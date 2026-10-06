@@ -480,3 +480,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Khaparwada Connect: uploaded files live outside the repo (see docs/ARCHITECTURE.md)
+**/App_Data/
