@@ -1,0 +1,38 @@
+@model HomeViewModel
+@using Khaparwada.Web.Infrastructure.Text
+<section class="kc-section kc-about" id="about" aria-labelledby="about-title">
+    <div class="container">
+        <div class="row g-4 g-lg-5 align-items-center">
+            <div class="col-lg-7" data-reveal>
+                <p class="kc-eyebrow">@L["About the village"]</p>
+                <h2 class="kc-section-title" id="about-title">@L["About {0}", Model.Site.VillageName]</h2>
+                <div class="kc-prose">
+                    @foreach (var paragraph in TextHelpers.Paragraphs(Model.Site.VillageIntro))
+                    {
+                        <p>@paragraph</p>
+                    }
+                </div>
+                <a class="btn btn-kc-primary" asp-route="@RouteNames.About">@L["Read our story"] <icon name="arrow-right" class="kc-arrow" /></a>
+            </div>
+            <div class="col-lg-5" data-reveal>
+                <aside class="kc-facts-card" aria-labelledby="facts-title">
+                    <img class="kc-facts-emblem" src="/images/brand/emblem.svg" width="64" height="64" alt="" />
+                    <h3 class="kc-facts-title" id="facts-title">@L["Village facts"]</h3>
+                    @if (Model.Facts.Count > 0)
+                    {
+                        <dl class="kc-facts">
+                            @foreach (var fact in Model.Facts)
+                            {
+                                <div>
+                                    <dt>@fact.Label</dt>
+                                    <dd>@fact.Value</dd>
+                                </div>
+                            }
+                        </dl>
+                    }
+                    <p class="kc-facts-tagline">@Model.Site.Tagline</p>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>

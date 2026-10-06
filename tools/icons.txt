@@ -1,0 +1,90 @@
+# Icons in the site's SVG sprite (Khaparwada.Web/wwwroot/images/icons.svg).
+# Format: <set> <font-awesome-name>    set = solid | brands
+# Browse names at https://fontawesome.com/search?ic=free
+# After editing, run tools/build-icon-sprite.ps1 and commit icons.svg.
+
+# Navigation and UI
+solid house
+solid bars
+solid xmark
+solid arrow-right
+solid arrow-left
+solid arrow-up
+solid chevron-right
+solid chevron-down
+solid magnifying-glass
+solid language
+solid arrow-up-right-from-square
+solid share-nodes
+solid circle-info
+solid circle-check
+solid quote-left
+solid heart
+
+# Sections
+solid book-open
+solid clock-rotate-left
+solid scroll
+solid compass
+solid map
+solid map-location-dot
+solid location-dot
+solid location-crosshairs
+solid route
+solid people-group
+solid users
+solid user
+solid calendar-days
+solid clock
+solid images
+solid image
+solid camera
+solid bullhorn
+solid envelope
+solid phone
+solid globe
+solid landmark-dome
+solid paperclip
+solid file-pdf
+
+# Statistics
+solid people-roof
+solid house-chimney
+solid ruler-combined
+
+# Place categories
+solid gopuram
+solid om
+solid school
+solid landmark
+solid hospital
+solid water
+solid monument
+solid store
+solid building
+
+# People categories
+solid chalkboard-user
+solid user-doctor
+solid helmet-safety
+solid building-columns
+solid briefcase
+solid tractor
+solid medal
+solid hand-holding-heart
+solid star
+
+# Notice categories and priorities
+solid droplet
+solid bolt
+solid file-signature
+solid triangle-exclamation
+solid seedling
+solid leaf
+
+# Social links
+brands facebook
+brands instagram
+brands youtube
+brands whatsapp
+brands x-twitter

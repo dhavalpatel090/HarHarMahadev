@@ -1,0 +1,51 @@
+@model HomeViewModel
+@{
+    var heading = new SectionHeadingViewModel(
+        L["Community"], L["Our people, our memories"], "community-title",
+        L["The people who serve the village, and the stories residents share."]);
+}
+<section class="kc-section kc-section--sand" id="community" aria-labelledby="community-title">
+    <div class="container">
+        <partial name="_SectionHeading" model="heading" />
+        <div class="row g-4 g-lg-5">
+            <div class="col-lg-6" data-reveal>
+                <div class="kc-subheading-row">
+                    <h3 class="kc-subheading">@L["People of the village"]</h3>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.People">@L["Meet everyone"] <icon name="arrow-right" /></a>
+                </div>
+                @if (Model.FeaturedPeople.Count == 0)
+                {
+                    <p class="kc-empty">@L["Profiles will appear here once they are approved."]</p>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var person in Model.FeaturedPeople)
+                        {
+                            <div class="col-sm-6"><partial name="Cards/_PersonCard" model="person" /></div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-6" data-reveal>
+                <div class="kc-subheading-row">
+                    <h3 class="kc-subheading">@L["{0} memories", Model.Site.VillageName]</h3>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.Memories">@L["Read all"] <icon name="arrow-right" /></a>
+                </div>
+                @foreach (var memory in Model.Memories)
+                {
+                    <partial name="Cards/_MemoryCard" model="memory" />
+                }
+                <div class="kc-share-memory">
+                    <icon name="camera" class="kc-share-memory-icon" />
+                    <div class="kc-share-memory-text">
+                        <strong>@L["Have an old photo or a story?"]</strong>
+                        <p>@L["Share it with the village. An admin checks every submission before it appears."]</p>
+                    </div>
+                    <a class="btn btn-kc-accent" asp-route="@RouteNames.ShareMemory">@L["Share a memory"]</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

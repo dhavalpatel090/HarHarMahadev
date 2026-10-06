@@ -1,0 +1,36 @@
+@model PageHeaderViewModel
+<header class="kc-page-header">
+    <div class="container">
+        <nav aria-label="@L["Breadcrumb"]">
+            <ol class="breadcrumb kc-breadcrumb">
+                <li class="breadcrumb-item"><a asp-route="@RouteNames.Home">@L["Home"]</a></li>
+                @for (var i = 0; i < Model.Breadcrumbs.Count; i++)
+                {
+                    var crumb = Model.Breadcrumbs[i];
+                    var isCurrent = i == Model.Breadcrumbs.Count - 1;
+                    if (isCurrent || crumb.RouteName is null)
+                    {
+                        <li class="breadcrumb-item active" aria-current="@(isCurrent ? "page" : null)">@crumb.Text</li>
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item"><a asp-route="@crumb.RouteName">@crumb.Text</a></li>
+                    }
+                }
+            </ol>
+        </nav>
+        <div class="kc-page-header-main">
+            @if (Model.Icon is not null)
+            {
+                <span class="kc-page-header-icon"><icon name="@Model.Icon" /></span>
+            }
+            <div>
+                <h1 class="kc-page-title">@Model.Title</h1>
+                @if (!string.IsNullOrWhiteSpace(Model.Lead))
+                {
+                    <p class="kc-page-lead">@Model.Lead</p>
+                }
+            </div>
+        </div>
+    </div>
+</header>

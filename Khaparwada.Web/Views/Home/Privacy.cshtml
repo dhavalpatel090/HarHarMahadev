@@ -1,6 +1,57 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    var title = L["Privacy policy"].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = L["What information Khaparwada Connect collects, why, and how it is protected."].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = L["What information this website collects, why, and how it is protected."],
+        Icon = "circle-info",
+        Breadcrumbs = [new BreadcrumbItem(title)]
+    };
 }
-<h1>@ViewData["Title"]</h1>
+<partial name="_PageHeader" model="header" />
 
-<p>Use this page to detail your site's privacy policy.</p>
+@* DRAFT. Review before going live; text in [brackets] needs a decision. Phase 12 adds the Gujarati version. *@
+<section class="kc-section">
+    <div class="container">
+        <article class="kc-prose-page">
+            <p class="kc-draft-note"><icon name="triangle-exclamation" /> Draft: please review this policy before the website goes live.</p>
+
+            <p>Khaparwada Connect is a community website for Khaparwada village. This page explains what information the website collects, why it is collected and what is done with it.</p>
+
+            <h2>Reading the website</h2>
+            <p>You do not need an account to read this website. It does not use advertising or tracking tools such as analytics or social-media trackers.</p>
+            <p>Like most websites, the hosting server keeps technical logs (such as IP address, browser type and time of visit) for a short period to keep the site secure and working.</p>
+
+            <h2>Cookies</h2>
+            <p>The website uses only essential cookies:</p>
+            <ul>
+                <li>a security cookie that protects forms against misuse; and</li>
+                <li>a sign-in cookie, used only by village administrators.</li>
+            </ul>
+            <p>No advertising or tracking cookies are used.</p>
+
+            <h2>Messages you send us</h2>
+            <p>When you use the contact form, we receive your name, the message and any contact details you choose to give. They are used only to reply to you and are seen only by the village administrators. [Decide how long messages are kept, for example 12 months.]</p>
+
+            <h2>Memories, stories and photos you share</h2>
+            <p>When you share a memory, we receive your name, your story or photos and, if you give them, your contact details. An administrator reviews every submission, and it is published only if you have agreed to publication. Your contact details are never published. Location information stored inside photos (GPS) is removed automatically.</p>
+
+            <h2>Community profiles</h2>
+            <p>Profiles of people from the village are published only with the consent of that person or their family. Phone numbers, home addresses and dates of birth are never published.</p>
+
+            <h2>Maps</h2>
+            <p>The village map loads map images from OpenStreetMap. To show the map, your browser connects to their servers, and their <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer">privacy policy</a> applies to that connection.</p>
+
+            <h2>Your choices</h2>
+            <p>You can ask us to correct or remove any information about you, including a profile, a photo or a memory, by writing to us through the <a asp-route="@RouteNames.Contact">contact page</a>.</p>
+
+            <h2>Children</h2>
+            <p>Photos or stories that show children are published only with the consent of a parent or guardian.</p>
+
+            <h2>Changes to this policy</h2>
+            <p>If this policy changes, the new version will be published on this page. [Add the date of the latest version.]</p>
+        </article>
+    </div>
+</section>

@@ -1,24 +1,26 @@
-using System.Diagnostics;
-using Khaparwada.Web.ViewModels;
+using Khaparwada.Web.Infrastructure.Routing;
+using Khaparwada.Web.Services.Home;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Khaparwada.Web.Controllers;
 
-public class HomeController : Controller
+public class HomeController(IHomeService homeService) : Controller
 {
-    public IActionResult Index()
+    [HttpGet("", Name = RouteNames.Home)]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        return View();
+        return View(await homeService.GetAsync(cancellationToken));
     }
 
+    [HttpGet("privacy", Name = RouteNames.Privacy)]
     public IActionResult Privacy()
     {
         return View();
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    [HttpGet("terms", Name = RouteNames.Terms)]
+    public IActionResult Terms()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return View();
     }
 }

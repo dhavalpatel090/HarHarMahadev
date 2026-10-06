@@ -1,12 +1,22 @@
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Khaparwada.Web.Data;
 using Khaparwada.Web.Data.Interceptors;
 using Khaparwada.Web.Data.Seed;
+using Khaparwada.Web.Infrastructure.Localization;
 using Khaparwada.Web.Infrastructure.Options;
 using Khaparwada.Web.Models.Entities;
+using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.Home;
+using Khaparwada.Web.Services.Notices;
+using Khaparwada.Web.Services.Site;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.WebEncoders;
 
 namespace Khaparwada.Web.Infrastructure.Extensions;
 
@@ -25,6 +35,16 @@ public static class ServiceCollectionExtensions
             .Validate(
                 site => TimeZoneInfo.TryFindSystemTimeZoneById(site.TimeZoneId, out _),
                 "Site:TimeZoneId must be a time zone id such as \"Asia/Kolkata\".")
+            .Validate(
+                site => string.IsNullOrWhiteSpace(site.PublicBaseUrl)
+                        || (Uri.TryCreate(site.PublicBaseUrl, UriKind.Absolute, out var uri)
+                            && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)),
+                "Site:PublicBaseUrl must be empty or an absolute address such as \"https://khaparwada.in\".")
+            .ValidateOnStart();
+
+        services.AddOptions<MapOptions>()
+            .Bind(configuration.GetSection(MapOptions.SectionName))
+            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         services.AddOptions<DatabaseOptions>()
@@ -94,6 +114,49 @@ public static class ServiceCollectionExtensions
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+        return services;
+    }
+
+    /// <summary>MVC, the two site languages, URL style, caching and the services behind the public pages.</summary>
+    public static IServiceCollection AddKhaparwadaWeb(this IServiceCollection services)
+    {
+        services.AddLocalization(options => options.ResourcesPath = "Resources");
+        services.Configure<RequestLocalizationOptions>(options =>
+        {
+            options.DefaultRequestCulture = new RequestCulture(SiteLanguages.English);
+            options.SupportedCultures = [SiteLanguages.English, SiteLanguages.Gujarati];
+            options.SupportedUICultures = [SiteLanguages.English, SiteLanguages.Gujarati];
+
+            // The URL is the only source of the language (see LanguagePrefixCultureProvider).
+            options.RequestCultureProviders = [new LanguagePrefixCultureProvider()];
+        });
+
+        services.AddControllersWithViews(options =>
+            {
+                // Check the antiforgery token on every POST/PUT/DELETE, so no form can forget it (CSRF protection).
+                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+            })
+            .AddDataAnnotationsLocalization(options =>
+                options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
+
+        // Razor's default encoder writes every non-English letter as a numeric code (મ → &#xAAE;), which makes
+        // Gujarati pages two to three times larger. Allowing all Unicode ranges sends the text as plain UTF-8;
+        // HTML-sensitive characters (< > & " ') are still always encoded, so XSS protection is unchanged.
+        services.Configure<WebEncoderOptions>(options =>
+            options.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
+
+        // "/places" rather than "/Places": one spelling per URL is better for search engines.
+        services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+
+        // One antiforgery cookie for both languages; by default its path would follow the "/gu" PathBase.
+        services.AddAntiforgery(options => options.Cookie.Path = "/");
+
+        services.AddMemoryCache();
+        services.AddSingleton<IVillageClock, VillageClock>();
+        services.AddScoped<ISiteInfoService, SiteInfoService>();
+        services.AddScoped<INoticeService, NoticeService>();
+        services.AddScoped<IHomeService, HomeService>();
 
         return services;
     }

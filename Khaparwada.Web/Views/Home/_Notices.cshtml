@@ -1,0 +1,31 @@
+@model HomeViewModel
+@{
+    var heading = new SectionHeadingViewModel(
+        L["Notice board"], L["Latest notices"], "notices-title",
+        L["Water and electricity updates, meetings, government schemes and emergencies."],
+        L["All notices"], RouteNames.Notices);
+}
+<section class="kc-section kc-section--sand" id="notices" aria-labelledby="notices-title">
+    <div class="container">
+        <div class="row g-4 g-lg-5">
+            <div class="col-lg-4">
+                <partial name="_SectionHeading" model="heading" />
+            </div>
+            <div class="col-lg-8">
+                @if (Model.LatestNotices.Count == 0)
+                {
+                    <p class="kc-empty">@L["There are no notices at the moment."]</p>
+                }
+                else
+                {
+                    <ul class="kc-notice-list">
+                        @foreach (var notice in Model.LatestNotices)
+                        {
+                            <li data-reveal><partial name="Cards/_NoticeItem" model="notice" /></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</section>

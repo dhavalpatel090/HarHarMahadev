@@ -1,0 +1,14 @@
+@model int
+@{
+    ViewData["Title"] = L["Something went wrong"].Value;
+}
+<section class="kc-section">
+    <div class="container">
+        <div class="kc-error">
+            <p class="kc-error-code">@Model</p>
+            <h1>@L["Something went wrong"]</h1>
+            <p>@L["The request could not be completed."]</p>
+            <a class="btn btn-kc-primary" asp-route="@RouteNames.Home"><icon name="house" /> @L["Back to home"]</a>
+        </div>
+    </div>
+</section>

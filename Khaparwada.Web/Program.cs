@@ -1,5 +1,4 @@
 using Khaparwada.Web.Infrastructure.Extensions;
-using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,37 +6,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddKhaparwadaOptions(builder.Configuration);
 builder.Services.AddKhaparwadaData(builder.Configuration);
 builder.Services.AddKhaparwadaIdentity();
-
-builder.Services.AddControllersWithViews(options =>
-{
-    // Check the antiforgery token on every POST/PUT/DELETE, so no form can forget it (CSRF protection).
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-});
+builder.Services.AddKhaparwadaWeb();
 
 var app = builder.Build();
 
 // Upgrade the database (Development only) and insert required data before the first request.
 await app.InitializeDatabaseAsync();
 
-// ---- HTTP request pipeline ----
+// ---- HTTP request pipeline (order matters) ----
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/error/{0}");  // friendly 404 and other error pages
 app.UseHttpsRedirection();
+app.UseLanguageFromUrl();                           // "/gu/..." → Gujarati; must come before routing
 app.UseRouting();
-
+app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+app.MapControllers()
     .WithStaticAssets();
 
 await app.RunAsync();

@@ -1,0 +1,18 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = L["Something went wrong"].Value;
+}
+<section class="kc-section">
+    <div class="container">
+        <div class="kc-error">
+            <p class="kc-error-code">500</p>
+            <h1>@L["Something went wrong"]</h1>
+            <p>@L["Sorry, the page could not be shown. Please try again in a moment."]</p>
+            @if (Model.ShowRequestId)
+            {
+                <p class="kc-error-ref">@L["Reference"]: <code>@Model.RequestId</code></p>
+            }
+            <a class="btn btn-kc-primary" asp-route="@RouteNames.Home"><icon name="house" /> @L["Back to home"]</a>
+        </div>
+    </div>
+</section>

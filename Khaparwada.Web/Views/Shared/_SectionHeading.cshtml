@@ -1,0 +1,15 @@
+@model SectionHeadingViewModel
+<div class="kc-section-heading">
+    <div class="kc-section-heading-text">
+        <p class="kc-eyebrow">@Model.Eyebrow</p>
+        <h2 class="kc-section-title" id="@Model.TitleId">@Model.Title</h2>
+        @if (!string.IsNullOrWhiteSpace(Model.Lead))
+        {
+            <p class="kc-section-lead">@Model.Lead</p>
+        }
+    </div>
+    @if (Model.LinkRoute is not null && Model.LinkText is not null)
+    {
+        <a class="kc-link-arrow" asp-route="@Model.LinkRoute">@Model.LinkText <icon name="arrow-right" /></a>
+    }
+</div>

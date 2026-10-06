@@ -1,0 +1,22 @@
+@model HomeViewModel
+@if (Model.Stats.Count > 0)
+{
+    <section class="kc-stats-wrap" aria-label="@L["{0} at a glance", Model.Site.VillageName]">
+        <div class="container">
+            <dl class="kc-stats">
+                @foreach (var stat in Model.Stats)
+                {
+                    <div class="kc-stat">
+                        <icon name="@stat.Icon" class="kc-stat-icon" />
+                        <dt class="kc-stat-label">@stat.Label</dt>
+                        <dd class="kc-stat-value">@stat.Value</dd>
+                    </div>
+                }
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(Model.Site.StatsSource))
+            {
+                <p class="kc-stats-source">@L["Source: {0}", Model.Site.StatsSource]</p>
+            }
+        </div>
+    </section>
+}

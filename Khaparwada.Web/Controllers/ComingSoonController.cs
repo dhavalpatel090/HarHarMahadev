@@ -1,0 +1,80 @@
+using Khaparwada.Web.Infrastructure.Routing;
+using Khaparwada.Web.ViewModels.Shared;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Khaparwada.Web.Controllers;
+
+/// <summary>
+/// Placeholder pages for the sections built in later phases, so every menu link works and the final URLs
+/// exist from now on. When a phase builds the real page, it deletes the action here and puts the same route
+/// name on the new action (a duplicate route name fails at startup, which makes a leftover impossible to miss).
+/// </summary>
+public class ComingSoonController : Controller
+{
+    [HttpGet("about", Name = RouteNames.About)]
+    public IActionResult About() =>
+        Placeholder(RouteNames.About, "About the village", "Introduction, culture, traditions, festivals and how the village is growing.", "book-open");
+
+    [HttpGet("history", Name = RouteNames.History)]
+    public IActionResult History() =>
+        Placeholder(RouteNames.History, "Village history", "A timeline of the moments that shaped the village.", "clock-rotate-left");
+
+    [HttpGet("places", Name = RouteNames.Places)]
+    public IActionResult Places() =>
+        Placeholder(RouteNames.Places, "Places", "Temples, schools, offices, water places and other important places.", "location-dot");
+
+    [HttpGet("places/{slug}", Name = RouteNames.PlaceDetails)]
+    public IActionResult PlaceDetails(string slug) => Places();
+
+    [HttpGet("map", Name = RouteNames.Map)]
+    public IActionResult Map() =>
+        Placeholder(RouteNames.Map, "Village map", "Every place on an interactive map.", "map-location-dot");
+
+    [HttpGet("people", Name = RouteNames.People)]
+    public IActionResult People() =>
+        Placeholder(RouteNames.People, "People", "Teachers, doctors, farmers, sports persons and others who serve the village.", "people-group");
+
+    [HttpGet("people/{slug}", Name = RouteNames.PersonDetails)]
+    public IActionResult PersonDetails(string slug) => People();
+
+    [HttpGet("events", Name = RouteNames.Events)]
+    public IActionResult Events() =>
+        Placeholder(RouteNames.Events, "Events", "Festivals, meetings and village programmes, upcoming and past.", "calendar-days");
+
+    [HttpGet("events/{slug}", Name = RouteNames.EventDetails)]
+    public IActionResult EventDetails(string slug) => Events();
+
+    [HttpGet("gallery", Name = RouteNames.Gallery)]
+    public IActionResult Gallery() =>
+        Placeholder(RouteNames.Gallery, "Gallery", "Photos of festivals, people, places and the old village.", "images");
+
+    [HttpGet("gallery/{slug}", Name = RouteNames.AlbumDetails)]
+    public IActionResult AlbumDetails(string slug) => Gallery();
+
+    [HttpGet("notices", Name = RouteNames.Notices)]
+    public IActionResult Notices() =>
+        Placeholder(RouteNames.Notices, "Notice board", "Announcements, government schemes, water and electricity updates, meetings and emergencies.", "bullhorn");
+
+    [HttpGet("notices/{slug}", Name = RouteNames.NoticeDetails)]
+    public IActionResult NoticeDetails(string slug) => Notices();
+
+    [HttpGet("memories", Name = RouteNames.Memories)]
+    public IActionResult Memories() =>
+        Placeholder(RouteNames.Memories, "Village memories", "Old photos, stories and memories shared by residents.", "camera");
+
+    [HttpGet("memories/share", Name = RouteNames.ShareMemory)]
+    public IActionResult ShareMemory() => Memories();
+
+    [HttpGet("memories/{slug}", Name = RouteNames.MemoryDetails)]
+    public IActionResult MemoryDetails(string slug) => Memories();
+
+    [HttpGet("contact", Name = RouteNames.Contact)]
+    public IActionResult Contact() =>
+        Placeholder(RouteNames.Contact, "Contact", "Location, contact details and useful links.", "envelope");
+
+    private ViewResult Placeholder(string section, string title, string lead, string icon)
+    {
+        ViewData[SiteNavigation.SectionKey] = section;
+        return View("ComingSoon", new ComingSoonViewModel(title, lead, icon));
+    }
+}

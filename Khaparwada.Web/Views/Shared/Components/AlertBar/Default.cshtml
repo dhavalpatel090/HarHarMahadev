@@ -1,0 +1,15 @@
+@model IReadOnlyList<NoticeAlertViewModel>
+@{
+    var first = Model[0];
+}
+<div class="kc-alert-bar" role="region" aria-label="@L["Urgent notice"]">
+    <div class="container kc-alert-inner">
+        <icon name="triangle-exclamation" />
+        <strong class="kc-alert-label">@L["Urgent"]</strong>
+        <a class="kc-alert-link" asp-route="@RouteNames.NoticeDetails" asp-route-slug="@first.Slug">@first.Title</a>
+        @if (Model.Count > 1)
+        {
+            <a class="kc-alert-more" asp-route="@RouteNames.Notices">@L["+{0} more", Model.Count - 1]</a>
+        }
+    </div>
+</div>

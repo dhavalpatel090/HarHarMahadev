@@ -1,0 +1,35 @@
+@model SiteInfo
+<section class="kc-contact-strip" id="contact" aria-labelledby="contact-title">
+    <div class="container kc-contact-grid">
+        <div>
+            <p class="kc-eyebrow">@L["Visit or get in touch"]</p>
+            <h2 class="kc-section-title" id="contact-title">@L["Contact {0}", Model.VillageName]</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Location))
+            {
+                <p class="kc-contact-location"><icon name="location-dot" /> @Model.VillageName, @Model.Location</p>
+            }
+        </div>
+        <ul class="kc-contact-list">
+            @if (!string.IsNullOrWhiteSpace(Model.OfficeAddress))
+            {
+                <li><icon name="landmark" /> @Model.OfficeAddress</li>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.OfficePhone))
+            {
+                <li><icon name="phone" /> <a href="tel:@Model.OfficePhone">@Model.OfficePhone</a></li>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.OfficeEmail))
+            {
+                <li><icon name="envelope" /> <a href="mailto:@Model.OfficeEmail">@Model.OfficeEmail</a></li>
+            }
+            <li><icon name="clock" /> @L["Messages are answered by the village administrators."]</li>
+        </ul>
+        <div class="kc-contact-actions">
+            <a class="btn btn-kc-accent" asp-route="@RouteNames.Contact"><icon name="envelope" /> @L["Send a message"]</a>
+            @if (Model.DirectionsUrl is not null)
+            {
+                <a class="btn btn-kc-ghost" href="@Model.DirectionsUrl" target="_blank" rel="noopener noreferrer"><icon name="route" /> @L["Get directions"]</a>
+            }
+        </div>
+    </div>
+</section>

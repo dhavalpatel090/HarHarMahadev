@@ -1,0 +1,27 @@
+@model AlbumCardViewModel
+<article class="kc-card kc-album-card">
+    <div class="kc-card-media kc-album-media">
+        @if (Model.CoverImageUrl is not null)
+        {
+            <img src="@Model.CoverImageUrl" alt="" loading="lazy" decoding="async" />
+        }
+        else
+        {
+            <span class="kc-media-placeholder"><icon name="camera" /></span>
+        }
+        @if (Model.PhotoCount > 0)
+        {
+            <span class="kc-album-count"><icon name="images" /> @Model.PhotoCount<span class="visually-hidden"> @L["photos"]</span></span>
+        }
+    </div>
+    <div class="kc-card-body">
+        <span class="kc-chip">@Model.CategoryName</span>
+        <h3 class="kc-card-title">
+            <a class="stretched-link" asp-route="@RouteNames.AlbumDetails" asp-route-slug="@Model.Slug">@Model.Title</a>
+        </h3>
+        @if (Model.TakenOn is { } takenOn)
+        {
+            <p class="kc-card-meta"><icon name="calendar-days" /> @takenOn.ToString("d MMMM yyyy", CultureInfo.CurrentCulture)</p>
+        }
+    </div>
+</article>

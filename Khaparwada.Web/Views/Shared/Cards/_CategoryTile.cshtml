@@ -1,0 +1,6 @@
+@model CategoryTileViewModel
+<a class="kc-category" asp-route="@RouteNames.Places" asp-route-category="@Model.Slug">
+    <span class="kc-category-icon"><icon name="@Model.Icon" color="@Model.Color" /></span>
+    <span class="kc-category-name">@Model.Name</span>
+    <span class="kc-category-count">@Model.PlaceCount<span class="visually-hidden"> @L["places"]</span></span>
+</a>

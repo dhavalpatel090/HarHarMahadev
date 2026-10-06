@@ -1,0 +1,31 @@
+@model NoticeItemViewModel
+@{
+    var priorityClass = Model.Priority switch
+    {
+        NoticePriority.Urgent => "is-urgent",
+        NoticePriority.Important => "is-important",
+        _ => null
+    };
+}
+<article class="kc-notice @priorityClass">
+    <span class="kc-notice-icon"><icon name="@Model.Icon" /></span>
+    <div class="kc-notice-body">
+        <div class="kc-notice-meta">
+            @if (Model.Priority == NoticePriority.Urgent)
+            {
+                <span class="kc-badge kc-badge--urgent">@L["Urgent"]</span>
+            }
+            else if (Model.Priority == NoticePriority.Important)
+            {
+                <span class="kc-badge kc-badge--important">@L["Important"]</span>
+            }
+            <span>@L[Model.CategoryLabel]</span>
+            <span aria-hidden="true">·</span>
+            <time datetime="@Model.PublishedAt.ToString("O", CultureInfo.InvariantCulture)">@Model.PublishedAt.ToString("d MMM yyyy", CultureInfo.CurrentCulture)</time>
+        </div>
+        <h3 class="kc-notice-title">
+            <a class="stretched-link" asp-route="@RouteNames.NoticeDetails" asp-route-slug="@Model.Slug">@Model.Title</a>
+        </h3>
+    </div>
+    <icon name="chevron-right" class="kc-notice-arrow" />
+</article>

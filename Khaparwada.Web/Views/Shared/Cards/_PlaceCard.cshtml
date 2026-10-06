@@ -1,0 +1,20 @@
+@model PlaceCardViewModel
+<article class="kc-card kc-place-card">
+    <div class="kc-card-media">
+        @if (Model.ImageUrl is not null)
+        {
+            <img src="@Model.ImageUrl" alt="" loading="lazy" decoding="async" />
+        }
+        else
+        {
+            <span class="kc-media-placeholder"><icon name="@Model.CategoryIcon" /></span>
+        }
+    </div>
+    <div class="kc-card-body">
+        <span class="kc-chip"><icon name="@Model.CategoryIcon" color="@Model.CategoryColor" /> @Model.CategoryName</span>
+        <h3 class="kc-card-title">
+            <a class="stretched-link" asp-route="@RouteNames.PlaceDetails" asp-route-slug="@Model.Slug">@Model.Name</a>
+        </h3>
+        <p class="kc-card-text">@Model.Summary</p>
+    </div>
+</article>

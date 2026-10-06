@@ -1,0 +1,94 @@
+@model SiteInfo
+@inject Khaparwada.Web.Services.Common.IVillageClock Clock
+@{
+    var year = Clock.ToVillageTime(Clock.UtcNow).Year;
+}
+<footer class="kc-footer">
+    <div class="kc-toran" aria-hidden="true"></div>
+    <div class="container">
+        <div class="row g-4 g-lg-5">
+            <div class="col-lg-4">
+                <a class="kc-footer-brand" asp-route="@RouteNames.Home">
+                    <img src="/images/brand/emblem.svg" width="52" height="52" alt="" />
+                    <span>@Model.SiteName</span>
+                </a>
+                <p class="kc-footer-tagline">@Model.Tagline</p>
+                @if (!string.IsNullOrWhiteSpace(Model.MetaDescription))
+                {
+                    <p class="kc-footer-about">@Model.MetaDescription</p>
+                }
+                @if (Model.SocialLinks.Count > 0)
+                {
+                    <ul class="kc-social">
+                        @foreach (var link in Model.SocialLinks)
+                        {
+                            <li>
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer" aria-label="@link.Name">
+                                    <icon brand="@link.BrandIcon" />
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h2 class="kc-footer-heading">@L["Quick links"]</h2>
+                <ul class="kc-footer-links">
+                    @foreach (var item in SiteNavigation.Main.Where(item => item.RouteName != RouteNames.Home))
+                    {
+                        <li><a asp-route="@item.RouteName">@L[item.Label]</a></li>
+                    }
+                </ul>
+            </div>
+
+            @if (Model.FooterLinks.Count > 0)
+            {
+                <div class="col-6 col-lg-3">
+                    <h2 class="kc-footer-heading">@L["Important links"]</h2>
+                    <ul class="kc-footer-links">
+                        @foreach (var link in Model.FooterLinks)
+                        {
+                            <li>
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer">
+                                    @link.Title <icon name="arrow-up-right-from-square" class="kc-external" />
+                                    <span class="visually-hidden">@L["(opens in a new tab)"]</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="col-lg-3">
+                <h2 class="kc-footer-heading">@L["Village location"]</h2>
+                <address class="kc-footer-address">
+                    <strong>@Model.VillageName</strong>
+                    @if (!string.IsNullOrWhiteSpace(Model.Location))
+                    {
+                        <br />@Model.Location
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.PinCode))
+                    {
+                        <br />@L["PIN"] @Model.PinCode
+                    }
+                </address>
+                <ul class="kc-footer-links">
+                    <li><a asp-route="@RouteNames.Map"><icon name="map-location-dot" /> @L["See the village map"]</a></li>
+                    @if (Model.DirectionsUrl is not null)
+                    {
+                        <li><a href="@Model.DirectionsUrl" target="_blank" rel="noopener noreferrer"><icon name="route" /> @L["Get directions"]</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="kc-footer-bottom">
+            <p>&copy; @year @Model.SiteName</p>
+            <ul>
+                <li><a asp-route="@RouteNames.Privacy">@L["Privacy policy"]</a></li>
+                <li><a asp-route="@RouteNames.Terms">@L["Terms & disclaimer"]</a></li>
+            </ul>
+        </div>
+    </div>
+</footer>

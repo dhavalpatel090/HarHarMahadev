@@ -1,0 +1,28 @@
+@model ComingSoonViewModel
+@{
+    var title = L[Model.Title].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = L[Model.Lead].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = L[Model.Lead],
+        Icon = Model.Icon,
+        Breadcrumbs = [new BreadcrumbItem(title)]
+    };
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section">
+    <div class="container">
+        <div class="kc-coming-soon" data-reveal>
+            <span class="kc-coming-soon-icon"><icon name="@Model.Icon" /></span>
+            <h2>@L["This page is being built"]</h2>
+            <p>@L["We are preparing this part of the website. Please visit again soon."]</p>
+            <div class="kc-coming-soon-actions">
+                <a class="btn btn-kc-primary" asp-route="@RouteNames.Home"><icon name="house" /> @L["Back to home"]</a>
+                <a class="btn btn-kc-outline" asp-route="@RouteNames.Contact"><icon name="envelope" /> @L["Contact"]</a>
+            </div>
+        </div>
+    </div>
+</section>

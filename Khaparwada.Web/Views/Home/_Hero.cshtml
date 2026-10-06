@@ -1,0 +1,22 @@
+@model HeroViewModel
+<section class="kc-hero @(Model.IsIllustration ? "is-illustration" : null)" aria-labelledby="hero-title">
+    @* An <img>, not a CSS background: the browser finds it immediately and fetchpriority makes it load first. *@
+    <img class="kc-hero-media" src="@Model.ImageUrl" alt="" fetchpriority="high" decoding="async" />
+    @if (Model.VideoUrl is not null)
+    {
+        @* No src until site.js decides: never on Save-Data or for visitors who prefer reduced motion. *@
+        <video class="kc-hero-media kc-hero-video" data-hero-video data-src="@Model.VideoUrl" poster="@Model.ImageUrl"
+               muted loop playsinline preload="none" aria-hidden="true"></video>
+    }
+    <div class="kc-hero-shade" aria-hidden="true"></div>
+
+    <div class="container kc-hero-content">
+        <p class="kc-hero-eyebrow"><icon name="location-dot" /> @L["Our village on the web"]</p>
+        <h1 class="kc-hero-title" id="hero-title">@Model.Title</h1>
+        <p class="kc-hero-tagline">@Model.Tagline</p>
+        <div class="kc-hero-actions">
+            <a class="btn btn-kc-accent btn-lg" href="#explore">@L["Discover {0}", Model.VillageName] <icon name="arrow-right" class="kc-arrow" /></a>
+            <a class="btn btn-kc-ghost btn-lg" asp-route="@RouteNames.Events"><icon name="calendar-days" /> @L["Upcoming events"]</a>
+        </div>
+    </div>
+</section>

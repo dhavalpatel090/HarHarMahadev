@@ -1,0 +1,22 @@
+@model HomeViewModel
+@if (Model.Albums.Count > 0)
+{
+    var heading = new SectionHeadingViewModel(
+        L["Gallery"], L["Moments from the village"], "gallery-title",
+        L["Festivals, people, places and old photographs."],
+        L["Open the gallery"], RouteNames.Gallery);
+
+    <section class="kc-section" id="gallery" aria-labelledby="gallery-title">
+        <div class="container">
+            <partial name="_SectionHeading" model="heading" />
+            <div class="row g-4">
+                @foreach (var album in Model.Albums)
+                {
+                    <div class="col-md-6 col-lg-4" data-reveal>
+                        <partial name="Cards/_AlbumCard" model="album" />
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

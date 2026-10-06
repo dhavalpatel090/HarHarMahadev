@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="20" viewBox="0 0 48 20">
+  <!-- One repeat of a toran: a cord with a mango leaf, beads and a marigold. Tiled horizontally in CSS. -->
+  <path d="M0 2.5h48" stroke="#7A1531" stroke-width="1.6"/>
+  <path d="M12 2.5c5.2 3.6 5 9.6 0 15-5-5.4-5.2-11.4 0-15z" fill="#2E6B4E"/>
+  <path d="M12 4.5v11" stroke="#7FB394" stroke-width=".8"/>
+  <circle cx="24" cy="5" r="1.7" fill="#7A1531"/>
+  <circle cx="36" cy="9" r="4.4" fill="#E8A33D"/>
+  <circle cx="36" cy="9" r="2" fill="#C9761B"/>
+  <path d="M36 2.5v2.4" stroke="#7A1531" stroke-width="1"/>
+  <circle cx="0" cy="5" r="1.7" fill="#7A1531"/>
+  <circle cx="48" cy="5" r="1.7" fill="#7A1531"/>
+</svg>

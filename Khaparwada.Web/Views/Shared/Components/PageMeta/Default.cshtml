@@ -1,0 +1,24 @@
+@model PageMetaViewModel
+<title>@Model.Title</title>
+@if (!string.IsNullOrWhiteSpace(Model.Description))
+{
+    <meta name="description" content="@Model.Description" />
+}
+<link rel="canonical" href="@Model.CanonicalUrl" />
+<link rel="alternate" hreflang="en-IN" href="@Model.EnglishUrl" />
+<link rel="alternate" hreflang="gu-IN" href="@Model.GujaratiUrl" />
+<link rel="alternate" hreflang="x-default" href="@Model.EnglishUrl" />
+<meta name="theme-color" content="#7A1531" />
+@* Open Graph: the title, text and picture WhatsApp and Facebook show when someone shares a link. *@
+<meta property="og:site_name" content="@Model.SiteName" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="@Model.ShareTitle" />
+@if (!string.IsNullOrWhiteSpace(Model.Description))
+{
+    <meta property="og:description" content="@Model.Description" />
+}
+<meta property="og:url" content="@Model.CanonicalUrl" />
+<meta property="og:image" content="@Model.ImageUrl" />
+<meta property="og:locale" content="@Model.Locale" />
+<meta property="og:locale:alternate" content="@Model.AlternateLocale" />
+<meta name="twitter:card" content="summary_large_image" />

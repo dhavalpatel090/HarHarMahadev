@@ -1,0 +1,41 @@
+@{
+    var title = L["Terms & disclaimer"].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = L["The terms for using Khaparwada Connect and sharing content on it."].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = L["The terms for using this website and for sharing content on it."],
+        Icon = "scroll",
+        Breadcrumbs = [new BreadcrumbItem(title)]
+    };
+}
+<partial name="_PageHeader" model="header" />
+
+@* DRAFT. Review before going live; text in [brackets] needs a decision. Phase 12 adds the Gujarati version. *@
+<section class="kc-section">
+    <div class="container">
+        <article class="kc-prose-page">
+            <p class="kc-draft-note"><icon name="triangle-exclamation" /> Draft: please review these terms before the website goes live.</p>
+
+            <h2>About this website</h2>
+            <p>Khaparwada Connect shares information about Khaparwada village: its places, people, events, notices, photos and history. [State who runs the website, for example the Gram Panchayat or a group of residents, and whether it is an official website.]</p>
+
+            <h2>Accuracy of information</h2>
+            <p>Information is published in good faith, but notices, timings and details can change. For anything official, please confirm with the Gram Panchayat office or the government department concerned.</p>
+
+            <h2>Links to other websites</h2>
+            <p>This website links to other websites, such as government portals. We are not responsible for their content.</p>
+
+            <h2>Content you share</h2>
+            <p>When you share a memory, story or photo, you confirm that you have the right to share it and that it does not include anyone's private information without their permission. You allow Khaparwada Connect to publish it after review. You can ask for it to be removed at any time through the <a asp-route="@RouteNames.Contact">contact page</a>.</p>
+            <p>Content that is offensive, hateful, false or that targets any person or community will not be published.</p>
+
+            <h2>Photos and copyright</h2>
+            <p>Photos and texts on this website belong to the people who created them. Please do not reuse them without permission.</p>
+
+            <h2>Changes</h2>
+            <p>These terms may be updated; the latest version is always on this page. [Add the date of the latest version.]</p>
+        </article>
+    </div>
+</section>

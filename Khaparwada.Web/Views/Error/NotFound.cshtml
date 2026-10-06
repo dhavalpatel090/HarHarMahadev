@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = L["Page not found"].Value;
+}
+<section class="kc-section">
+    <div class="container">
+        <div class="kc-error">
+            <p class="kc-error-code">404</p>
+            <h1>@L["Page not found"]</h1>
+            <p>@L["The page you are looking for does not exist or has moved."]</p>
+            <div class="kc-coming-soon-actions">
+                <a class="btn btn-kc-primary" asp-route="@RouteNames.Home"><icon name="house" /> @L["Back to home"]</a>
+                <a class="btn btn-kc-outline" asp-route="@RouteNames.Places"><icon name="location-dot" /> @L["Explore places"]</a>
+            </div>
+        </div>
+    </div>
+</section>

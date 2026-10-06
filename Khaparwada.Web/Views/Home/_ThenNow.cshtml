@@ -1,0 +1,41 @@
+@model HomeViewModel
+@if (Model.ThenNow.Count > 0)
+{
+    var heading = new SectionHeadingViewModel(
+        L["Then & now"], L["How {0} has changed", Model.Site.VillageName], "then-now-title",
+        L["Drag the slider to compare the same place, years apart."]);
+
+    <section class="kc-section kc-section--indigo kc-then-now" aria-labelledby="then-now-title">
+        <div class="container">
+            <partial name="_SectionHeading" model="heading" />
+            <div class="row g-4">
+                @foreach (var item in Model.ThenNow)
+                {
+                    <div class="col-lg-6" data-reveal>
+                        <figure class="kc-compare">
+                            <div class="kc-compare-frame" data-then-now>
+                                <img class="kc-compare-now" src="@item.NowImageUrl" alt="@L["{0} today", item.Title]" loading="lazy" decoding="async" />
+                                <img class="kc-compare-then @(item.ThenIsPlaceholder ? "is-sepia" : null)" src="@item.ThenImageUrl"
+                                     alt="@L["{0} in the past", item.Title]" loading="lazy" decoding="async" />
+                                <span class="kc-compare-label is-then">@item.ThenLabel</span>
+                                <span class="kc-compare-label is-now">@item.NowLabel</span>
+                                <span class="kc-compare-handle" aria-hidden="true">
+                                    <span class="kc-compare-knob"><icon name="chevron-right" class="is-flipped" /><icon name="chevron-right" /></span>
+                                </span>
+                                <input class="kc-compare-range" type="range" min="0" max="100" value="50"
+                                       aria-label="@L["Compare then and now: {0}", item.Title]" />
+                            </div>
+                            <figcaption>
+                                <strong>@item.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.Caption))
+                                {
+                                    <span>@item.Caption</span>
+                                }
+                            </figcaption>
+                        </figure>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

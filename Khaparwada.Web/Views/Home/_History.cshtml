@@ -1,0 +1,24 @@
+@model HomeViewModel
+@if (Model.HistoryHighlights.Count > 0)
+{
+    var heading = new SectionHeadingViewModel(
+        L["Our heritage"], L["Village history"], "history-title",
+        L["Moments that shaped {0}.", Model.Site.VillageName],
+        L["See the full timeline"], RouteNames.History);
+
+    <section class="kc-section kc-history" id="history" aria-labelledby="history-title">
+        <div class="container">
+            <partial name="_SectionHeading" model="heading" />
+            <ol class="kc-timeline">
+                @foreach (var item in Model.HistoryHighlights)
+                {
+                    <li class="kc-timeline-item" data-reveal>
+                        <span class="kc-timeline-year">@item.YearLabel</span>
+                        <h3 class="kc-timeline-title">@item.Title</h3>
+                        <p class="kc-timeline-text">@item.Description</p>
+                    </li>
+                }
+            </ol>
+        </div>
+    </section>
+}

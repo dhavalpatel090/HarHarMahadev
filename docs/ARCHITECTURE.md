@@ -12,8 +12,10 @@ same commit.
 | Framework | ASP.NET Core MVC on **.NET 10** (LTS, supported until November 2028) |
 | Data | EF Core **10.0.12** + SQL Server (development: SQL Server 2025 Express at `.\SQLEXPRESS`) |
 | Sign-in | ASP.NET Core Identity, roles **Admin** and **Editor**, no public registration |
-| UI | Razor views, Bootstrap 5, small plain-JS files; jQuery only for form validation |
-| Map | Leaflet + OpenStreetMap tiles, tile URL in configuration (Phase 5) |
+| UI | Razor views, Bootstrap 5.3.8 re-themed through CSS variables, small plain-JS files; jQuery only on pages with forms |
+| Icons | Font Awesome Free 7.3.1 icons, delivered as one SVG sprite (`wwwroot/images/icons.svg`) |
+| Fonts | Rasa (headings) and Mukta Vaani (text), self-hosted, each with Gujarati and Latin letters |
+| Map | Leaflet 1.9.4 + OpenStreetMap tiles, tile URL in configuration, loaded only when a map scrolls into view |
 | Images | SixLabors.ImageSharp: validate, rotate, strip metadata, resize, WebP (Phase 3) |
 | Tools | Visual Studio 2026, SSMS 22, `dotnet-ef` pinned in `dotnet-tools.json` |
 
@@ -24,27 +26,26 @@ Browser (phone / desktop)
         │ HTTPS
         ▼
 Kestrel (IIS in production) → Program.cs middleware, in this order:
-  error page/HSTS → HTTPS redirect → security headers
-  → static assets (css/js, fingerprinted) → /uploads (runtime images)
-  → routing → language (en | gu) → rate limiter → authentication → authorization → output cache
+  error page / HSTS → friendly status pages (/error/404) → HTTPS redirect
+  → language: "/gu/…" becomes PathBase "/gu" + path "/…"  (LanguagePrefixMiddleware)
+  → routing → request culture from the URL → authentication → authorization
+  → static assets (fingerprinted, pre-compressed) and controllers
+  Later phases add: security headers, /uploads, rate limiting, output caching.
         │
         ├── Public controllers       /places/{slug}   /gu/places/{slug}   …
-        └── Admin area controllers   /admin/…   [Authorize(Roles = "Admin,Editor")]
-                 │  thin: validate → call service → return view / redirect
+        └── Admin area controllers   /admin/…   [Authorize(Roles = "Admin,Editor")]   (Phase 3)
+                 │  thin: call a service → return a view
                  ▼
-        Services (one per feature: business rules, queries, moderation, caching)
+        Services (one per feature) — public queries all filtered by Services/Common/PublicVisibility.cs
            │                         │                          │
            ▼                         ▼                          ▼
-     AppDbContext (EF Core 10)   Media (ImageSharp,         IMemoryCache /
-           │                     file storage)              output-cache tags
-           ▼                         ▼
-   SQL Server: KhaparwadaConnect   App_Data/uploads          (public, approved)
-                                   App_Data/private-uploads  (pending, admin-only)
+     AppDbContext (EF Core 10)   Media (Phase 3)            IMemoryCache (site settings 10 min,
+           │                                                urgent notices 1 min)
+           ▼
+   SQL Server: KhaparwadaConnect
 ```
 
 Views receive ViewModels only; forms bind to InputModels. Entities never reach a view or a form.
-Items in the pipeline above that belong to later phases (security headers, language, rate limiter,
-output cache, /uploads) are added in those phases.
 
 ## 3. Key decisions and the problem each one prevents
 
@@ -61,60 +62,74 @@ output cache, /uploads) are added in those phases.
 | "Active", "upcoming" and the school/temple counts are computed, never stored | Stored flags and counts going stale |
 | One `ModerationStatus` field (Pending → UnderReview → Approved → Published / Rejected) | Impossible combinations of two booleans |
 | Every text column is `nvarchar` with an explicit length; enums stored as text | Gujarati turning into `????`; unindexable `nvarchar(max)`; enum reorders changing data meaning |
-| `DateTimeOffset` in the database, shown in `Asia/Kolkata`, time read via `TimeProvider` | Servers on UTC making "upcoming" and expiry wrong by 5½ hours |
+| `DateTimeOffset` in the database, shown in `Asia/Kolkata` through `IVillageClock` | Servers on UTC making "upcoming" and expiry wrong by 5½ hours |
 | Uploads in `App_Data/uploads`, served at `/uploads` (path configurable) | `MapStaticAssets()` only serves build-time files (uploads would 404); redeploys wiping photos |
 | Pending resident uploads in `App_Data/private-uploads` | Unreviewed photos reachable by URL |
 | Images re-encoded by ImageSharp | Multi-MB phone photos on village mobile data; GPS location leaking from EXIF; disguised files |
-| `/places/{slug}` canonical, `/Places/Details/{id}` → 301; Gujarati under `/gu/` | Split search ranking; Gujarati pages invisible to Google with a cookie-only language switch |
-| All UI text through `IStringLocalizer` from Phase 2 | Rewriting every view in Phase 12 |
-| Leaflet + OpenStreetMap, tile URL in config | Google Maps needs an API key with billing |
+| Gujarati pages under `/gu/…`, handled by middleware that moves `/gu` into the PathBase | Google cannot index a cookie-only language. A `{culture}` route parameter was rejected: ASP.NET Core drops it from links to another controller, so links would fall back to English. With PathBase every generated link keeps `/gu` automatically |
+| Language comes from the URL only (no cookie, no browser setting) | One URL showing different languages to different visitors and to search engines |
+| Route names (`RouteNames`) and "coming soon" placeholder pages for later phases | Broken menu links now, and links to change later: a phase moves the route name to its real page |
+| `/places/{slug}` canonical, `/Places/Details/{id}` → 301 (Phase 5) | Split search ranking |
+| All UI text through `IStringLocalizer` (`@L["…"]`) from Phase 2 | Rewriting every view in Phase 12 |
+| Unicode-wide HTML encoder (`WebEncoderOptions`) | The default encoder sent every Gujarati letter as `&#xAAE;`, making Gujarati pages 2–3× larger |
+| Icon sprite instead of the Font Awesome icon font | ~320 KB of fonts and CSS for 2,600 icons when the site uses ~70 (sprite: ~15 KB compressed) |
+| Fonts with Gujarati + Latin glyphs, split by `unicode-range`, `font-display: swap` | English pages downloading Gujarati font files; invisible text while fonts load |
+| Leaflet loaded only when the map nears the screen; markers built with DOM `textContent` | 40 KB of JavaScript for visitors who never scroll to the map; HTML injection through place names |
+| Map data in `<script type="application/json">`, no inline JavaScript anywhere | A strict Content-Security-Policy becoming impossible in Phase 13 |
+| Public visibility rules in one file (`PublicVisibility.cs`) | One page forgetting a condition and showing unpublished or unconsented content |
 | Identity with our own login page, no registration, first admin from User Secrets / env vars | A public `/Register` page; a password in code or git |
 | Global antiforgery filter, lockout after 5 failures, rate-limited public forms + honeypot | A forgotten `[ValidateAntiForgeryToken]`; bot spam; password guessing |
-| No inline JavaScript from Phase 2 | A strict Content-Security-Policy becoming impossible in Phase 13 |
 | Database CHECK constraints for the critical rules | Invalid data saved by a bug or a manual SQL edit (see §5) |
 
 ## 4. Folder structure
 
-✓ = exists after Phase 1.
-
 ```
 D:\Dhaval\HarHarMahadev\                      ← git repo root
-├─ Khaparwada.slnx                       ✓
-├─ dotnet-tools.json                     ✓  pins dotnet-ef 10.0.12 (.NET 10 default location)
-├─ docs\ARCHITECTURE.md                  ✓  this file
-├─ Khaparwada.Web\
-│  ├─ Program.cs                         ✓  short composition root
-│  ├─ appsettings.json                   ✓  non-secret defaults only
-│  ├─ appsettings.Development.json       ✓  local SQLEXPRESS connection (no password)
-│  ├─ Areas\Admin\ Controllers\ Models\ Views\          (Phase 3)
-│  ├─ Controllers\                       ✓  HomeController (template; reworked in Phase 2)
-│  ├─ Models\
-│  │  ├─ Common\                         ✓  BaseEntity, ISoftDeletable, FieldLengths
-│  │  ├─ Enums\                          ✓  ModerationStatus, NoticeCategory, NoticePriority
-│  │  └─ Entities\                       ✓  20 entity classes
-│  ├─ ViewModels\                        ✓  ErrorViewModel (more per feature)
-│  ├─ Data\
-│  │  ├─ AppDbContext.cs                 ✓
-│  │  ├─ Configurations\                 ✓  one IEntityTypeConfiguration<T> per entity + SqlConstraints
-│  │  ├─ Interceptors\                   ✓  AuditSaveChangesInterceptor
-│  │  └─ Seed\                           ✓  DatabaseInitializer, IdentitySeeder, ReferenceDataSeeder, DemoDataSeeder
-│  ├─ Migrations\                        ✓  generated by EF
-│  ├─ Services\<Feature>\                   interface + implementation side by side (from Phase 2)
-│  ├─ Infrastructure\
-│  │  ├─ Options\                        ✓  SiteOptions, DatabaseOptions, SeedOptions, AdminSeedOptions
-│  │  ├─ Extensions\                     ✓  service registration, startup database initialisation
-│  │  ├─ Localization\                      (Phase 2 / 12)
-│  │  └─ Security\                       ✓  AppRoles (headers middleware, upload validation later)
-│  ├─ ViewComponents\                       (Phase 2)
-│  ├─ Resources\                            SharedResource.gu.resx (Phase 12)
-│  ├─ Views\                             ✓  template views (reworked from Phase 2)
-│  ├─ wwwroot\ css\ js\ images\ fonts\ lib\
-│  └─ App_Data\                             git-ignored; uploads (Phase 3)
-└─ Khaparwada.Web.Tests\                    Phase 14
+├─ Khaparwada.slnx
+├─ dotnet-tools.json                          pins dotnet-ef 10.0.12
+├─ docs\ARCHITECTURE.md                       this file
+├─ tools\
+│  ├─ icons.txt                               icons in the sprite
+│  └─ build-icon-sprite.ps1                   rebuilds wwwroot/images/icons.svg
+└─ Khaparwada.Web\
+   ├─ Program.cs                              composition root
+   ├─ appsettings.json / appsettings.Development.json
+   ├─ Controllers\                            Home, ComingSoon (placeholders), Error
+   ├─ Data\                                   AppDbContext, Configurations, Interceptors, Seed
+   ├─ Migrations\
+   ├─ Models\                                 Common, Enums, Entities (20)
+   ├─ Services\
+   │  ├─ Common\                              VillageClock, PublicVisibility
+   │  ├─ Home\                                HomeService (one query per Home section)
+   │  ├─ Notices\                             NoticeService (urgent alerts, cached 1 min)
+   │  └─ Site\                                SiteInfoService (settings + village info, cached 10 min)
+   ├─ ViewModels\                             Shared, Home, Places, Events, Notices, History, Gallery, People, Memories, Map
+   ├─ ViewComponents\                         PageMeta (head tags), AlertBar, SiteFooter
+   ├─ Infrastructure\
+   │  ├─ Extensions\                          service registration, middleware registration
+   │  ├─ Localization\                        SiteLanguages, LanguagePrefixMiddleware, culture provider, LanguageUrls, AppLanguage
+   │  ├─ Media\                               MediaUrls (upload URLs, default artwork)
+   │  ├─ Options\                             Site, Map, Database, Seed, AdminSeed
+   │  ├─ Routing\                             RouteNames, SiteNavigation
+   │  ├─ Security\                            AppRoles
+   │  ├─ TagHelpers\                          <icon> tag helper
+   │  └─ Text\                                Excerpt, Initials, Paragraphs (Gujarati-safe)
+   ├─ Resources\                              SharedResource (Gujarati .resx in Phase 12)
+   ├─ Views\
+   │  ├─ Home\                                Index + one partial per section, Privacy, Terms
+   │  ├─ Shared\                              _Layout, _Header, _PageHeader, _SectionHeading, ComingSoon,
+   │  │                                       Cards\ (place, event, notice, album, person, memory, category),
+   │  │                                       Components\ (PageMeta, AlertBar, SiteFooter)
+   │  └─ Error\                               NotFound, Status, Error
+   ├─ wwwroot\
+   │  ├─ css\site.css                         the design system
+   │  ├─ js\                                  site.js (all pages), home.js, map.js
+   │  ├─ fonts\                               Rasa, Mukta Vaani (+ OFL licences)
+   │  ├─ images\                              icons.svg, brand\ (emblem, share image), motifs\toran.svg,
+   │  │                                       illustrations\village-dusk.svg
+   │  └─ lib\                                 bootstrap, jquery(+validation), leaflet
+   └─ App_Data\                               git-ignored; uploads (Phase 3)
 ```
-
-There is deliberately no `Interfaces\` or `Repositories\` folder: each interface sits next to its
-implementation, and `DbContext` replaces repositories (see §3).
 
 ## 5. Database
 
@@ -229,14 +244,16 @@ Enums (stored as text): `ModerationStatus` (Pending, UnderReview, Approved, Publ
 | `Database:SqlCompatibilityLevel` | `150` | `150` (raise only if hosting is newer) |
 | `Seed:DemoData` | `true` | `false` (and ignored outside Development anyway) |
 | `Site:TimeZoneId` | `Asia/Kolkata` | same |
-
-Storage and Map settings are added in Phases 3 and 5, when code first reads them.
+| `Site:PublicBaseUrl` | empty (the request's own address is used) | the real address, e.g. `https://khaparwada.in` — canonical and share links depend on it |
+| `Map:TileUrl`, `Map:Attribution`, `Map:MaxZoom` | OpenStreetMap | same, or another tile provider if traffic outgrows OSM's fair-use policy |
 
 Do not copy SSMS's connection string into the app: it has no `Database=` (tables would go into `master`),
 `Pooling=False` (slow for a website), `Command Timeout=0` (a stuck query hangs forever) and
 `Application Name=SQL Server Management Studio`.
 
-## 8. Packages
+## 8. Packages and front-end files
+
+**NuGet**
 
 | Package | Version | Phase | Purpose |
 |---|---|---|---|
@@ -250,19 +267,27 @@ All Microsoft packages stay on the installed runtime's version; mixed EF version
 and migration-tool errors. Built in, no package: localization, output caching, rate limiting, memory cache,
 data protection, `TimeProvider`, logging, antiforgery.
 
-Front-end (files under `wwwroot/lib`): Bootstrap 5.3.8, jQuery 3.7.1 + validation (template),
-Leaflet 1.9.4, Font Awesome Free 7.x, self-hosted fonts with both Gujarati and Latin glyphs.
+**Front-end** (committed under `wwwroot`; each file was checked against the npm package's published SHA-256)
+
+| Library | Version | Source | Files kept |
+|---|---|---|---|
+| Bootstrap | 5.3.8 | npm `bootstrap` | `bootstrap.min.css`, `bootstrap.bundle.min.js` (+ maps, licence) |
+| jQuery + validation | 3.7.1 (template) | template | minified files only; loaded only by `_ValidationScriptsPartial` |
+| Leaflet | 1.9.4 | npm `leaflet` | `leaflet.css`, `leaflet.js`, `images/` (+ licence) |
+| Font Awesome Free | 7.3.1 | npm `@fortawesome/fontawesome-free` (`svgs-full`) | only the icons in `tools/icons.txt`, in `images/icons.svg` (+ licence) |
+| Rasa (variable) | 5.3.0 | npm `@fontsource-variable/rasa` | gujarati, latin, latin-ext `.woff2` (+ OFL) |
+| Mukta Vaani 400 / 600 | 5.3.0 | npm `@fontsource/mukta-vaani` | gujarati, latin, latin-ext `.woff2` (+ OFL) |
 
 Deliberately not used: Identity UI package (public registration pages), AutoMapper / MediatR,
 generic repository libraries, NetTopologySuite, masonry / lightbox plugins, HtmlSanitizer
-(content is plain text).
+(content is plain text), the Font Awesome icon font (see §3).
 
 ## 9. Phases
 
 | # | Phase | Status |
 |---|---|---|
 | 1 | Setup + database + EF Core | **Done** |
-| 2 | Layout, navbar, footer, Home (design system, language-aware routes) | |
+| 2 | Layout, navbar, footer, Home (design system, language-aware URLs, placeholders for later sections) | **Done** |
 | 3 | Admin foundation: login, roles, dashboard, image upload pipeline, Village Info / Settings / Categories / Useful Links | |
 | 4 | About + History + Then vs Now (public + admin) | |
 | 5 | Places + Map | |
@@ -272,11 +297,12 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 9 | Notices + Contact (inbox) | |
 | 10 | Memories (submission + review workflow) | |
 | 11 | Admin completion: users, pending queue, dashboard polish | |
-| 12 | Gujarati / English (resx, switcher, hreflang) | |
+| 12 | Gujarati / English (resx, hreflang review, Gujarati Privacy & Terms) | |
 | 13 | SEO + performance + security hardening | |
 | 14 | Testing + deployment | |
 
-Each feature phase ships its public pages and its admin screens together.
+Each feature phase ships its public pages and its admin screens together, and replaces its
+`ComingSoonController` actions by moving the same route names onto the real pages.
 
 ## 10. Developer how-tos
 
@@ -289,10 +315,35 @@ Each feature phase ships its public pages and its admin screens together.
   (or delete it in SSMS), then F5 recreates and reseeds it.
 - **Production upgrade script:** `dotnet ef migrations script --idempotent --project Khaparwada.Web -o migrate.sql`,
   review it, run it against the production database.
+- **Add an icon:** add a line such as `solid tractor` to `tools/icons.txt` (names:
+  https://fontawesome.com/search?ic=free), run `powershell -ExecutionPolicy Bypass -File tools/build-icon-sprite.ps1`
+  from the repo root, then use `<icon name="tractor" />` (brands: `<icon brand="whatsapp" />`).
+- **Link to a page:** `<a asp-route="@RouteNames.Places">` (never a hard-coded path); on Gujarati pages the
+  link gets `/gu` automatically.
+- **Reference a static file:** use an absolute path (`/css/site.css`), not `~/` (see §11).
+- **Add UI text:** `@L["English text"]` in views; keep the English text as the key.
 
-## 11. Open items
+## 11. Pitfalls found and fixed (read before changing these areas)
+
+| Symptom | Root cause | Rule now |
+|---|---|---|
+| Renaming the project folder failed with "Permission denied" | A shell's working directory was inside the folder; Windows locks a folder a process is "standing in" | Close VS and move out of a folder before renaming it |
+| On Gujarati pages, CSS/fonts would have been downloaded twice | `~/` resolves through PathBase, so it would produce `/gu/css/…` | Static files use absolute `/…` paths; the `<icon>` helper and map pass `PathString.Empty` |
+| Gujarati text 2–3× larger than needed in the HTML | Razor's default encoder only allows Basic Latin and writes other letters as `&#x…;` | `WebEncoderOptions` allows all Unicode ranges (`< > & " '` are still encoded) |
+| Phones could scroll sideways | (1) `g-5` gutters: rows got −1.5 rem margins inside 0.75 rem container padding. (2) Bootstrap parks the closed slide-out menu off-screen, and that hidden panel widened the page | Use `g-4 g-lg-5`; the closed menu is `display: none` (`@starting-style` keeps the animation). Check with `scrollWidth === clientWidth` at 390 px |
+| Phone menu cut off at the header's height | `backdrop-filter` on the header made it the containing block for the `position: fixed` menu inside it | Frosted header only at ≥ 1200 px, where the menu is inline |
+| Gujarati conjuncts can break; uppercase means nothing | Letter-spacing and `text-transform` on Gujarati text | Both are switched off under `html[lang="gu"]` |
+| Notices sorted Urgent/Important/Normal alphabetically | Enums are stored as text, so `ORDER BY Priority` sorts by the word | Rank explicitly (`OrderByDescending(n => n.Priority == Urgent)…`) |
+| A 9 PM event without an end time would vanish at 9:01 PM | "Upcoming" compared only the start time | Events without an end count as running 3 hours (all-day: 24 hours) |
+
+## 12. Open items
 
 - From the village: Gujarati spelling of "Khaparwada", taluka, district, state, village-centre coordinates,
   real text and photos. Until then the database holds clearly marked `[Add …]` / `[Sample]` placeholders.
 - Native-speaker review of the Gujarati seed names (categories, tagline).
-- Hosting choice (affects Phase 14 only).
+- Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
+  to make; consider making them admin-editable pages later. The privacy policy's statement that photo
+  location data is removed depends on the Phase 3 image pipeline.
+- UI text on `/gu` pages stays English until the Phase 12 translations.
+- Hosting choice (affects Phase 14 only). The site must be hosted at the root of its domain (static files use
+  absolute paths).

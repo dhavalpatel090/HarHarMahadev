@@ -1,0 +1,15 @@
+@model MemoryCardViewModel
+<article class="kc-memory">
+    <icon name="quote-left" class="kc-memory-quote" />
+    <h4 class="kc-memory-title">
+        <a class="stretched-link" asp-route="@RouteNames.MemoryDetails" asp-route-slug="@Model.Slug">@Model.Title</a>
+    </h4>
+    <p class="kc-memory-text">@Model.Excerpt</p>
+    <p class="kc-memory-by">
+        @Model.SubmitterName
+        @if (!string.IsNullOrWhiteSpace(Model.EraLabel))
+        {
+            <span>· @Model.EraLabel</span>
+        }
+    </p>
+</article>

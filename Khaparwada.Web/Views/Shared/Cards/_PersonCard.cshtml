@@ -1,0 +1,19 @@
+@model PersonCardViewModel
+<article class="kc-card kc-person-card">
+    <span class="kc-avatar" aria-hidden="true">
+        @if (Model.PhotoUrl is not null)
+        {
+            <img src="@Model.PhotoUrl" alt="" loading="lazy" decoding="async" />
+        }
+        else
+        {
+            @Model.Initials
+        }
+    </span>
+    <div class="kc-person-text">
+        <h4 class="kc-person-name">
+            <a class="stretched-link" asp-route="@RouteNames.PersonDetails" asp-route-slug="@Model.Slug">@Model.FullName</a>
+        </h4>
+        <p class="kc-person-role"><icon name="@Model.CategoryIcon" /> @Model.Profession</p>
+    </div>
+</article>

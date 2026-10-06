@@ -13,4 +13,11 @@ public sealed class SiteOptions
     /// </summary>
     [Required]
     public string TimeZoneId { get; set; } = "Asia/Kolkata";
+
+    /// <summary>
+    /// Public address of the site, e.g. "https://khaparwada.in", used for canonical, language and share links.
+    /// Leave empty in Development (the request's own address is used). Set it in production: behind a proxy
+    /// the request address can be an internal one, and wrong absolute URLs break link previews.
+    /// </summary>
+    public string? PublicBaseUrl { get; set; }
 }

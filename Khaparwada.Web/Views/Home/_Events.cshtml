@@ -1,0 +1,27 @@
+@model HomeViewModel
+@{
+    var heading = new SectionHeadingViewModel(
+        L["What's on"], L["Upcoming events"], "events-title",
+        L["Festivals, meetings and village programmes."],
+        L["All events"], RouteNames.Events);
+}
+<section class="kc-section" id="events" aria-labelledby="events-title">
+    <div class="container">
+        <partial name="_SectionHeading" model="heading" />
+        @if (Model.UpcomingEvents.Count == 0)
+        {
+            <p class="kc-empty">@L["No upcoming events right now. Please check again soon."]</p>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var item in Model.UpcomingEvents)
+                {
+                    <div class="col-md-6 col-lg-4" data-reveal>
+                        <partial name="Cards/_EventCard" model="item" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

@@ -1,4 +1,5 @@
 using Khaparwada.Web.Data.Seed;
+using Khaparwada.Web.Infrastructure.Localization;
 
 namespace Khaparwada.Web.Infrastructure.Extensions;
 
@@ -14,4 +15,8 @@ public static class WebApplicationExtensions
         var initializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
         await initializer.InitializeAsync(app.Lifetime.ApplicationStopping);
     }
+
+    /// <summary>"/gu/…" serves the Gujarati site (see <see cref="LanguagePrefixMiddleware"/>). Must run before routing.</summary>
+    public static IApplicationBuilder UseLanguageFromUrl(this IApplicationBuilder app) =>
+        app.UseMiddleware<LanguagePrefixMiddleware>();
 }

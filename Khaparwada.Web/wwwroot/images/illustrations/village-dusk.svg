@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+  <!-- Default hero artwork: a Gujarati village at dusk. Replaced by a real photo once one is uploaded in Admin.
+       Composition: only low houses on the left, where page text sits; the temple, tree and water tank on the
+       right, so they stay visible next to the text and at the centre of phone screens (about 66% across). -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#101B33"/>
+      <stop offset=".38" stop-color="#2B2B55"/>
+      <stop offset=".62" stop-color="#7A2C4B"/>
+      <stop offset=".8" stop-color="#D97B3F"/>
+      <stop offset=".9" stop-color="#F2B35B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="1330" cy="700" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD98A" stop-opacity=".85"/>
+      <stop offset=".35" stop-color="#F2A54A" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#F2A54A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1A1E33"/>
+      <stop offset="1" stop-color="#0C1020"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+
+  <g fill="#FFF6E0">
+    <circle cx="140" cy="90" r="1.6" opacity=".7"/><circle cx="330" cy="150" r="1.2" opacity=".5"/>
+    <circle cx="520" cy="70" r="1.8" opacity=".6"/><circle cx="760" cy="130" r="1.2" opacity=".45"/>
+    <circle cx="980" cy="60" r="1.5" opacity=".55"/><circle cx="1210" cy="120" r="1.3" opacity=".4"/>
+    <circle cx="1420" cy="80" r="1.7" opacity=".6"/><circle cx="1530" cy="190" r="1.1" opacity=".4"/>
+    <circle cx="640" cy="210" r="1" opacity=".35"/><circle cx="260" cy="250" r="1" opacity=".3"/>
+  </g>
+
+  <circle cx="1330" cy="712" r="118" fill="#FFD27A"/>
+
+  <path d="M0 640c140-38 260-46 390-22s240 44 380 10 300-70 470-40 260 50 360 30v100H0z" fill="#5B2343" opacity=".55"/>
+
+  <g fill="none" stroke="#1B1E30" stroke-width="3" stroke-linecap="round">
+    <path d="M1150 360q11-9 22 0q11-9 22 0"/>
+    <path d="M1208 392q8-7 16 0q8-7 16 0"/>
+    <path d="M1100 412q7-6 14 0q7-6 14 0"/>
+  </g>
+
+  <g fill="#1B1E30">
+    <!-- Low houses on the left, under the page text -->
+    <rect x="60" y="664" width="92" height="58"/>
+    <path d="M48 668l58-38 58 38z"/>
+    <rect x="172" y="678" width="72" height="44"/>
+    <path d="M162 682l46-28 46 28z"/>
+    <rect x="327" y="586" width="6" height="136"/>
+    <rect x="308" y="598" width="44" height="5"/>
+    <rect x="420" y="668" width="92" height="54"/>
+    <path d="M410 672l56-36 56 36z"/>
+    <rect x="522" y="656" width="78" height="66"/>
+    <rect x="516" y="650" width="90" height="8"/>
+    <rect x="608" y="676" width="70" height="46"/>
+    <path d="M598 680l45-28 45 28z"/>
+
+    <!-- Water tank -->
+    <path d="M740 722l8-162h6l-6 162zM800 722l-8-162h-6l6 162z"/>
+    <path d="M752 640h36v5h-36z"/>
+    <rect x="728" y="500" width="84" height="62" rx="6"/>
+    <path d="M728 502q42-34 84 0z"/>
+
+    <!-- Neem tree -->
+    <rect x="893" y="640" width="15" height="82"/>
+    <circle cx="900" cy="606" r="54"/><circle cx="856" cy="630" r="40"/>
+    <circle cx="946" cy="628" r="42"/><circle cx="904" cy="562" r="40"/>
+
+    <!-- Temple: shikhara with two smaller spires, a mandapa with a dome, and a flag -->
+    <rect x="992" y="688" width="168" height="34"/>
+    <path d="M1030 690V600c0-42 14-82 30-118 16 36 30 76 30 118v90z"/>
+    <path d="M1010 690v-42c0-17 7-34 16-48 9 14 16 31 16 48v42z"/>
+    <path d="M1078 690v-42c0-17 7-34 16-48 9 14 16 31 16 48v42z"/>
+    <circle cx="1026" cy="596" r="4"/><circle cx="1094" cy="596" r="4"/>
+    <ellipse cx="1060" cy="480" rx="13" ry="5.5"/>
+    <circle cx="1060" cy="469" r="5"/>
+    <rect x="1058.5" y="420" width="3" height="46"/>
+    <rect x="1104" y="636" width="58" height="54"/>
+    <path d="M1102 638q31-44 62 0z"/>
+
+    <!-- House on the right and a second pole -->
+    <rect x="1380" y="668" width="112" height="54"/>
+    <path d="M1368 672l67-42 67 42z"/>
+    <rect x="1537" y="572" width="6" height="150"/>
+    <rect x="1518" y="586" width="44" height="5"/>
+
+    <!-- Ground -->
+    <rect x="0" y="716" width="1600" height="40"/>
+  </g>
+
+  <!-- Coconut palm, silhouetted against the sun -->
+  <g fill="none" stroke="#1B1E30" stroke-linecap="round">
+    <path d="M1262 722c-6-56 2-112 22-164" stroke-width="11"/>
+    <path d="M1284 558c-34-12-66-6-92 14M1284 558c-22-28-52-40-86-36M1284 558c10-36 34-58 68-62M1284 558c34-14 68-8 92 12M1284 558c28 6 50 26 60 56M1284 558c-16 18-28 44-30 72" stroke-width="7"/>
+  </g>
+
+  <!-- Wires between the poles -->
+  <path d="M330 600C520 640 640 650 760 620M1540 588c-120 40-240 46-360 18" fill="none" stroke="#1B1E30" stroke-width="2" opacity=".55"/>
+
+  <!-- Flag on the temple, the one warm accent on the skyline -->
+  <path d="M1061 420l40 11-40 11z" fill="#E8A33D"/>
+
+  <!-- Fields -->
+  <rect x="0" y="754" width="1600" height="146" fill="url(#field)"/>
+  <g fill="none" stroke="#2C3556" stroke-width="2" opacity=".6">
+    <path d="M0 780c400-10 1200-10 1600 0"/>
+    <path d="M0 812c400-14 1200-14 1600 0"/>
+    <path d="M0 848c400-18 1200-18 1600 0"/>
+    <path d="M0 888c400-22 1200-22 1600 0"/>
+  </g>
+</svg>

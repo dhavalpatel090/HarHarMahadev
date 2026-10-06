@@ -1,0 +1,60 @@
+@inject Khaparwada.Web.Services.Site.ISiteInfoService SiteInfoService
+@{
+    var site = await SiteInfoService.GetAsync(Context.RequestAborted);
+    var currentRoute = Context.GetEndpoint()?.Metadata.GetMetadata<RouteNameMetadata>()?.RouteName;
+    var section = ViewData[SiteNavigation.SectionKey] as string ?? currentRoute;
+    var gujarati = AppLanguage.IsGujarati;
+    var nameParts = site.SiteName.Split(' ', 2);
+}
+<header class="kc-header">
+    <div class="kc-toran" aria-hidden="true"></div>
+    <nav class="navbar navbar-expand-xl kc-navbar" aria-label="@L["Main menu"]">
+        <div class="container">
+            <a class="navbar-brand kc-brand" asp-route="@RouteNames.Home">
+                <img src="/images/brand/emblem.svg" width="44" height="44" alt="" />
+                <span class="kc-brand-text">
+                    <span class="kc-brand-name">@nameParts[0]</span>
+                    @if (nameParts.Length > 1)
+                    {
+                        <span class="kc-brand-sub">@nameParts[1]</span>
+                    }
+                </span>
+            </a>
+
+            <div class="kc-nav-tools order-xl-last">
+                <a class="kc-lang-switch" href="@LanguageUrls.PathFor(Context.Request, gujarati: !gujarati)"
+                   hreflang="@(gujarati ? "en" : "gu")" lang="@(gujarati ? "en" : "gu")">
+                    <icon name="language" />
+                    <span>@(gujarati ? "English" : "ગુજરાતી")</span>
+                </a>
+                <button class="kc-menu-button d-xl-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#kc-menu"
+                        aria-controls="kc-menu" aria-label="@L["Open menu"]">
+                    <icon name="bars" />
+                </button>
+            </div>
+
+            <div class="offcanvas-xl offcanvas-end kc-offcanvas" tabindex="-1" id="kc-menu" aria-labelledby="kc-menu-title">
+                <div class="offcanvas-header">
+                    <p class="offcanvas-title kc-offcanvas-title" id="kc-menu-title">@L["Menu"]</p>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#kc-menu"
+                            aria-label="@L["Close menu"]"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <ul class="navbar-nav kc-nav">
+                        @foreach (var item in SiteNavigation.Main)
+                        {
+                            var active = item.RouteName == section;
+                            <li class="nav-item">
+                                <a class="nav-link @(active ? "active" : null)" asp-route="@item.RouteName"
+                                   aria-current="@(active ? "page" : null)">
+                                    <icon name="@item.Icon" class="kc-nav-icon" />
+                                    <span>@L[item.Label]</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
