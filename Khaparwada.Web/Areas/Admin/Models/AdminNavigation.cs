@@ -1,0 +1,39 @@
+namespace Khaparwada.Web.Areas.Admin.Models;
+
+/// <summary>
+/// The admin sidebar. Items without a controller are screens that later phases add; they are shown
+/// greyed out so the admin can see what is coming.
+/// </summary>
+public static class AdminNavigation
+{
+    public sealed record Item(string Label, string Icon, string? Controller, bool AdminOnly = false, string? ComingIn = null);
+
+    public sealed record Group(string Label, IReadOnlyList<Item> Items);
+
+    public static IReadOnlyList<Group> Groups { get; } =
+    [
+        new("Overview",
+        [
+            new Item("Dashboard", "house", "Dashboard")
+        ]),
+        new("Content",
+        [
+            new Item("About & history", "book-open", null, ComingIn: "Phase 4"),
+            new Item("Places", "location-dot", null, ComingIn: "Phase 5"),
+            new Item("People", "people-group", null, ComingIn: "Phase 6"),
+            new Item("Events", "calendar-days", null, ComingIn: "Phase 7"),
+            new Item("Gallery", "images", null, ComingIn: "Phase 8"),
+            new Item("Notices", "bullhorn", null, ComingIn: "Phase 9"),
+            new Item("Memories", "camera", null, ComingIn: "Phase 10"),
+            new Item("Messages", "envelope", null, ComingIn: "Phase 9")
+        ]),
+        new("Settings",
+        [
+            new Item("Village info", "landmark", "VillageInfo", AdminOnly: true),
+            new Item("Site settings", "globe", "SiteSettings", AdminOnly: true),
+            new Item("Categories", "compass", "Categories", AdminOnly: true),
+            new Item("Useful links", "arrow-up-right-from-square", "UsefulLinks", AdminOnly: true),
+            new Item("Users", "users", null, AdminOnly: true, ComingIn: "Phase 11")
+        ])
+    ];
+}

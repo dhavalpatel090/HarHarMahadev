@@ -1,0 +1,91 @@
+@model CategoryInputModel
+@inject Khaparwada.Web.Services.Media.IIconCatalog Icons
+@{
+    var kind = CategoryKinds.RouteValue(Model.Kind);
+    ViewData["Title"] = Model.IsNew ? $"Add a {CategoryKinds.Noun(Model.Kind)} category" : $"Edit “{Model.Name}”";
+    ViewData["Lead"] = CategoryKinds.Title(Model.Kind);
+}
+
+<form method="post" class="kc-admin-form kc-admin-form--narrow"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-kind="@kind" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+
+    <section class="kc-panel">
+        <div class="kc-panel-body">
+            <bilingual-field for="Name" for-gu="NameGu" />
+
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    Used in web addresses, e.g. <code class="kc-code">temples</code>. Lowercase English letters, numbers and hyphens.
+                    Filled in from the English name; change it only if you need to.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.Name)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+
+            @if (Model.HasIcon)
+            {
+                <fieldset class="kc-field">
+                    <legend class="kc-field-label">Icon</legend>
+                    <div class="kc-icon-picker">
+                        <input type="search" class="form-control kc-icon-search" placeholder="Search icons, e.g. school"
+                               aria-label="Search icons" data-icon-filter="category-icons" />
+                        <div class="kc-icon-grid" id="category-icons">
+                            @foreach (var name in Icons.CategoryIcons)
+                            {
+                                var label = name.Replace('-', ' ');
+                                <label class="kc-icon-option" data-name="@name" title="@label">
+                                    <input type="radio" name="@Html.NameFor(m => m.Icon)" value="@name" checked="@(name == Model.Icon)" />
+                                    <icon name="@name" />
+                                    <span class="visually-hidden">@label</span>
+                                </label>
+                            }
+                        </div>
+                        <p class="kc-icon-none" hidden>No icon matches. Try another word.</p>
+                    </div>
+                    <span asp-validation-for="Icon" class="kc-field-error"></span>
+                </fieldset>
+            }
+
+            @if (Model.IsPlaceCategory)
+            {
+                <div class="kc-field">
+                    <label asp-for="MarkerColor" class="kc-field-label"></label>
+                    <div class="kc-color-field">
+                        <input asp-for="MarkerColor" type="color" class="form-control form-control-color" aria-describedby="color-hint" />
+                        <span class="kc-field-hint mb-0" id="color-hint">The colour of this category’s pins on the map.</span>
+                    </div>
+                    <span asp-validation-for="MarkerColor" class="kc-field-error"></span>
+                </div>
+
+                <div class="form-check form-switch kc-field">
+                    <input asp-for="ShowInStats" class="form-check-input" role="switch" />
+                    <label asp-for="ShowInStats" class="form-check-label"></label>
+                </div>
+            }
+
+            <div class="kc-field kc-field--short">
+                <label asp-for="SortOrder" class="kc-field-label"></label>
+                <input asp-for="SortOrder" class="form-control" min="0" max="9999" aria-describedby="order-hint" />
+                <p class="kc-field-hint" id="order-hint">Smaller numbers come first.</p>
+                <span asp-validation-for="SortOrder" class="kc-field-error"></span>
+            </div>
+
+            <div class="form-check form-switch">
+                <input asp-for="IsActive" class="form-check-input" role="switch" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add category" : "Save category")</button>
+        <a class="btn btn-link" asp-action="List" asp-route-kind="@kind">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

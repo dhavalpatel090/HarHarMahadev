@@ -74,6 +74,19 @@ solid medal
 solid hand-holding-heart
 solid star
 
+# Admin area
+solid right-from-bracket
+solid key
+solid pen-to-square
+solid trash-can
+solid plus
+solid eye
+solid lock
+solid list-check
+solid inbox
+solid video
+solid upload
+
 # Notice categories and priorities
 solid droplet
 solid bolt

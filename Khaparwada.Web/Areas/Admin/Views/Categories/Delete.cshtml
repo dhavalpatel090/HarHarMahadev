@@ -1,0 +1,34 @@
+@model CategoryDeleteViewModel
+@{
+    var kind = CategoryKinds.RouteValue(Model.Kind);
+    ViewData["Title"] = $"Delete “{Model.Name}”";
+    ViewData["Lead"] = CategoryKinds.Title(Model.Kind);
+}
+
+<section class="kc-panel kc-panel--narrow">
+    <div class="kc-panel-body">
+        @if (Model.UsageCount > 0)
+        {
+            <div class="kc-admin-alert kc-admin-alert--warning">
+                <icon name="triangle-exclamation" />
+                <span>
+                    This category is used by @CategoryKinds.CountOf(Model.Kind, Model.UsageCount)
+                    (deleted ones still in the bin count too), so it cannot be deleted.
+                </span>
+            </div>
+            <p>
+                Move them to another category first. Or, to hide the category from the website but keep it,
+                <a asp-action="Edit" asp-route-kind="@kind" asp-route-id="@Model.Id">edit it</a> and switch off “Show on the website”.
+            </p>
+            <a class="btn btn-kc-outline" asp-action="List" asp-route-kind="@kind"><icon name="arrow-left" /> Back to the list</a>
+        }
+        else
+        {
+            <p>This deletes the category for good. It cannot be undone.</p>
+            <form method="post" asp-action="DeleteConfirmed" asp-route-kind="@kind" asp-route-id="@Model.Id" class="kc-inline-actions">
+                <button type="submit" class="btn btn-danger"><icon name="trash-can" /> Delete category</button>
+                <a class="btn btn-link" asp-action="List" asp-route-kind="@kind">Cancel</a>
+            </form>
+        }
+    </div>
+</section>

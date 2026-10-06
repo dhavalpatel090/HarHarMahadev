@@ -1,0 +1,17 @@
+@model UsefulLinkInputModel
+@{
+    ViewData["Title"] = $"Delete “{Model.Title}”";
+}
+
+<section class="kc-panel kc-panel--narrow">
+    <div class="kc-panel-body">
+        <p>
+            This removes the link to <code class="kc-code">@Model.Url</code> from the website for good. It cannot be undone.
+            To hide it for a while instead, <a asp-action="Edit" asp-route-id="@Model.Id">edit it</a> and switch off “Show on the website”.
+        </p>
+        <form method="post" asp-action="DeleteConfirmed" asp-route-id="@Model.Id" class="kc-inline-actions">
+            <button type="submit" class="btn btn-danger"><icon name="trash-can" /> Delete link</button>
+            <a class="btn btn-link" asp-action="Index">Cancel</a>
+        </form>
+    </div>
+</section>

@@ -23,9 +23,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/error/{0}");  // friendly 404 and other error pages
 app.UseHttpsRedirection();
+app.UseUploadedFiles();                             // /uploads/… from the uploads folder (outside wwwroot)
 app.UseLanguageFromUrl();                           // "/gu/..." → Gujarati; must come before routing
 app.UseRouting();
 app.UseRequestLocalization();
+app.UseRateLimiter();                               // sign-in attempts per network address
 app.UseAuthentication();
 app.UseAuthorization();
 

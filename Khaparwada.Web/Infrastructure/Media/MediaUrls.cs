@@ -9,7 +9,7 @@ public enum ImageSize
 
 /// <summary>
 /// URLs of uploaded images. The database stores one base key per image (e.g. "places/2026/10/3f2a…") and
-/// every upload is saved in three sizes next to each other. The upload pipeline itself arrives in Phase 3.
+/// every upload is saved in three sizes next to each other (see Services/Media/ImageUploadService).
 /// </summary>
 public static class MediaUrls
 {

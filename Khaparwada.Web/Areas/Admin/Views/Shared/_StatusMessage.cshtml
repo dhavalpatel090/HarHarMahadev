@@ -1,0 +1,19 @@
+@* The one-off message set by the previous request ("Saved."), shown once after the redirect. *@
+@{
+    var status = TempData[AdminControllerBase.StatusMessageKey] as string;
+    var error = TempData[AdminControllerBase.ErrorMessageKey] as string;
+}
+@if (!string.IsNullOrWhiteSpace(status))
+{
+    <div class="kc-admin-alert kc-admin-alert--success" role="status">
+        <icon name="circle-check" />
+        <span>@status</span>
+    </div>
+}
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <div class="kc-admin-alert kc-admin-alert--error" role="alert">
+        <icon name="triangle-exclamation" />
+        <span>@error</span>
+    </div>
+}

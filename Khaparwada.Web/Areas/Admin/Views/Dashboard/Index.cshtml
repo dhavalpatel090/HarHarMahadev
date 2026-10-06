@@ -1,0 +1,84 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Lead"] = $"Namaste, {Model.DisplayName}. Here is how the website is doing.";
+    var number = CultureInfo.GetCultureInfo("en-IN");
+}
+
+<section class="kc-stat-grid" aria-label="The website in numbers">
+    @foreach (var stat in Model.Stats)
+    {
+        <div class="kc-stat">
+            <span class="kc-stat-icon"><icon name="@stat.Icon" /></span>
+            <span class="kc-stat-value">@stat.Value.ToString("N0", number)</span>
+            <span class="kc-stat-label">@stat.Label</span>
+            @if (stat.Detail is not null)
+            {
+                <span class="kc-stat-detail">@stat.Detail</span>
+            }
+        </div>
+    }
+</section>
+
+<div class="row g-4">
+    <div class="col-xl-6">
+        <section class="kc-panel" aria-labelledby="pending-title">
+            <header class="kc-panel-header">
+                <h2 class="kc-panel-title" id="pending-title"><icon name="inbox" /> Waiting for review</h2>
+                <span class="kc-count @(Model.PendingTotal > 0 ? "is-hot" : null)">@Model.PendingTotal</span>
+            </header>
+            <ul class="kc-pending-list">
+                @foreach (var item in Model.Pending)
+                {
+                    <li>
+                        <icon name="@item.Icon" />
+                        <span class="kc-pending-label">@item.Label</span>
+                        @if (item.Controller is null)
+                        {
+                            <span class="kc-admin-soon">screen in a later phase</span>
+                        }
+                        <span class="kc-count @(item.Count > 0 ? "is-hot" : null)">@item.Count</span>
+                    </li>
+                }
+            </ul>
+            <p class="kc-panel-note">
+                Residents’ memories, profiles and photos never appear on the website until someone here approves them.
+            </p>
+        </section>
+    </div>
+
+    <div class="col-xl-6">
+        <section class="kc-panel" aria-labelledby="setup-title">
+            <header class="kc-panel-header">
+                <h2 class="kc-panel-title" id="setup-title"><icon name="list-check" /> Finish setting up</h2>
+                <span class="kc-panel-meta">@Model.SetupDone of @Model.Setup.Count done</span>
+            </header>
+            <div class="kc-panel-body pb-0">
+                <progress class="kc-progress" max="@Model.Setup.Count" value="@Model.SetupDone"
+                          aria-label="Setup progress">@Model.SetupDone of @Model.Setup.Count</progress>
+            </div>
+            <ol class="kc-setup-list">
+                @foreach (var step in Model.Setup)
+                {
+                    <li class="@(step.Done ? "is-done" : null)">
+                        <span class="kc-setup-mark" aria-hidden="true">@if (step.Done) { <icon name="circle-check" /> }</span>
+                        <span class="kc-setup-text">
+                            <span class="kc-setup-label">
+                                @step.Label
+                                @if (step.Done)
+                                {
+                                    <span class="visually-hidden">(done)</span>
+                                }
+                            </span>
+                            <span class="kc-setup-hint">@step.Hint</span>
+                        </span>
+                        @if (!step.Done && step.Controller is not null && User.IsInRole(AppRoles.Admin))
+                        {
+                            <a class="btn btn-sm btn-kc-outline" asp-controller="@step.Controller" asp-action="Index">Open</a>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+    </div>
+</div>

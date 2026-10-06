@@ -1,0 +1,177 @@
+@model SiteSettingsInputModel
+@using Microsoft.Extensions.Options
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.StorageOptions> StorageOptions
+@{
+    ViewData["Title"] = "Site settings";
+    ViewData["Lead"] = "The website’s name, the Home page picture, contact details and social media links.";
+    var storage = StorageOptions.Value;
+    // The browser checks the same limits as the server, so a too-large file is caught before a long upload.
+    var maxImageBytes = storage.MaxImageMegabytes * 1024L * 1024L;
+    var maxVideoBytes = storage.MaxVideoMegabytes * 1024L * 1024L;
+}
+
+<form method="post" asp-action="Index" enctype="multipart/form-data" class="kc-admin-form">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">
+        Gujarati boxes are optional: where one is empty, the Gujarati pages show the English text.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="identity-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="identity-title">Website name and tagline</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="SiteName" for-gu="SiteNameGu" />
+            <bilingual-field for="Tagline" for-gu="TaglineGu" hint="Shown under the village name at the top of the Home page." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="hero-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="hero-title">Home page picture</h2>
+            <p class="kc-panel-text">The large picture at the top of the Home page, behind the village name.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <figure class="kc-media-preview">
+                        <img id="hero-image-preview" src="@(Model.CurrentHeroImageUrl ?? MediaUrls.VillageIllustration)" alt="" />
+                        <figcaption>
+                            @(Model.CurrentHeroImageUrl is null
+                                ? "No photo yet: the website shows this illustration."
+                                : "The photo on the website now.")
+                        </figcaption>
+                    </figure>
+                    <div class="kc-field">
+                        <label asp-for="HeroImage" class="kc-field-label">Upload a new photo</label>
+                        <p class="kc-field-hint" id="hero-image-hint">
+                            JPG, PNG or WebP, up to @storage.MaxImageMegabytes MB. A wide landscape photo works best.
+                            It is resized automatically, and hidden details such as the GPS location are removed.
+                        </p>
+                        <input asp-for="HeroImage" class="form-control" accept="image/jpeg,image/png,image/webp"
+                               aria-describedby="hero-image-hint" data-max-bytes="@maxImageBytes" data-preview-target="hero-image-preview" />
+                        <span asp-validation-for="HeroImage" class="kc-field-error"></span>
+                    </div>
+                    @if (Model.CurrentHeroImageUrl is not null)
+                    {
+                        <div class="form-check">
+                            <input asp-for="RemoveHeroImage" class="form-check-input" />
+                            <label asp-for="RemoveHeroImage" class="form-check-label"></label>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-lg-6">
+                    <figure class="kc-media-preview">
+                        @if (Model.CurrentHeroVideoUrl is not null)
+                        {
+                            <video src="@Model.CurrentHeroVideoUrl" controls muted playsinline preload="metadata"></video>
+                            <figcaption>The video on the website now.</figcaption>
+                        }
+                        else
+                        {
+                            <div class="kc-media-empty"><icon name="video" /> No video</div>
+                            <figcaption>A video is optional.</figcaption>
+                        }
+                    </figure>
+                    <div class="kc-field">
+                        <label asp-for="HeroVideo" class="kc-field-label">Upload a video</label>
+                        <p class="kc-field-hint" id="hero-video-hint">
+                            MP4, up to @storage.MaxVideoMegabytes MB; 10–20 seconds is plenty. It plays silently in a loop on
+                            tablets and computers. Phones, data-saver users and people who turn off animations see the photo instead.
+                        </p>
+                        <input asp-for="HeroVideo" class="form-control" accept="video/mp4"
+                               aria-describedby="hero-video-hint" data-max-bytes="@maxVideoBytes" />
+                        <span asp-validation-for="HeroVideo" class="kc-field-error"></span>
+                    </div>
+                    @if (Model.CurrentHeroVideoUrl is not null)
+                    {
+                        <div class="form-check">
+                            <input asp-for="RemoveHeroVideo" class="form-check-input" />
+                            <label asp-for="RemoveHeroVideo" class="form-check-label"></label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="contact-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="contact-title">Contact details</h2>
+            <p class="kc-panel-text">The panchayat or village office. Shown on the Home page and in the footer.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="OfficeEmail" class="kc-field-label"></label>
+                    <input asp-for="OfficeEmail" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="OfficeEmail" class="kc-field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="OfficePhone" class="kc-field-label"></label>
+                    <input asp-for="OfficePhone" type="tel" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="OfficePhone" class="kc-field-error"></span>
+                </div>
+            </div>
+            <div class="form-check form-switch kc-field">
+                <input asp-for="ShowOfficePhone" class="form-check-input" role="switch" aria-describedby="show-phone-hint" />
+                <label asp-for="ShowOfficePhone" class="form-check-label"></label>
+                <p class="kc-field-hint mb-0" id="show-phone-hint">
+                    Off by default, so the number stays private. Only switch it on for an office number, never a personal one.
+                </p>
+            </div>
+            <bilingual-field for="OfficeAddress" for-gu="OfficeAddressGu" rows="3" />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="social-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="social-title">Social media</h2>
+            <p class="kc-panel-text">Full web addresses, starting with https://. Leave empty to hide an icon.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="FacebookUrl" class="kc-field-label"></label>
+                    <input asp-for="FacebookUrl" type="url" class="form-control" placeholder="https://www.facebook.com/…" />
+                    <span asp-validation-for="FacebookUrl" class="kc-field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="InstagramUrl" class="kc-field-label"></label>
+                    <input asp-for="InstagramUrl" type="url" class="form-control" placeholder="https://www.instagram.com/…" />
+                    <span asp-validation-for="InstagramUrl" class="kc-field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="YouTubeUrl" class="kc-field-label"></label>
+                    <input asp-for="YouTubeUrl" type="url" class="form-control" placeholder="https://www.youtube.com/@@…" />
+                    <span asp-validation-for="YouTubeUrl" class="kc-field-error"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="WhatsAppUrl" class="kc-field-label"></label>
+                    <input asp-for="WhatsAppUrl" type="url" class="form-control" placeholder="https://whatsapp.com/channel/…" />
+                    <span asp-validation-for="WhatsAppUrl" class="kc-field-error"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="seo-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="seo-title">Search engines and link previews</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="DefaultMetaDescription" for-gu="DefaultMetaDescriptionGu" rows="3"
+                             hint="One or two sentences (about 150 characters) that Google, WhatsApp and Facebook show under the website’s name." />
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">Save settings</button>
+        <a class="btn btn-link" asp-controller="Dashboard" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

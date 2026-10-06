@@ -1,0 +1,94 @@
+@model CategoryListViewModel
+@{
+    ViewData["Title"] = "Categories";
+    ViewData["Lead"] = "Groups for places, people and photo albums. Visitors use them to filter lists and the map.";
+    var kind = CategoryKinds.RouteValue(Model.Kind);
+    var isPlaces = Model.Kind == CategoryKind.Places;
+}
+@section Actions {
+    <a class="btn btn-kc-primary" asp-action="Create" asp-route-kind="@kind"><icon name="plus" /> Add @CategoryKinds.Noun(Model.Kind) category</a>
+}
+
+<nav class="kc-tabs" aria-label="Category lists">
+    @foreach (var tab in CategoryKinds.All)
+    {
+        var current = tab == Model.Kind;
+        <a class="kc-tab @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+           asp-action="List" asp-route-kind="@CategoryKinds.RouteValue(tab)">@CategoryKinds.Title(tab)</a>
+    }
+</nav>
+
+<section class="kc-panel" aria-label="@CategoryKinds.Title(Model.Kind)">
+    @if (Model.Items.Count == 0)
+    {
+        <p class="kc-panel-empty">No categories yet. Add the first one with the button above.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Web address</th>
+                        <th scope="col">Used by</th>
+                        @if (isPlaces)
+                        {
+                            <th scope="col">Home page count</th>
+                        }
+                        <th scope="col">Order</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="kc-name-cell">
+                                    @if (item.Icon is not null)
+                                    {
+                                        <span class="kc-name-icon"><icon name="@item.Icon" color="@item.Color" /></span>
+                                    }
+                                    <span>
+                                        <strong>@item.Name</strong>
+                                        @if (!string.IsNullOrWhiteSpace(item.NameGu))
+                                        {
+                                            <span class="kc-name-gu" lang="gu">@item.NameGu</span>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td><code class="kc-code">@item.Slug</code></td>
+                            <td>@CategoryKinds.CountOf(Model.Kind, item.UsageCount)</td>
+                            @if (isPlaces)
+                            {
+                                <td>@(item.ShowInStats ? "Shown" : "–")</td>
+                            }
+                            <td>@item.SortOrder</td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status">Hidden</span>
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-kind="@kind" asp-route-id="@item.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @item.Name</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-kind="@kind" asp-route-id="@item.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @item.Name</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

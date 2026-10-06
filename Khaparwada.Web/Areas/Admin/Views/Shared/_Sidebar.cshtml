@@ -1,0 +1,88 @@
+@* Admin menu: a fixed column from 992px, a slide-in panel below that (Bootstrap "offcanvas-lg").
+   Editors do not see Admin-only screens; screens from later phases are listed but greyed out. *@
+@using Khaparwada.Web.Infrastructure.Text
+@inject Khaparwada.Web.Services.Site.ISiteInfoService SiteInfoService
+@{
+    var site = await SiteInfoService.GetAsync();
+    var currentController = ViewContext.RouteData.Values["controller"] as string;
+    var currentAction = ViewContext.RouteData.Values["action"] as string;
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var displayName = User.DisplayName();
+    var onChangePassword = currentController == "Account" && currentAction == "ChangePassword";
+}
+<aside class="kc-admin-sidebar offcanvas-lg offcanvas-start" id="admin-sidebar" tabindex="-1" aria-label="Admin menu">
+    <div class="kc-admin-sidebar-inner">
+        <div class="kc-admin-brand">
+            <img src="/images/brand/emblem.svg" width="40" height="40" alt="" />
+            <span class="kc-admin-brand-text">
+                <span class="kc-admin-brand-name">@site.SiteName</span>
+                <span class="kc-admin-brand-sub">Admin panel</span>
+            </span>
+            <button type="button" class="kc-admin-close" data-bs-dismiss="offcanvas" data-bs-target="#admin-sidebar">
+                <icon name="xmark" />
+                <span class="visually-hidden">Close menu</span>
+            </button>
+        </div>
+
+        <nav class="kc-admin-nav" aria-label="Admin sections">
+            @foreach (var group in AdminNavigation.Groups)
+            {
+                var items = group.Items.Where(item => isAdmin || !item.AdminOnly).ToList();
+                if (items.Count == 0)
+                {
+                    continue;
+                }
+
+                var headingId = "admin-nav-" + group.Label.ToLowerInvariant();
+                <p class="kc-admin-nav-heading" id="@headingId">@group.Label</p>
+                <ul class="kc-admin-nav-list" aria-labelledby="@headingId">
+                    @foreach (var item in items)
+                    {
+                        <li>
+                            @if (item.Controller is null)
+                            {
+                                <span class="kc-admin-nav-link is-soon">
+                                    <icon name="@item.Icon" />
+                                    <span class="kc-admin-nav-text">@item.Label</span>
+                                    <span class="kc-admin-soon">@item.ComingIn</span>
+                                </span>
+                            }
+                            else
+                            {
+                                var active = string.Equals(item.Controller, currentController, StringComparison.OrdinalIgnoreCase);
+                                <a class="kc-admin-nav-link @(active ? "is-active" : null)" aria-current="@(active ? "page" : null)"
+                                   asp-area="Admin" asp-controller="@item.Controller" asp-action="Index">
+                                    <icon name="@item.Icon" />
+                                    <span class="kc-admin-nav-text">@item.Label</span>
+                                </a>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </nav>
+
+        <div class="kc-admin-user">
+            <div class="kc-admin-user-card">
+                <span class="kc-admin-avatar" aria-hidden="true">@TextHelpers.Initials(displayName)</span>
+                <span class="kc-admin-user-text">
+                    <span class="kc-admin-user-name">@displayName</span>
+                    <span class="kc-admin-user-role">@(isAdmin ? "Admin" : "Editor")</span>
+                </span>
+            </div>
+            <div class="kc-admin-user-actions">
+                <a class="kc-admin-user-action @(onChangePassword ? "is-active" : null)" aria-current="@(onChangePassword ? "page" : null)"
+                   asp-area="Admin" asp-controller="Account" asp-action="ChangePassword">
+                    <icon name="key" />
+                    <span><span class="visually-hidden">Change </span>Password</span>
+                </a>
+                <form method="post" asp-area="Admin" asp-controller="Account" asp-action="Logout">
+                    <button type="submit" class="kc-admin-user-action">
+                        <icon name="right-from-bracket" />
+                        <span>Sign out</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</aside>

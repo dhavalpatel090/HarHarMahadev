@@ -3,7 +3,7 @@ using Khaparwada.Web.Models.Common;
 namespace Khaparwada.Web.Models.Entities;
 
 /// <summary>Category of place (Temples, Schools, …); also decides the map marker's icon and colour.</summary>
-public class PlaceCategory : BaseEntity
+public class PlaceCategory : BaseEntity, ICategory
 {
     public string Name { get; set; } = string.Empty;
     public string? NameGu { get; set; }

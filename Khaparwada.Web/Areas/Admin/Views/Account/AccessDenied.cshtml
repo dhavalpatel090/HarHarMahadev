@@ -1,0 +1,9 @@
+@{
+    ViewData["Title"] = "No access";
+    Layout = "_AuthLayout";
+}
+<h1 class="kc-auth-title">You can’t open that page</h1>
+<p class="kc-auth-lead">
+    It is for Admins only. If you need it, ask an Admin to change your account.
+</p>
+<a class="btn btn-kc-primary w-100" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Go to the dashboard</a>

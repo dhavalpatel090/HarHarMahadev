@@ -1,0 +1,67 @@
+@* The admin panel's frame: sidebar (a slide-in menu below 992px), top bar, page title and content.
+   Shares fonts, colours and buttons with the public site (site.css); admin.css adds the panel's own parts.
+   Pages set ViewData["Title"], optionally ViewData["Lead"] (one line under the title) and a section "Actions"
+   (buttons next to the title). *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@ViewData["Title"] · Admin</title>
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/mukta-vaani-latin-400-normal.woff2" />
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/admin.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body class="kc-admin">
+    <a class="kc-skip-link" href="#main">Skip to main content</a>
+
+    <div class="kc-admin-shell">
+        <partial name="_Sidebar" />
+
+        <div class="kc-admin-main">
+            <header class="kc-admin-topbar">
+                <button class="kc-admin-menu-button" type="button" data-bs-toggle="offcanvas" data-bs-target="#admin-sidebar"
+                        aria-controls="admin-sidebar">
+                    <icon name="bars" />
+                    <span>Menu</span>
+                </button>
+                <a class="kc-admin-site-link" href="/" target="_blank" rel="noopener">
+                    <icon name="eye" />
+                    <span>View website</span>
+                    <span class="visually-hidden">(opens in a new tab)</span>
+                </a>
+            </header>
+
+            <main id="main" class="kc-admin-content" tabindex="-1">
+                <div class="kc-admin-page-header">
+                    <div class="kc-admin-page-heading">
+                        <h1 class="kc-admin-title">@ViewData["Title"]</h1>
+                        @if (ViewData["Lead"] is string lead)
+                        {
+                            <p class="kc-admin-lead">@lead</p>
+                        }
+                    </div>
+                    @if (IsSectionDefined("Actions"))
+                    {
+                        <div class="kc-admin-page-actions">
+                            @await RenderSectionAsync("Actions")
+                        </div>
+                    }
+                </div>
+
+                <partial name="_StatusMessage" />
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true" defer></script>
+    <script src="/js/admin.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

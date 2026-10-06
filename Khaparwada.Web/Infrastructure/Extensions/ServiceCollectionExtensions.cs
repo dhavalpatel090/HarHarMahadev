@@ -1,13 +1,19 @@
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using System.Threading.RateLimiting;
 using Khaparwada.Web.Data;
 using Khaparwada.Web.Data.Interceptors;
 using Khaparwada.Web.Data.Seed;
 using Khaparwada.Web.Infrastructure.Localization;
+using Khaparwada.Web.Infrastructure.ModelBinding;
 using Khaparwada.Web.Infrastructure.Options;
+using Khaparwada.Web.Infrastructure.Security;
 using Khaparwada.Web.Models.Entities;
+using Khaparwada.Web.Services.Admin;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.Services.Home;
+using Khaparwada.Web.Services.Media;
 using Khaparwada.Web.Services.Notices;
 using Khaparwada.Web.Services.Site;
 using Microsoft.AspNetCore.Identity;
@@ -49,6 +55,11 @@ public static class ServiceCollectionExtensions
 
         services.AddOptions<DatabaseOptions>()
             .Bind(configuration.GetSection(DatabaseOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<StorageOptions>()
+            .Bind(configuration.GetSection(StorageOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
@@ -113,7 +124,47 @@ public static class ServiceCollectionExtensions
                 options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<AppDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>();
+
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.Name = ".Khaparwada.Admin";
+            options.Cookie.HttpOnly = true;                              // not readable by page scripts
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;     // HTTPS only
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.Path = "/";                                   // by default it would follow the "/gu" PathBase
+            options.LoginPath = "/admin/login";
+            options.LogoutPath = "/admin/logout";
+            options.AccessDeniedPath = "/admin/access-denied";
+            options.ExpireTimeSpan = TimeSpan.FromHours(8);              // a working day; renewed while in use
+            options.SlidingExpiration = true;
+        });
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(Policies.Staff, policy => policy.RequireRole(AppRoles.Admin, AppRoles.Editor))
+            .AddPolicy(Policies.AdminOnly, policy => policy.RequireRole(AppRoles.Admin));
+
+        // At most 10 sign-in attempts per network address every 5 minutes, on top of the per-account lockout:
+        // the lockout protects one account, this slows down guessing across many accounts. A refused request gets
+        // status 429, which the error page explains ("Too many attempts").
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.OnRejected = (context, _) =>
+            {
+                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                {
+                    context.HttpContext.Response.Headers.RetryAfter =
+                        ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+                }
+
+                return ValueTask.CompletedTask;
+            };
+            options.AddPolicy(Policies.LoginRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(5) }));
+        });
 
         return services;
     }
@@ -136,6 +187,9 @@ public static class ServiceCollectionExtensions
             {
                 // Check the antiforgery token on every POST/PUT/DELETE, so no form can forget it (CSRF protection).
                 options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+
+                // Decimal form boxes keep every digit (by default they would show only two decimal places).
+                options.ModelMetadataDetailsProviders.Add(new DecimalEditFormatMetadataProvider());
             })
             .AddDataAnnotationsLocalization(options =>
                 options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
@@ -157,6 +211,18 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISiteInfoService, SiteInfoService>();
         services.AddScoped<INoticeService, NoticeService>();
         services.AddScoped<IHomeService, HomeService>();
+
+        // Uploads (stateless, so one instance serves every request).
+        services.AddSingleton<IUploadStorage, LocalUploadStorage>();
+        services.AddSingleton<IImageUploadService, ImageUploadService>();
+        services.AddSingleton<IVideoUploadService, VideoUploadService>();
+        services.AddSingleton<IIconCatalog, IconCatalog>();
+
+        // Admin area.
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<ISettingsAdminService, SettingsAdminService>();
+        services.AddScoped<ICategoryAdminService, CategoryAdminService>();
+        services.AddScoped<IUsefulLinkAdminService, UsefulLinkAdminService>();
 
         return services;
     }

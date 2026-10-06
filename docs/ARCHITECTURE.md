@@ -16,7 +16,7 @@ same commit.
 | Icons | Font Awesome Free 7.3.1 icons, delivered as one SVG sprite (`wwwroot/images/icons.svg`) |
 | Fonts | Rasa (headings) and Mukta Vaani (text), self-hosted, each with Gujarati and Latin letters |
 | Map | Leaflet 1.9.4 + OpenStreetMap tiles, tile URL in configuration, loaded only when a map scrolls into view |
-| Images | SixLabors.ImageSharp: validate, rotate, strip metadata, resize, WebP (Phase 3) |
+| Images | SkiaSharp 3.119 (MIT, maintained by Microsoft): check, turn upright, convert colours, resize, WebP without metadata |
 | Tools | Visual Studio 2026, SSMS 22, `dotnet-ef` pinned in `dotnet-tools.json` |
 
 ## 2. How a request flows
@@ -27,20 +27,21 @@ Browser (phone / desktop)
         ▼
 Kestrel (IIS in production) → Program.cs middleware, in this order:
   error page / HSTS → friendly status pages (/error/404) → HTTPS redirect
-  → language: "/gu/…" becomes PathBase "/gu" + path "/…"  (LanguagePrefixMiddleware)
-  → routing → request culture from the URL → authentication → authorization
+  → /uploads/… (uploaded files: .webp .mp4 .pdf only, cached a year, nosniff)
+  → language: "/gu/…" becomes PathBase "/gu" + path "/…"  (LanguagePrefixMiddleware; "/gu/admin" → 404)
+  → routing → request culture from the URL → rate limiting (sign-in) → authentication → authorization
   → static assets (fingerprinted, pre-compressed) and controllers
-  Later phases add: security headers, /uploads, rate limiting, output caching.
+  Later phases add: security headers, output caching.
         │
         ├── Public controllers       /places/{slug}   /gu/places/{slug}   …
-        └── Admin area controllers   /admin/…   [Authorize(Roles = "Admin,Editor")]   (Phase 3)
+        └── Admin area controllers   /admin/…   policy "Staff" (Admin or Editor); settings screens "AdminOnly"
                  │  thin: call a service → return a view
                  ▼
         Services (one per feature) — public queries all filtered by Services/Common/PublicVisibility.cs
            │                         │                          │
            ▼                         ▼                          ▼
-     AppDbContext (EF Core 10)   Media (Phase 3)            IMemoryCache (site settings 10 min,
-           │                                                urgent notices 1 min)
+     AppDbContext (EF Core 10)   Media: image + video        IMemoryCache (site settings 10 min,
+           │                     upload services             urgent notices 1 min; admin saves clear it)
            ▼
    SQL Server: KhaparwadaConnect
 ```
@@ -65,7 +66,13 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | `DateTimeOffset` in the database, shown in `Asia/Kolkata` through `IVillageClock` | Servers on UTC making "upcoming" and expiry wrong by 5½ hours |
 | Uploads in `App_Data/uploads`, served at `/uploads` (path configurable) | `MapStaticAssets()` only serves build-time files (uploads would 404); redeploys wiping photos |
 | Pending resident uploads in `App_Data/private-uploads` | Unreviewed photos reachable by URL |
-| Images re-encoded by ImageSharp | Multi-MB phone photos on village mobile data; GPS location leaking from EXIF; disguised files |
+| Every photo re-encoded (SkiaSharp): JPEG/PNG/WebP only, judged by content; pixel count checked before decoding; turned upright; colours converted to sRGB; saved as WebP in 3 sizes (480/960/1920) under a random name | Multi-MB phone photos on village mobile data; GPS location leaking from EXIF; disguised files; "decompression bombs"; sideways portraits |
+| SkiaSharp instead of ImageSharp 4 | ImageSharp 4 needs a licence key to build: Release builds and `dotnet publish` fail without one, and keys expire. ImageSharp 3.1 has had no release since October 2025 while residents' photos (Phase 10) need a maintained decoder |
+| Admin at `/admin/…` (attribute routes), English only, every response `no-store`, `noindex`, `X-Frame-Options: DENY` | Admin pages shown again with the Back button on a shared office PC; admin pages in search results; clickjacking |
+| Policies `Staff` (Admin or Editor) and `AdminOnly` instead of role strings in attributes | Role names typed differently in different controllers |
+| Sign-in: password checked before the "account switched off" message; generic message otherwise; session cookie (not persistent); lockout 5 / 15 min; at most 10 attempts per address per 5 min (429 page explains) | Finding out which emails have accounts; staying signed in on a shared PC; password guessing |
+| `DecimalEditFormatMetadataProvider` gives every decimal form box all its digits | ASP.NET Core shows decimals with 2 decimal places, so saving the Village info form unchanged would have moved the map pin up to ~1 km |
+| `<bilingual-field for="X" for-gu="XGu" />` tag helper for every two-language field | Each form repeating (and getting wrong) the English/Gujarati pair: `lang="gu"`, limits, hints, validation |
 | Gujarati pages under `/gu/…`, handled by middleware that moves `/gu` into the PathBase | Google cannot index a cookie-only language. A `{culture}` route parameter was rejected: ASP.NET Core drops it from links to another controller, so links would fall back to English. With PathBase every generated link keeps `/gu` automatically |
 | Language comes from the URL only (no cookie, no browser setting) | One URL showing different languages to different visitors and to search engines |
 | Route names (`RouteNames`) and "coming soon" placeholder pages for later phases | Broken menu links now, and links to change later: a phase moves the route name to its real page |
@@ -78,7 +85,7 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | Map data in `<script type="application/json">`, no inline JavaScript anywhere | A strict Content-Security-Policy becoming impossible in Phase 13 |
 | Public visibility rules in one file (`PublicVisibility.cs`) | One page forgetting a condition and showing unpublished or unconsented content |
 | Identity with our own login page, no registration, first admin from User Secrets / env vars | A public `/Register` page; a password in code or git |
-| Global antiforgery filter, lockout after 5 failures, rate-limited public forms + honeypot | A forgotten `[ValidateAntiForgeryToken]`; bot spam; password guessing |
+| Global antiforgery filter, lockout after 5 failures, rate-limited sign-in (public forms + honeypot from Phase 9) | A forgotten `[ValidateAntiForgeryToken]`; bot spam; password guessing |
 | Database CHECK constraints for the critical rules | Invalid data saved by a bug or a manual SQL edit (see §5) |
 
 ## 4. Folder structure
@@ -94,13 +101,21 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
 └─ Khaparwada.Web\
    ├─ Program.cs                              composition root
    ├─ appsettings.json / appsettings.Development.json
+   ├─ Areas\Admin\
+   │  ├─ Controllers\                         AdminControllerBase (+ admin headers), Account (sign in/out,
+   │  │                                       password), Dashboard, VillageInfo, SiteSettings, Categories, UsefulLinks
+   │  ├─ Models\                              InputModels, list/view models, AdminNavigation (the sidebar)
+   │  └─ Views\                               _AdminLayout, _AuthLayout, _Sidebar, _StatusMessage + one folder per screen
    ├─ Controllers\                            Home, ComingSoon (placeholders), Error
    ├─ Data\                                   AppDbContext, Configurations, Interceptors, Seed
    ├─ Migrations\
    ├─ Models\                                 Common, Enums, Entities (20)
    ├─ Services\
-   │  ├─ Common\                              VillageClock, PublicVisibility
+   │  ├─ Admin\                               Dashboard, Settings (village info + site settings), Category, UsefulLink
+   │  ├─ Common\                              VillageClock, PublicVisibility, OperationResult
    │  ├─ Home\                                HomeService (one query per Home section)
+   │  ├─ Media\                               UploadStorage (folders, random names), ImageUploadService,
+   │  │                                       VideoUploadService, IconCatalog (icons allowed for categories)
    │  ├─ Notices\                             NoticeService (urgent alerts, cached 1 min)
    │  └─ Site\                                SiteInfoService (settings + village info, cached 10 min)
    ├─ ViewModels\                             Shared, Home, Places, Events, Notices, History, Gallery, People, Memories, Map
@@ -109,11 +124,13 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
    │  ├─ Extensions\                          service registration, middleware registration
    │  ├─ Localization\                        SiteLanguages, LanguagePrefixMiddleware, culture provider, LanguageUrls, AppLanguage
    │  ├─ Media\                               MediaUrls (upload URLs, default artwork)
-   │  ├─ Options\                             Site, Map, Database, Seed, AdminSeed
+   │  ├─ ModelBinding\                        DecimalEditFormatMetadataProvider
+   │  ├─ Options\                             Site, Map, Storage, Database, Seed, AdminSeed
    │  ├─ Routing\                             RouteNames, SiteNavigation
-   │  ├─ Security\                            AppRoles
-   │  ├─ TagHelpers\                          <icon> tag helper
-   │  └─ Text\                                Excerpt, Initials, Paragraphs (Gujarati-safe)
+   │  ├─ Security\                            AppRoles, Policies, AppClaimsPrincipalFactory (display name)
+   │  ├─ TagHelpers\                          <icon>, <bilingual-field>
+   │  ├─ Text\                                Excerpt, Initials, Paragraphs (Gujarati-safe), SlugGenerator
+   │  └─ Validation\                          [HttpUrl]
    ├─ Resources\                              SharedResource (Gujarati .resx in Phase 12)
    ├─ Views\
    │  ├─ Home\                                Index + one partial per section, Privacy, Terms
@@ -122,13 +139,13 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
    │  │                                       Components\ (PageMeta, AlertBar, SiteFooter)
    │  └─ Error\                               NotFound, Status, Error
    ├─ wwwroot\
-   │  ├─ css\site.css                         the design system
-   │  ├─ js\                                  site.js (all pages), home.js, map.js
+   │  ├─ css\site.css, admin.css              the design system; the admin panel's additions
+   │  ├─ js\                                  site.js (all pages), home.js, map.js, admin.js (admin only)
    │  ├─ fonts\                               Rasa, Mukta Vaani (+ OFL licences)
    │  ├─ images\                              icons.svg, brand\ (emblem, share image), motifs\toran.svg,
    │  │                                       illustrations\village-dusk.svg
    │  └─ lib\                                 bootstrap, jquery(+validation), leaflet
-   └─ App_Data\                               git-ignored; uploads (Phase 3)
+   └─ App_Data\                               git-ignored; uploads\ (served at /uploads), private-uploads\ (never served)
 ```
 
 ## 5. Database
@@ -246,6 +263,8 @@ Enums (stored as text): `ModerationStatus` (Pending, UnderReview, Approved, Publ
 | `Site:TimeZoneId` | `Asia/Kolkata` | same |
 | `Site:PublicBaseUrl` | empty (the request's own address is used) | the real address, e.g. `https://khaparwada.in` — canonical and share links depend on it |
 | `Map:TileUrl`, `Map:Attribution`, `Map:MaxZoom` | OpenStreetMap | same, or another tile provider if traffic outgrows OSM's fair-use policy |
+| `Storage:UploadsPath`, `Storage:PrivateUploadsPath` | `App_Data/uploads`, `App_Data/private-uploads` (inside the project, git-ignored) | **absolute folders outside the site folder**, e.g. `D:\KhaparwadaData\uploads`, so a redeploy can never delete villagers' photos; back them up with the database |
+| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` | 10 / 40 / 25 | same. The Site settings form accepts at most 40 MB in total; on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
 
 Do not copy SSMS's connection string into the app: it has no `Database=` (tables would go into `master`),
 `Pooling=False` (slow for a website), `Command Timeout=0` (a stuck query hangs forever) and
@@ -260,7 +279,8 @@ Do not copy SSMS's connection string into the app: it has no `Database=` (tables
 | Microsoft.EntityFrameworkCore.SqlServer | 10.0.12 | 1 | EF Core provider |
 | Microsoft.EntityFrameworkCore.Tools | 10.0.12 | 1 | Package Manager Console commands (development only) |
 | Microsoft.AspNetCore.Identity.EntityFrameworkCore | 10.0.12 | 1 | Identity tables in `AppDbContext` |
-| SixLabors.ImageSharp | 4.1.x | 3 | Image pipeline (Six Labors Split License: Apache 2.0 for individuals / non-profits under US$1M revenue) |
+| SkiaSharp | 3.119.4 | 3 | Image pipeline (MIT). Brings the Windows and macOS native library |
+| SkiaSharp.NativeAssets.Linux.NoDependencies | 3.119.4 | 3 | The same native library for Linux hosting. Its ~80 MB debug symbols per Windows platform are excluded from bin/publish by a target in the `.csproj` |
 | xUnit + Microsoft.AspNetCore.Mvc.Testing | latest | 14 | Test project only |
 
 All Microsoft packages stay on the installed runtime's version; mixed EF versions cause "Method not found"
@@ -288,7 +308,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 |---|---|---|
 | 1 | Setup + database + EF Core | **Done** |
 | 2 | Layout, navbar, footer, Home (design system, language-aware URLs, placeholders for later sections) | **Done** |
-| 3 | Admin foundation: login, roles, dashboard, image upload pipeline, Village Info / Settings / Categories / Useful Links | |
+| 3 | Admin foundation: login, roles, dashboard, image upload pipeline, Village Info / Settings / Categories / Useful Links | **Done** |
 | 4 | About + History + Then vs Now (public + admin) | |
 | 5 | Places + Map | |
 | 6 | People (approval + consent) | |
@@ -322,6 +342,24 @@ Each feature phase ships its public pages and its admin screens together, and re
   link gets `/gu` automatically.
 - **Reference a static file:** use an absolute path (`/css/site.css`), not `~/` (see §11).
 - **Add UI text:** `@L["English text"]` in views; keep the English text as the key.
+- **First admin account (development):** right-click the project → *Manage User Secrets* →
+  `{ "AdminSeed": { "Email": "you@example.com", "Password": "…12+ characters, A-z, 0-9, symbol…" } }` → F5.
+  The startup log says "Created admin account …". Sign in at `/admin`, then change the password
+  (sidebar → Password). The secret is only read when the account does not exist yet.
+- **Locked out / forgotten password (until Phase 11 adds resets by another admin):** a lockout ends after
+  15 minutes. Forgotten password in development: in SSMS run
+  `DELETE FROM AspNetUsers WHERE NormalizedEmail = N'YOU@EXAMPLE.COM';`, then F5 re-creates the account from
+  User Secrets (possible while nothing yet refers to the account).
+- **Add an admin screen (pattern for Phases 4–11):** controller derived from `AdminControllerBase` with
+  `[Route("admin/…")]` (+ `[Authorize(Policy = Policies.AdminOnly)]` if Editors must not use it); entry action
+  named `Index`; an InputModel whose ids are `[BindNever]`; a service returning `OperationResult`; redirect after
+  saving with `SetStatusMessage`; `<bilingual-field for="X" for-gu="XGu" />` for two-language fields;
+  `<partial name="_ValidationScriptsPartial" />` in the Scripts section; a line in `AdminNavigation`.
+- **Save an uploaded photo:** `var result = await images.SaveAsync(file, "places", ct);` → store
+  `result.Image.Path`; show it with `MediaUrls.Image(path, ImageSize.Medium)`. Delete a replaced photo
+  (`images.Delete(oldPath)`) only after the database save succeeded (see `SettingsAdminService`).
+- **Test with curl from Git Bash:** `export MSYS_NO_PATHCONV=1` first, and send Gujarati values from UTF-8 files
+  (`--data-urlencode "NameGu@name.txt"`). See §11.
 
 ## 11. Pitfalls found and fixed (read before changing these areas)
 
@@ -335,6 +373,15 @@ Each feature phase ships its public pages and its admin screens together, and re
 | Gujarati conjuncts can break; uppercase means nothing | Letter-spacing and `text-transform` on Gujarati text | Both are switched off under `html[lang="gu"]` |
 | Notices sorted Urgent/Important/Normal alphabetically | Enums are stored as text, so `ORDER BY Priority` sorts by the word | Rank explicitly (`OrderByDescending(n => n.Priority == Urgent)…`) |
 | A 9 PM event without an end time would vanish at 9:01 PM | "Upcoming" compared only the start time | Events without an end count as running 3 hours (all-day: 24 hours) |
+| ImageSharp 4 built in Debug with only a warning, but Release builds and `dotnet publish` would fail | ImageSharp 4 checks for a licence key at build time; its target only continues on error in Debug | Image pipeline on SkiaSharp (MIT). Read a package's `build/*.targets` before adopting it |
+| Village info showed latitude `21.12` for `21.123457`; saving unchanged would have moved the pin | The input tag helper formats `decimal` as `0.00` when the property has no edit format | `DecimalEditFormatMetadataProvider` gives all decimals their full digits; round on purpose with `[DisplayFormat(ApplyFormatInEditMode = true)]` |
+| Admin lists made phones scroll sideways (833 px) | `.visually-hidden` labels are `position: absolute`; the static `.table-responsive` was not their containing block, so they escaped its scroll box | `.table-responsive { position: relative; }` in site.css |
+| Menu and close buttons showed on desktop | The rule hiding them came before the rule giving them `display`; with equal specificity the later rule wins | Responsive "hide" rules go after the component's own rules |
+| "Account switched off" would tell a stranger which emails have accounts | The account state was checked before the password | `CheckPasswordSignInAsync` first, then the account state, then `SignInAsync` |
+| Sign out sat below the fold on 768 px-high screens | The whole sidebar scrolled as one block | Only the menu list scrolls; brand and account stay in view |
+| `UPDATE AspNetUsers` from `sqlcmd` failed with Msg 1934 | `sqlcmd` runs with `QUOTED_IDENTIFIER OFF`, and SQL Server refuses to change tables with filtered indexes then | Use SSMS, or `sqlcmd -I` |
+| curl tests from Git Bash sent `C:/Program Files/Git/admin/…` and `????` | MSYS rewrites arguments that look like paths and passes arguments to `curl.exe` through the ANSI code page | `export MSYS_NO_PATHCONV=1`; non-English values from UTF-8 files |
+| SkiaSharp added ~240 MB to `bin` | Its native package also ships debug symbols (`libSkiaSharp.pdb`, ~80 MB per Windows platform) | Excluded by the `ExcludeSkiaSharpNativeSymbols` target in the `.csproj` |
 
 ## 12. Open items
 
@@ -342,8 +389,11 @@ Each feature phase ships its public pages and its admin screens together, and re
   real text and photos. Until then the database holds clearly marked `[Add …]` / `[Sample]` placeholders.
 - Native-speaker review of the Gujarati seed names (categories, tagline).
 - Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
-  to make; consider making them admin-editable pages later. The privacy policy's statement that photo
-  location data is removed depends on the Phase 3 image pipeline.
+  to make; consider making them admin-editable pages later. Its statement that photo location data is removed
+  is now true: verified in Phase 3 (no EXIF, GPS or camera details in any saved file).
+- Hosting (Phase 14): set `Storage:*Path` to folders outside the site folder; on IIS raise
+  `maxAllowedContentLength` to 40 MB for the hero video; Linux hosting is possible (SkiaSharp's Linux library
+  is included).
 - UI text on `/gu` pages stays English until the Phase 12 translations.
 - Hosting choice (affects Phase 14 only). The site must be hosted at the root of its domain (static files use
   absolute paths).

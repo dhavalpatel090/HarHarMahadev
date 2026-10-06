@@ -1,0 +1,135 @@
+@model VillageInfoInputModel
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using Microsoft.Extensions.Options
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.MapOptions> MapOptions
+@inject IFileVersionProvider FileVersions
+@{
+    ViewData["Title"] = "Village info";
+    ViewData["Lead"] = "The village’s name, introduction, figures and location. Used on the Home page, in the footer and on the map.";
+    var map = MapOptions.Value;
+    string Asset(string path) => FileVersions.AddFileVersionToPath(PathString.Empty, path);
+}
+
+<form method="post" asp-action="Index" class="kc-admin-form">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">
+        Gujarati boxes are optional: where one is empty, the Gujarati pages show the English text.
+        Please only enter information you are sure of.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="name-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="name-title">Name and introduction</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Name" for-gu="NameGu" />
+            <bilingual-field for="ShortIntro" for-gu="ShortIntroGu" rows="4"
+                             hint="Two or three sentences about the village, shown on the Home page." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="figures-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="figures-title">The village in numbers</h2>
+            <p class="kc-panel-text">Leave a figure empty if you are not sure. Empty figures are simply not shown.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-3 mb-3">
+                <div class="col-sm-4">
+                    <label asp-for="Population" class="kc-field-label"></label>
+                    <input asp-for="Population" class="form-control" min="0" inputmode="numeric" />
+                    <span asp-validation-for="Population" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="Households" class="kc-field-label"></label>
+                    <input asp-for="Households" class="form-control" min="0" inputmode="numeric" />
+                    <span asp-validation-for="Households" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="AreaSqKm" class="kc-field-label"></label>
+                    <input asp-for="AreaSqKm" class="form-control" inputmode="decimal" />
+                    <span asp-validation-for="AreaSqKm" class="kc-field-error"></span>
+                </div>
+            </div>
+            <bilingual-field for="StatsSource" for-gu="StatsSourceGu"
+                             hint="Where the figures come from, e.g. “Census of India 2011”. Shown next to them." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="address-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="address-title">Address</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Taluka" for-gu="TalukaGu" />
+            <bilingual-field for="District" for-gu="DistrictGu" />
+            <bilingual-field for="State" for-gu="StateGu" />
+            <div class="kc-field kc-field--short">
+                <label asp-for="PinCode" class="kc-field-label"></label>
+                <input asp-for="PinCode" class="form-control" inputmode="numeric" maxlength="6" autocomplete="off" />
+                <span asp-validation-for="PinCode" class="kc-field-error"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="map-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="map-title">Location on the map</h2>
+            <p class="kc-panel-text">
+                Zoom in to the village and click its centre, or drag the pin. The website’s map opens at the zoom you leave it on.
+            </p>
+        </header>
+        <div class="kc-panel-body">
+            @* With no location saved yet, the map starts on the whole of Gujarat (data-start-*). *@
+            <div class="kc-map kc-map-picker" id="village-map-picker" role="region" aria-label="Map for choosing the village centre"
+                 data-kc-picker
+                 data-lat-input="@Html.IdFor(m => m.Latitude)"
+                 data-lng-input="@Html.IdFor(m => m.Longitude)"
+                 data-zoom-input="@Html.IdFor(m => m.MapZoom)"
+                 data-tiles="@map.TileUrl"
+                 data-attribution="@map.Attribution"
+                 data-max-zoom="@map.MaxZoom"
+                 data-icons="@Asset(IconTagHelper.SpritePath)"
+                 data-leaflet-css="@Asset("/lib/leaflet/leaflet.css")"
+                 data-leaflet-js="@Asset("/lib/leaflet/leaflet.js")"
+                 data-start-lat="22.5" data-start-lng="71.5" data-start-zoom="7">
+                <p class="kc-map-loading">
+                    <icon name="map-location-dot" />
+                    <span class="kc-map-loading-text">Loading map…</span>
+                    <span class="kc-map-error-text">The map could not be loaded. You can still type the latitude and longitude below.</span>
+                </p>
+            </div>
+
+            <div class="row g-3 mt-1 align-items-end">
+                <div class="col-sm-4">
+                    <label asp-for="Latitude" class="kc-field-label"></label>
+                    <input asp-for="Latitude" class="form-control" inputmode="decimal" autocomplete="off" />
+                    <span asp-validation-for="Latitude" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="Longitude" class="kc-field-label"></label>
+                    <input asp-for="Longitude" class="form-control" inputmode="decimal" autocomplete="off" />
+                    <span asp-validation-for="Longitude" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-2">
+                    <label asp-for="MapZoom" class="kc-field-label"></label>
+                    <input asp-for="MapZoom" class="form-control" min="5" max="19" />
+                    <span asp-validation-for="MapZoom" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-2">
+                    <button type="button" class="btn btn-sm btn-kc-outline w-100" data-picker-clear="village-map-picker">Remove pin</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">Save village info</button>
+        <a class="btn btn-link" asp-controller="Dashboard" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="/js/map.js" asp-append-version="true" defer></script>
+}

@@ -1,4 +1,4 @@
-// Village map on Leaflet, shared by the Home page and (Phase 5) the full map page.
+// Village map on Leaflet, shared by the Home page, (Phase 5) the full map page and the admin location picker.
 // Markers and pop-ups are built with DOM methods and textContent, never innerHTML, so text typed in Admin
 // can never inject HTML or script. Colours are set through element.style, which a strict
 // Content-Security-Policy allows (inline style attributes it would block).
@@ -50,6 +50,17 @@ window.KcMap = (() => {
         return element;
     }
 
+    // The same pin everywhere: on the public maps and in the admin location picker.
+    function markerIcon(spriteUrl, marker) {
+        return window.L.divIcon({
+            html: pin(spriteUrl, marker),
+            className: 'kc-pin-wrap',
+            iconSize: [36, 36],
+            iconAnchor: [18, 43],
+            popupAnchor: [0, -40]
+        });
+    }
+
     function popup(spriteUrl, marker, detailsLabel) {
         const root = document.createElement('div');
         root.className = 'kc-map-popup';
@@ -94,16 +105,9 @@ window.KcMap = (() => {
 
         const points = markers.map((marker) => {
             const position = [marker.lat, marker.lng];
-            window.L.marker(position, {
-                title: marker.name,
-                icon: window.L.divIcon({
-                    html: pin(data.icons, marker),
-                    className: 'kc-pin-wrap',
-                    iconSize: [36, 36],
-                    iconAnchor: [18, 43],
-                    popupAnchor: [0, -40]
-                })
-            }).bindPopup(popup(data.icons, marker, data.detailsLabel)).addTo(map);
+            window.L.marker(position, { title: marker.name, icon: markerIcon(data.icons, marker) })
+                .bindPopup(popup(data.icons, marker, data.detailsLabel))
+                .addTo(map);
             return position;
         });
 
@@ -117,5 +121,5 @@ window.KcMap = (() => {
         return map;
     }
 
-    return { show };
+    return { show, loadLeaflet, markerIcon };
 })();

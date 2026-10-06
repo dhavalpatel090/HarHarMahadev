@@ -3,7 +3,7 @@ using Khaparwada.Web.Models.Common;
 namespace Khaparwada.Web.Models.Entities;
 
 /// <summary>Category of community profile (Teachers, Doctors, Farmers, …).</summary>
-public class PersonCategory : BaseEntity
+public class PersonCategory : BaseEntity, ICategory
 {
     public string Name { get; set; } = string.Empty;
     public string? NameGu { get; set; }

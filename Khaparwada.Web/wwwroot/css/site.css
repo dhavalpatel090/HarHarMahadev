@@ -647,6 +647,11 @@ main:focus { outline: none; }
 }
 .kc-media-placeholder .icon { opacity: .5; }
 
+/* A wide table scrolls inside its .table-responsive box. Screen-reader-only text (.visually-hidden) is
+   position: absolute, and an absolute element is only clipped by a scroll box that is also its containing
+   block. Without this, hidden labels in the last column stretched the whole page sideways on phones. */
+.table-responsive { position: relative; }
+
 .kc-chip {
     display: inline-flex;
     align-self: flex-start;

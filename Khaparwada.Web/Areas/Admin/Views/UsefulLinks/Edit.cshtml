@@ -1,0 +1,47 @@
+@model UsefulLinkInputModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a link" : $"Edit “{Model.Title}”";
+}
+
+<form method="post" class="kc-admin-form kc-admin-form--narrow" asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+
+    <section class="kc-panel">
+        <div class="kc-panel-body">
+            <bilingual-field for="Title" for-gu="TitleGu" hint="What the website is for, e.g. “Land records (AnyROR)”." />
+
+            <div class="kc-field">
+                <label asp-for="Url" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="url-hint">The full address, starting with https://. Open it once to check it works.</p>
+                <input asp-for="Url" type="url" class="form-control" placeholder="https://…" aria-describedby="url-hint" />
+                <span asp-validation-for="Url" class="kc-field-error"></span>
+            </div>
+
+            <div class="form-check form-switch kc-field">
+                <input asp-for="ShowInFooter" class="form-check-input" role="switch" />
+                <label asp-for="ShowInFooter" class="form-check-label"></label>
+            </div>
+
+            <div class="kc-field kc-field--short">
+                <label asp-for="SortOrder" class="kc-field-label"></label>
+                <input asp-for="SortOrder" class="form-control" min="0" max="9999" aria-describedby="order-hint" />
+                <p class="kc-field-hint" id="order-hint">Smaller numbers come first.</p>
+                <span asp-validation-for="SortOrder" class="kc-field-error"></span>
+            </div>
+
+            <div class="form-check form-switch">
+                <input asp-for="IsActive" class="form-check-input" role="switch" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add link" : "Save link")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

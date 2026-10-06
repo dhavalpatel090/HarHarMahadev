@@ -1,0 +1,69 @@
+@model IReadOnlyList<UsefulLinkListItem>
+@{
+    ViewData["Title"] = "Useful links";
+    ViewData["Lead"] = "Government and other websites that villagers often need: land records, schemes, certificates.";
+}
+@section Actions {
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add link</a>
+}
+
+<section class="kc-panel" aria-label="Useful links">
+    @if (Model.Count == 0)
+    {
+        <p class="kc-panel-empty">No links yet. Add the first one with the button above.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Title</th>
+                        <th scope="col">Web address</th>
+                        <th scope="col">In footer</th>
+                        <th scope="col">Order</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var link in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@link.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(link.TitleGu))
+                                {
+                                    <span class="kc-name-gu" lang="gu">@link.TitleGu</span>
+                                }
+                            </td>
+                            <td class="kc-url-cell">
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer">@link.Url<span class="visually-hidden"> (opens in a new tab)</span></a>
+                            </td>
+                            <td>@(link.ShowInFooter ? "Yes" : "–")</td>
+                            <td>@link.SortOrder</td>
+                            <td>
+                                @if (link.IsActive)
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status">Hidden</span>
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@link.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @link.Title</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@link.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @link.Title</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -1,13 +1,17 @@
 @model int
 @{
-    ViewData["Title"] = L["Something went wrong"].Value;
+    // 429 comes from the sign-in rate limit: say what to do instead of a generic error.
+    var (title, text) = Model == StatusCodes.Status429TooManyRequests
+        ? (L["Too many attempts"].Value, L["Please wait a few minutes, then try again."].Value)
+        : (L["Something went wrong"].Value, L["The request could not be completed."].Value);
+    ViewData["Title"] = title;
 }
 <section class="kc-section">
     <div class="container">
         <div class="kc-error">
             <p class="kc-error-code">@Model</p>
-            <h1>@L["Something went wrong"]</h1>
-            <p>@L["The request could not be completed."]</p>
+            <h1>@title</h1>
+            <p>@text</p>
             <a class="btn btn-kc-primary" asp-route="@RouteNames.Home"><icon name="house" /> @L["Back to home"]</a>
         </div>
     </div>

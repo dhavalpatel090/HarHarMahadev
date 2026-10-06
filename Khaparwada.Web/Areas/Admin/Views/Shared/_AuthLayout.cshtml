@@ -1,0 +1,30 @@
+@* Pages for people who are not signed in (or may not open a page): sign in and access denied. No sidebar. *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@ViewData["Title"] · Admin</title>
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/mukta-vaani-latin-400-normal.woff2" />
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/admin.css" asp-append-version="true" />
+</head>
+<body class="kc-auth">
+    <div class="kc-toran" aria-hidden="true"></div>
+    <main id="main" class="kc-auth-main">
+        <a class="kc-auth-brand" href="/">
+            <img src="/images/brand/emblem.svg" width="56" height="56" alt="" />
+            <span>Khaparwada Connect</span>
+        </a>
+        <div class="kc-auth-card">
+            @RenderBody()
+        </div>
+        <a class="kc-auth-back" href="/"><icon name="arrow-left" /> Back to the website</a>
+    </main>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,11 @@
+@* Area views do not see Views/_ViewImports.cshtml (it only covers the Views folder), so the admin area has its own.
+   The admin panel is English-only, so there is no localizer here. *@
+@using System.Globalization
+@using Khaparwada.Web
+@using Khaparwada.Web.Areas.Admin.Controllers
+@using Khaparwada.Web.Areas.Admin.Models
+@using Khaparwada.Web.Infrastructure.Media
+@using Khaparwada.Web.Infrastructure.Security
+@using Khaparwada.Web.Infrastructure.TagHelpers
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, Khaparwada.Web

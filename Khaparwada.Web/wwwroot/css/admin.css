@@ -1,0 +1,982 @@
+/* ==========================================================================
+   Khaparwada Connect: admin panel
+   Loaded after site.css, which provides the fonts, colours (--kc-*), buttons and .icon.
+   1 Shell & sidebar · 2 Top bar & page header · 3 Panels & alerts · 4 Forms · 5 Dashboard
+   6 Tabs & tables · 7 Pickers & previews · 8 Sign-in pages · 9 Motion
+   ========================================================================== */
+
+:root {
+    --kc-admin-bg: #F4EEE4;
+    --kc-admin-side: var(--kc-indigo-900);
+    --kc-admin-side-text: #CBD3E1;
+    --kc-admin-side-muted: #8592AA;
+    --kc-admin-side-width: 272px;
+    --kc-admin-field-border: #D9CCB6;
+    --kc-success: #1D7A4E;
+    --kc-success-50: #E5F3EB;
+    --kc-danger-50: #FCEBE9;
+    --kc-warning-50: #FEF3DD;
+}
+
+/* 1. Shell & sidebar ----------------------------------------------------------- */
+.kc-admin {
+    --bs-body-font-size: 1rem;
+    background-color: var(--kc-admin-bg);
+}
+
+.kc-admin-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.kc-admin-main {
+    flex: 1 1 auto;
+    min-width: 0; /* lets a wide table scroll inside its box instead of widening the whole page */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Below 992px Bootstrap turns the sidebar into a slide-in panel. From 992px it forces the panel's own
+   background to transparent (!important), so the colour lives on the inner wrapper instead. */
+.kc-admin-sidebar {
+    --bs-offcanvas-width: min(300px, 86vw);
+    --bs-offcanvas-bg: var(--kc-admin-side);
+    --bs-offcanvas-color: var(--kc-admin-side-text);
+    --bs-offcanvas-border-width: 0;
+    flex-direction: column;
+}
+
+/* Brand at the top, account at the bottom, and only the menu between them scrolls: Sign out stays in view
+   even on a 768px-high laptop screen. */
+.kc-admin-sidebar-inner {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--kc-admin-side);
+    color: var(--kc-admin-side-text);
+}
+
+@media (min-width: 992px) {
+    .kc-admin-sidebar {
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex: 0 0 var(--kc-admin-side-width);
+        width: var(--kc-admin-side-width);
+        height: 100vh;
+    }
+}
+
+.kc-admin-brand {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: .75rem;
+    padding: 1.1rem 1.25rem 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / .08);
+}
+.kc-admin-brand img { flex-shrink: 0; }
+.kc-admin-brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.2;
+}
+.kc-admin-brand-name {
+    color: var(--kc-white);
+    font-family: var(--kc-font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+.kc-admin-brand-sub {
+    color: var(--kc-marigold);
+    font-size: .74rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.kc-admin-close {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: auto;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / .08);
+    color: var(--kc-white);
+}
+
+.kc-admin-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: .25rem 0 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: rgb(255 255 255 / .2) transparent;
+    scrollbar-width: thin;
+}
+.kc-admin-nav-heading {
+    margin: 1rem 1.5rem .3rem;
+    color: var(--kc-admin-side-muted);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.kc-admin-nav-list {
+    margin: 0;
+    padding: 0 .75rem;
+    list-style: none;
+}
+.kc-admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+    padding: .5rem .75rem;
+    border: 0;
+    border-radius: var(--kc-radius-sm);
+    background: none;
+    color: var(--kc-admin-side-text);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    transition: background-color .15s, color .15s;
+}
+.kc-admin-nav-link .icon { color: var(--kc-marigold); }
+a.kc-admin-nav-link:hover,
+button.kc-admin-nav-link:hover {
+    background: rgb(255 255 255 / .07);
+    color: var(--kc-white);
+}
+.kc-admin-nav-link.is-active {
+    background: rgb(232 163 61 / .16);
+    color: var(--kc-white);
+    box-shadow: inset 3px 0 0 var(--kc-marigold);
+}
+.kc-admin-nav-link.is-soon {
+    color: var(--kc-admin-side-muted);
+    cursor: default;
+}
+.kc-admin-nav-link.is-soon .icon { color: inherit; opacity: .7; }
+.kc-admin-nav-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.kc-admin-soon {
+    flex-shrink: 0;
+    padding: .05rem .5rem;
+    border: 1px solid rgb(255 255 255 / .14);
+    border-radius: var(--kc-radius-pill);
+    font-size: .7rem;
+    white-space: nowrap;
+}
+
+.kc-admin-user {
+    flex-shrink: 0;
+    padding: .9rem 1rem 1rem;
+    border-top: 1px solid rgb(255 255 255 / .1);
+    background: rgb(0 0 0 / .12);
+}
+.kc-admin-user form { margin: 0; }
+.kc-admin-user-card {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+.kc-admin-user-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+}
+.kc-admin-user-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .4rem .5rem;
+    border: 1px solid rgb(255 255 255 / .16);
+    border-radius: var(--kc-radius-sm);
+    background: none;
+    color: var(--kc-admin-side-text);
+    font: inherit;
+    font-size: .88rem;
+    text-decoration: none;
+    transition: background-color .15s, color .15s;
+}
+.kc-admin-user-action:hover { background: rgb(255 255 255 / .08); color: var(--kc-white); }
+.kc-admin-user-action.is-active { border-color: var(--kc-marigold); color: var(--kc-white); }
+.kc-admin-avatar {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--kc-marigold);
+    color: var(--kc-indigo-900);
+    font-weight: 700;
+}
+.kc-admin-user-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+.kc-admin-user-name {
+    overflow: hidden;
+    color: var(--kc-white);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.kc-admin-user-role {
+    color: var(--kc-admin-side-muted);
+    font-size: .8rem;
+}
+
+/* 2. Top bar & page header ----------------------------------------------------- */
+.kc-admin-topbar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .65rem 1rem;
+}
+@media (max-width: 991.98px) {
+    .kc-admin-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        border-bottom: 1px solid var(--kc-line);
+        background: var(--kc-white);
+    }
+}
+@media (min-width: 992px) {
+    .kc-admin-topbar { padding: 1.25rem 2.5rem 0; }
+}
+.kc-admin-menu-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .95rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-ivory);
+    color: var(--kc-ink);
+    font-weight: 600;
+}
+
+/* The menu buttons are only needed while the sidebar is a slide-in panel. This rule must come after the
+   buttons' own display rules above: with equal specificity, the later rule wins. */
+@media (min-width: 992px) {
+    .kc-admin-menu-button,
+    .kc-admin-close { display: none; }
+}
+
+.kc-admin-site-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    margin-left: auto;
+    font-weight: 600;
+    text-decoration: none;
+}
+.kc-admin-site-link:hover { text-decoration: underline; }
+
+.kc-admin-content {
+    width: 100%;
+    max-width: 1180px;
+    padding: 1.25rem 1rem 3rem;
+}
+@media (min-width: 992px) {
+    .kc-admin-content { padding: .75rem 2.5rem 4rem; }
+}
+.kc-admin-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.kc-admin-page-heading { min-width: 0; }
+.kc-admin-title {
+    margin: 0;
+    font-size: clamp(1.65rem, 1.35rem + 1vw, 2.15rem);
+    overflow-wrap: anywhere;
+}
+.kc-admin-lead {
+    max-width: 46rem;
+    margin: .35rem 0 0;
+    color: var(--kc-muted);
+}
+.kc-admin-page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+/* 3. Panels & alerts ----------------------------------------------------------- */
+.kc-panel {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-sm);
+}
+.kc-panel--narrow { max-width: 44rem; }
+.kc-panel-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .25rem 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--kc-line);
+}
+.kc-panel-title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: 0;
+    font-family: var(--kc-font-body);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+.kc-panel-title .icon { color: var(--kc-marigold-600); }
+.kc-panel-text {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--kc-muted);
+    font-size: .95rem;
+}
+.kc-panel-meta {
+    color: var(--kc-muted);
+    font-size: .9rem;
+}
+.kc-panel-body { padding: 1.25rem; }
+@media (min-width: 768px) {
+    .kc-panel-header,
+    .kc-panel-body { padding-inline: 1.5rem; }
+}
+.kc-panel-empty {
+    margin: 0;
+    padding: 2.5rem 1.5rem;
+    color: var(--kc-muted);
+    text-align: center;
+}
+.kc-panel-note {
+    margin: 0;
+    padding: .9rem 1.25rem 1.1rem;
+    border-top: 1px solid var(--kc-line);
+    color: var(--kc-muted);
+    font-size: .9rem;
+}
+.kc-panel > .table-responsive { border-radius: var(--kc-radius); }
+
+.kc-admin-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    margin-bottom: 1.25rem;
+    padding: .85rem 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--kc-radius-sm);
+    font-weight: 500;
+}
+.kc-admin-alert .icon { margin-top: .2em; }
+.kc-admin-alert ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+.kc-admin-alert--success { border-color: #BFE3CD; background: var(--kc-success-50); color: #14563A; }
+.kc-admin-alert--error { border-color: #F3C3BE; background: var(--kc-danger-50); color: #8F1D14; }
+.kc-admin-alert--warning { border-color: #F2D49B; background: var(--kc-warning-50); color: #6B4A0E; }
+
+/* A validation summary with nothing to report stays in the page for client-side validation, hidden. */
+.validation-summary-valid { display: none; }
+
+/* 4. Forms --------------------------------------------------------------------- */
+.kc-admin-form { max-width: 62rem; }
+.kc-admin-form--narrow { max-width: 44rem; }
+.kc-form-intro {
+    margin: 0 0 1.25rem;
+    color: var(--kc-muted);
+}
+
+.kc-field,
+.kc-bilingual { margin-bottom: 1.35rem; }
+.kc-field:last-child,
+.kc-bilingual:last-child { margin-bottom: 0; }
+.kc-field--short { max-width: 14rem; }
+.kc-field-label {
+    display: block;
+    margin-bottom: .35rem;
+    color: var(--kc-ink);
+    font-weight: 600;
+}
+legend.kc-field-label { /* Bootstrap floats legends and makes them large */
+    float: none;
+    width: auto;
+    font-size: 1rem;
+}
+.kc-field-hint {
+    margin: -.15rem 0 .5rem;
+    color: var(--kc-muted);
+    font-size: .9rem;
+}
+.kc-optional {
+    margin-left: .3rem;
+    color: var(--kc-muted);
+    font-size: .78rem;
+    font-weight: 400;
+}
+
+.kc-bilingual { min-width: 0; }
+.kc-bilingual-grid {
+    display: grid;
+    gap: .75rem 1rem;
+}
+@media (min-width: 768px) {
+    .kc-bilingual-grid { grid-template-columns: 1fr 1fr; }
+}
+.kc-bilingual-col { min-width: 0; }
+.kc-lang-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-bottom: .25rem;
+    color: var(--kc-muted);
+    font-size: .82rem;
+    font-weight: 600;
+}
+.kc-lang-label::before {
+    content: "";
+    width: .45rem;
+    height: .45rem;
+    border-radius: 50%;
+    background: var(--kc-maroon);
+}
+.kc-bilingual-col + .kc-bilingual-col .kc-lang-label::before { background: var(--kc-marigold); }
+/* Gujarati vowel signs above and below the letters need a taller line. Both boxes of a pair get the same
+   height, so the English and Gujarati boxes line up. */
+.kc-admin .kc-bilingual .form-control { line-height: 1.75; }
+
+/* Bootstrap's form colours are blue and partly hard-coded; these bring them in line with the site. */
+.kc-admin .form-control,
+.kc-admin .form-select {
+    padding: .55rem .8rem;
+    border-color: var(--kc-admin-field-border);
+    border-radius: var(--kc-radius-sm);
+    background-color: var(--kc-white);
+}
+.kc-admin .form-control:focus,
+.kc-admin .form-select:focus {
+    border-color: var(--kc-marigold);
+    background-color: var(--kc-white);
+    box-shadow: 0 0 0 .2rem rgb(232 163 61 / .28);
+}
+.kc-admin .form-control::placeholder { color: #A39689; }
+.kc-admin .form-control-color {
+    width: 4rem;
+    height: 2.75rem;
+    padding: .3rem;
+}
+.kc-admin .form-check-input { border-color: #BFAF96; }
+.kc-admin .form-check-input:checked {
+    border-color: var(--kc-maroon);
+    background-color: var(--kc-maroon);
+}
+.kc-admin .form-check-input:focus {
+    border-color: var(--kc-marigold);
+    box-shadow: 0 0 0 .2rem rgb(232 163 61 / .3);
+}
+.kc-admin .form-switch .form-check-input:focus:not(:checked) {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23E8A33D'/%3e%3c/svg%3e");
+}
+.kc-admin .form-check { margin-bottom: .6rem; }
+.kc-admin .form-check-label { font-weight: 500; }
+.kc-color-field {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+}
+
+/* Field errors: from the server (.field-validation-error) or added while typing by jQuery Validation. */
+.kc-admin .input-validation-error { border-color: var(--kc-urgent); }
+.kc-admin .input-validation-error:focus { box-shadow: 0 0 0 .2rem rgb(180 35 24 / .2); }
+.kc-field-error {
+    display: block;
+    margin-top: .3rem;
+    color: var(--kc-urgent);
+    font-size: .875rem;
+    font-weight: 500;
+}
+.kc-field-error.field-validation-valid { display: none; }
+
+/* The Save button stays in reach at the bottom of the screen on long forms. */
+.kc-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    margin-top: .5rem;
+    padding: .85rem 1.25rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: rgb(255 255 255 / .97);
+    box-shadow: 0 -12px 30px -20px rgb(35 26 22 / .4);
+}
+.kc-inline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+}
+
+.kc-admin .btn-sm {
+    gap: .35rem;
+    padding: .35rem .85rem;
+    font-size: .875rem;
+}
+.kc-admin .btn-link { font-weight: 600; }
+.kc-admin .btn-danger {
+    --bs-btn-bg: var(--kc-urgent);
+    --bs-btn-border-color: var(--kc-urgent);
+    --bs-btn-hover-bg: #921C13;
+    --bs-btn-hover-border-color: #921C13;
+    --bs-btn-active-bg: #7D180F;
+    --bs-btn-active-border-color: #7D180F;
+}
+.kc-btn-delete {
+    --bs-btn-color: var(--kc-urgent);
+    --bs-btn-border-color: #EBC2BD;
+    --bs-btn-hover-color: var(--kc-white);
+    --bs-btn-hover-bg: var(--kc-urgent);
+    --bs-btn-hover-border-color: var(--kc-urgent);
+    --bs-btn-active-color: var(--kc-white);
+    --bs-btn-active-bg: #921C13;
+    --bs-btn-active-border-color: #921C13;
+}
+
+/* 5. Dashboard ----------------------------------------------------------------- */
+.kc-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.kc-stat {
+    display: grid;
+    grid-template-areas:
+        "icon value"
+        "label label"
+        "detail detail";
+    grid-template-columns: auto 1fr;
+    align-content: start; /* cards in a row share one height; keep every card's content at the top */
+    align-items: center;
+    column-gap: .75rem;
+    padding: 1.1rem 1.15rem 1rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-sm);
+}
+.kc-stat-icon {
+    display: inline-grid;
+    grid-area: icon;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 12px;
+    background: var(--kc-marigold-50);
+    color: var(--kc-marigold-600);
+}
+.kc-stat-value {
+    grid-area: value;
+    color: var(--kc-ink);
+    font-family: var(--kc-font-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.kc-stat-label {
+    grid-area: label;
+    margin-top: .75rem;
+    font-weight: 600;
+}
+.kc-stat-detail {
+    grid-area: detail;
+    color: var(--kc-muted);
+    font-size: .85rem;
+}
+
+.kc-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 1.75rem;
+    padding: 0 .55rem;
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-sand);
+    color: var(--kc-muted);
+    font-size: .9rem;
+    font-weight: 700;
+}
+.kc-count.is-hot { background: var(--kc-maroon); color: var(--kc-white); }
+
+.kc-pending-list {
+    margin: 0;
+    padding: .4rem 0;
+    list-style: none;
+}
+.kc-pending-list li {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem 1.25rem;
+}
+.kc-pending-list li + li { border-top: 1px solid #F0E7D8; }
+.kc-pending-list .icon { color: var(--kc-muted); }
+.kc-pending-label {
+    flex: 1 1 auto;
+    font-weight: 500;
+}
+.kc-pending-list .kc-admin-soon {
+    border-color: var(--kc-line);
+    color: var(--kc-muted);
+}
+@media (min-width: 768px) {
+    .kc-pending-list li { padding-inline: 1.5rem; }
+}
+@media (max-width: 575.98px) {
+    .kc-pending-list .kc-admin-soon { display: none; } /* room for the label on phones */
+}
+
+.kc-progress {
+    display: block;
+    width: 100%;
+    height: .6rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-sand);
+    appearance: none;
+}
+.kc-progress::-webkit-progress-bar { border-radius: var(--kc-radius-pill); background: var(--kc-sand); }
+.kc-progress::-webkit-progress-value { border-radius: var(--kc-radius-pill); background: var(--kc-success); }
+.kc-progress::-moz-progress-bar { border-radius: var(--kc-radius-pill); background: var(--kc-success); }
+
+.kc-setup-list {
+    margin: 0;
+    padding: .6rem 0 .5rem;
+    list-style: none;
+}
+.kc-setup-list li {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: .65rem 1.25rem;
+}
+@media (min-width: 768px) {
+    .kc-setup-list li { padding-inline: 1.5rem; }
+}
+.kc-setup-mark {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 2px solid var(--kc-sand-200);
+    border-radius: 50%;
+    color: var(--kc-success);
+}
+.kc-setup-list li.is-done .kc-setup-mark { border-color: transparent; }
+.kc-setup-list li.is-done .kc-setup-mark .icon { width: 1.6rem; height: 1.6rem; }
+.kc-setup-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+.kc-setup-label { font-weight: 600; }
+.kc-setup-hint {
+    color: var(--kc-muted);
+    font-size: .88rem;
+}
+.kc-setup-list li.is-done .kc-setup-label {
+    color: var(--kc-muted);
+    text-decoration: line-through;
+    text-decoration-color: rgb(106 93 85 / .5);
+}
+
+/* 6. Tabs & tables ------------------------------------------------------------- */
+.kc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+.kc-tab {
+    padding: .5rem 1rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-white);
+    color: var(--kc-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+.kc-tab:hover { border-color: var(--kc-marigold); color: var(--kc-maroon); }
+.kc-tab.is-active { border-color: var(--kc-maroon); background: var(--kc-maroon); color: var(--kc-white); }
+
+.kc-table {
+    --bs-table-bg: transparent;
+    margin: 0;
+}
+.kc-table > :not(caption) > * > * {
+    padding: .85rem 1rem;
+    border-bottom-color: #EFE6D7;
+    vertical-align: middle;
+}
+.kc-table thead th {
+    background: #FBF8F2;
+    color: var(--kc-muted);
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.kc-table tbody tr:last-child > * { border-bottom: 0; }
+.kc-table tbody tr:hover > * { background: #FFFCF6; }
+.kc-table-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+.kc-table-actions .btn + .btn { margin-left: .35rem; }
+.kc-name-cell {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+.kc-name-icon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--kc-line);
+    border-radius: 10px;
+    background: var(--kc-ivory);
+    color: var(--kc-indigo);
+}
+.kc-name-gu {
+    display: block;
+    color: var(--kc-muted);
+    font-size: .9rem;
+}
+.kc-url-cell {
+    max-width: 22rem;
+    overflow-wrap: anywhere;
+}
+.kc-code {
+    padding: .1rem .4rem;
+    border-radius: 6px;
+    background: var(--kc-sand);
+    color: var(--kc-indigo);
+    font-size: .85em;
+}
+.kc-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .15rem .6rem;
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-sand);
+    color: var(--kc-muted);
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.kc-status::before {
+    content: "";
+    width: .45rem;
+    height: .45rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+.kc-status.is-on { background: var(--kc-success-50); color: var(--kc-success); }
+
+/* 7. Pickers & previews -------------------------------------------------------- */
+.kc-icon-picker {
+    padding: .75rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-ivory);
+}
+.kc-icon-search { margin-bottom: .75rem; }
+.kc-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(2.9rem, 1fr));
+    gap: .4rem;
+    max-height: 16.5rem;
+    padding: .4rem; /* room for the focus outline inside the scrolling box */
+    overflow-y: auto;
+}
+.kc-icon-option {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border: 1px solid var(--kc-line);
+    border-radius: 10px;
+    background: var(--kc-white);
+    color: var(--kc-indigo);
+    cursor: pointer;
+}
+.kc-icon-option input { /* the real radio button covers the tile: clickable and keyboard-focusable */
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.kc-icon-option .icon { width: 1.3rem; height: 1.3rem; }
+.kc-icon-option:hover { border-color: var(--kc-marigold); }
+.kc-icon-option:has(input:checked) { border-color: var(--kc-maroon); background: var(--kc-maroon); color: var(--kc-white); }
+.kc-icon-option:has(input:focus-visible) { outline: 3px solid var(--kc-marigold); outline-offset: 2px; }
+.kc-icon-none {
+    margin: .5rem 0 0;
+    color: var(--kc-muted);
+}
+
+.kc-map.kc-map-picker {
+    height: clamp(300px, 50vh, 440px);
+    border-radius: var(--kc-radius-sm);
+    box-shadow: none;
+}
+.kc-map-picker.leaflet-container { cursor: crosshair; }
+.kc-map-error-text,
+.kc-map-loading.is-error .kc-map-loading-text { display: none; }
+.kc-map-loading.is-error .kc-map-error-text { display: inline; }
+.kc-map-loading { padding: 1rem; text-align: center; }
+
+.kc-media-preview { margin: 0 0 1rem; }
+.kc-media-preview img,
+.kc-media-preview video,
+.kc-media-empty {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-sand);
+    object-fit: cover;
+}
+.kc-media-empty {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: .35rem;
+    color: var(--kc-muted);
+    font-weight: 600;
+}
+.kc-media-empty .icon { width: 2rem; height: 2rem; opacity: .6; }
+.kc-media-preview figcaption {
+    margin-top: .4rem;
+    color: var(--kc-muted);
+    font-size: .85rem;
+}
+
+/* 8. Sign-in pages ------------------------------------------------------------- */
+.kc-auth {
+    min-height: 100vh;
+    background-color: var(--kc-indigo-900);
+    background-image:
+        radial-gradient(circle at 15% 0%, rgb(232 163 61 / .2), transparent 45%),
+        radial-gradient(circle, rgb(255 255 255 / .05) 1.5px, transparent 1.9px);
+    background-size: auto, 22px 22px;
+    color: var(--kc-white);
+}
+.kc-auth .kc-toran {
+    height: 16px;
+    background-size: 38px 16px;
+}
+.kc-auth-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    min-height: calc(100vh - 16px);
+    padding: 2rem 1rem 3rem;
+}
+.kc-auth-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .75rem;
+    color: var(--kc-white);
+    font-family: var(--kc-font-heading);
+    font-size: 1.55rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.kc-auth-brand:hover { color: var(--kc-marigold); }
+.kc-auth-card {
+    width: 100%;
+    max-width: 26rem;
+    padding: 2rem 1.75rem;
+    border-radius: var(--kc-radius-lg);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-lg);
+    color: var(--kc-ink);
+}
+.kc-auth-card .form-control {
+    padding: .65rem .85rem;
+    border-color: var(--kc-admin-field-border);
+    border-radius: var(--kc-radius-sm);
+    background-color: var(--kc-white);
+}
+.kc-auth-card .form-control:focus {
+    border-color: var(--kc-marigold);
+    box-shadow: 0 0 0 .2rem rgb(232 163 61 / .28);
+}
+.kc-auth-card .input-validation-error { border-color: var(--kc-urgent); }
+.kc-auth-title {
+    margin: 0 0 .35rem;
+    font-size: 1.8rem;
+}
+.kc-auth-lead {
+    margin: 0 0 1.5rem;
+    color: var(--kc-muted);
+}
+.kc-auth-note {
+    margin: 1.25rem 0 0;
+    color: var(--kc-muted);
+    font-size: .85rem;
+}
+.kc-auth-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: #D5DCE8;
+    font-weight: 600;
+    text-decoration: none;
+}
+.kc-auth-back:hover { color: var(--kc-marigold); }
+
+/* 9. Motion -------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .kc-admin-nav-link,
+    .kc-admin-user-action { transition: none; }
+}

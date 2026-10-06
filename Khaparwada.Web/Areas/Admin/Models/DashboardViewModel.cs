@@ -1,0 +1,20 @@
+namespace Khaparwada.Web.Areas.Admin.Models;
+
+public sealed class DashboardViewModel
+{
+    public required string DisplayName { get; init; }
+    public required IReadOnlyList<DashboardStat> Stats { get; init; }
+    public required IReadOnlyList<PendingItem> Pending { get; init; }
+    public required IReadOnlyList<SetupStep> Setup { get; init; }
+
+    public int PendingTotal => Pending.Sum(item => item.Count);
+    public int SetupDone => Setup.Count(step => step.Done);
+}
+
+public sealed record DashboardStat(string Label, int Value, string Icon, string? Detail = null);
+
+/// <summary>Something waiting for a person to act on. Controller is null until that admin screen exists.</summary>
+public sealed record PendingItem(string Label, int Count, string Icon, string? Controller = null);
+
+/// <summary>One step of "finish setting up": replacing a placeholder with real village information.</summary>
+public sealed record SetupStep(string Label, string Hint, bool Done, string? Controller);

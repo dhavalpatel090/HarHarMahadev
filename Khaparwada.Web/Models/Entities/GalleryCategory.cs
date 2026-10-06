@@ -3,7 +3,7 @@ using Khaparwada.Web.Models.Common;
 namespace Khaparwada.Web.Models.Entities;
 
 /// <summary>Gallery category (Old Khaparwada, Navratri, Diwali, …).</summary>
-public class GalleryCategory : BaseEntity
+public class GalleryCategory : BaseEntity, ICategory
 {
     public string Name { get; set; } = string.Empty;
     public string? NameGu { get; set; }

@@ -14,6 +14,19 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <!-- Image processing. The base package carries the Windows and macOS native library; the second adds Linux,
+         so uploads also work if the site is hosted on a Linux server. -->
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4" />
   </ItemGroup>
+
+  <!-- SkiaSharp's package also carries about 80 MB of debug symbols per Windows platform, useful only for debugging
+       Skia's own C++ code. Leave them out of bin and publish folders, so deployments stay small and fast. -->
+  <Target Name="ExcludeSkiaSharpNativeSymbols" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)" Condition="'%(Filename)%(Extension)' == 'libSkiaSharp.pdb'" />
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)" Condition="'%(Filename)%(Extension)' == 'libSkiaSharp.pdb'" />
+    </ItemGroup>
+  </Target>
 
 </Project>
