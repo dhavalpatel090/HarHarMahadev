@@ -28,14 +28,15 @@ public sealed class PageHeaderViewModel
 
 public sealed record BreadcrumbItem(string Text, string? RouteName = null);
 
-/// <summary>Eyebrow, title, lead and an optional "see all" link above a section.</summary>
+/// <summary>Eyebrow, title, lead and an optional "see all" link above a section (to a route, optionally an anchor on it).</summary>
 public sealed record SectionHeadingViewModel(
     string Eyebrow,
     string Title,
     string TitleId,
     string? Lead = null,
     string? LinkText = null,
-    string? LinkRoute = null);
+    string? LinkRoute = null,
+    string? LinkFragment = null);
 
 /// <summary>Placeholder for a section that is built in a later phase. Title and Lead are localization keys.</summary>
 public sealed record ComingSoonViewModel(string Title, string Lead, string Icon);

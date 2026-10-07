@@ -73,6 +73,14 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | Sign-in: password checked before the "account switched off" message; generic message otherwise; session cookie (not persistent); lockout 5 / 15 min; at most 10 attempts per address per 5 min (429 page explains) | Finding out which emails have accounts; staying signed in on a shared PC; password guessing |
 | `DecimalEditFormatMetadataProvider` gives every decimal form box all its digits | ASP.NET Core shows decimals with 2 decimal places, so saving the Village info form unchanged would have moved the map pin up to ~1 km |
 | `<bilingual-field for="X" for-gu="XGu" />` tag helper for every two-language field | Each form repeating (and getting wrong) the English/Gujarati pair: `lang="gu"`, limits, hints, validation |
+| Known village facts (taluka, district, state) are seed defaults, and a start-up step replaces a value only while it still is the original `[Add …]` placeholder | Facts typed into one database only; or a later seed overwriting what an admin typed |
+| The About page's sections are reference data (every environment), not demo data | A live site starting with an empty About page, although its topics come from the spec |
+| Upload forms declare `[UploadLimit(images: n, videos: m)]`; the limit is computed from the Storage settings | A two-photo form failing with 413, or a one-photo form accepting 28 MB, whenever MaxImageMegabytes changes |
+| `ImageEdit`: upload first, store the path, delete the replaced file only after the save (or the new one if it fails) | Orphaned files, or records pointing at deleted files after a failed save |
+| Content screens (About, History, Then & now) use the `Staff` policy; settings screens stay `AdminOnly`; content deletes are soft | Editors unable to write content; one wrong click erasing a page for good |
+| A "then & now" pair can be shown only with both photos | A comparison slider with nothing to compare |
+| About section addresses become element ids, so `main`, the page's own ids and anything starting with `kc-` are refused | "#…" links and the skip link jumping to the wrong element |
+| Timeline, milestone and then-and-now queries live in one place (`Services/History/HistoryQueries.cs`) | Home, About and History showing the same item differently |
 | Gujarati pages under `/gu/…`, handled by middleware that moves `/gu` into the PathBase | Google cannot index a cookie-only language. A `{culture}` route parameter was rejected: ASP.NET Core drops it from links to another controller, so links would fall back to English. With PathBase every generated link keeps `/gu` automatically |
 | Language comes from the URL only (no cookie, no browser setting) | One URL showing different languages to different visitors and to search engines |
 | Route names (`RouteNames`) and "coming soon" placeholder pages for later phases | Broken menu links now, and links to change later: a phase moves the route name to its real page |
@@ -106,24 +114,25 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
    │  │                                       password), Dashboard, VillageInfo, SiteSettings, Categories, UsefulLinks
    │  ├─ Models\                              InputModels, list/view models, AdminNavigation (the sidebar)
    │  └─ Views\                               _AdminLayout, _AuthLayout, _Sidebar, _StatusMessage + one folder per screen
-   ├─ Controllers\                            Home, ComingSoon (placeholders), Error
+   ├─ Controllers\                            Home, About, History, ComingSoon (placeholders), Error
    ├─ Data\                                   AppDbContext, Configurations, Interceptors, Seed
    ├─ Migrations\
    ├─ Models\                                 Common, Enums, Entities (20)
    ├─ Services\
-   │  ├─ Admin\                               Dashboard, Settings (village info + site settings), Category, UsefulLink
+   │  ├─ About\, History\                     About page; timeline + then & now (HistoryQueries shared with Home)
+   │  ├─ Admin\                               Dashboard, Settings, Category, UsefulLink, AboutSection, Timeline, ThenNow
    │  ├─ Common\                              VillageClock, PublicVisibility, OperationResult
    │  ├─ Home\                                HomeService (one query per Home section)
-   │  ├─ Media\                               UploadStorage (folders, random names), ImageUploadService,
+   │  ├─ Media\                               UploadStorage (folders, random names), ImageUploadService, ImageEdit,
    │  │                                       VideoUploadService, IconCatalog (icons allowed for categories)
    │  ├─ Notices\                             NoticeService (urgent alerts, cached 1 min)
    │  └─ Site\                                SiteInfoService (settings + village info, cached 10 min)
-   ├─ ViewModels\                             Shared, Home, Places, Events, Notices, History, Gallery, People, Memories, Map
+   ├─ ViewModels\                             Shared, Home, About, History, Places, Events, Notices, Gallery, People, Memories, Map
    ├─ ViewComponents\                         PageMeta (head tags), AlertBar, SiteFooter
    ├─ Infrastructure\
    │  ├─ Extensions\                          service registration, middleware registration
    │  ├─ Localization\                        SiteLanguages, LanguagePrefixMiddleware, culture provider, LanguageUrls, AppLanguage
-   │  ├─ Media\                               MediaUrls (upload URLs, default artwork)
+   │  ├─ Media\                               MediaUrls (upload URLs, srcset), UploadLimitAttribute
    │  ├─ ModelBinding\                        DecimalEditFormatMetadataProvider
    │  ├─ Options\                             Site, Map, Storage, Database, Seed, AdminSeed
    │  ├─ Routing\                             RouteNames, SiteNavigation
@@ -134,7 +143,8 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
    ├─ Resources\                              SharedResource (Gujarati .resx in Phase 12)
    ├─ Views\
    │  ├─ Home\                                Index + one partial per section, Privacy, Terms
-   │  ├─ Shared\                              _Layout, _Header, _PageHeader, _SectionHeading, ComingSoon,
+   │  ├─ About\, History\                     the About page; the timeline + then & now
+   │  ├─ Shared\                              _Layout, _Header, _PageHeader, _SectionHeading, _ThenNowFigure, ComingSoon,
    │  │                                       Cards\ (place, event, notice, album, person, memory, category),
    │  │                                       Components\ (PageMeta, AlertBar, SiteFooter)
    │  └─ Error\                               NotFound, Status, Error
@@ -264,7 +274,7 @@ Enums (stored as text): `ModerationStatus` (Pending, UnderReview, Approved, Publ
 | `Site:PublicBaseUrl` | empty (the request's own address is used) | the real address, e.g. `https://khaparwada.in` — canonical and share links depend on it |
 | `Map:TileUrl`, `Map:Attribution`, `Map:MaxZoom` | OpenStreetMap | same, or another tile provider if traffic outgrows OSM's fair-use policy |
 | `Storage:UploadsPath`, `Storage:PrivateUploadsPath` | `App_Data/uploads`, `App_Data/private-uploads` (inside the project, git-ignored) | **absolute folders outside the site folder**, e.g. `D:\KhaparwadaData\uploads`, so a redeploy can never delete villagers' photos; back them up with the database |
-| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` | 10 / 40 / 25 | same. The Site settings form accepts at most 40 MB in total; on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
+| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` | 10 / 40 / 25 | same. Each upload form's request limit follows from these (`[UploadLimit]`: Site settings = 1 photo + 1 video + 1 MB = 36 MB); on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
 
 Do not copy SSMS's connection string into the app: it has no `Database=` (tables would go into `master`),
 `Pooling=False` (slow for a website), `Command Timeout=0` (a stuck query hangs forever) and
@@ -309,7 +319,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 1 | Setup + database + EF Core | **Done** |
 | 2 | Layout, navbar, footer, Home (design system, language-aware URLs, placeholders for later sections) | **Done** |
 | 3 | Admin foundation: login, roles, dashboard, image upload pipeline, Village Info / Settings / Categories / Useful Links | **Done** |
-| 4 | About + History + Then vs Now (public + admin) | |
+| 4 | About + History + Then vs Now (public + admin) | **Done** |
 | 5 | Places + Map | |
 | 6 | People (approval + consent) | |
 | 7 | Events | |
@@ -350,14 +360,17 @@ Each feature phase ships its public pages and its admin screens together, and re
   15 minutes. Forgotten password in development: in SSMS run
   `DELETE FROM AspNetUsers WHERE NormalizedEmail = N'YOU@EXAMPLE.COM';`, then F5 re-creates the account from
   User Secrets (possible while nothing yet refers to the account).
-- **Add an admin screen (pattern for Phases 4–11):** controller derived from `AdminControllerBase` with
+- **Add an admin screen (pattern for Phases 5–11; Phase 4's About, Timeline and ThenNow are the model):** controller derived from `AdminControllerBase` with
   `[Route("admin/…")]` (+ `[Authorize(Policy = Policies.AdminOnly)]` if Editors must not use it); entry action
   named `Index`; an InputModel whose ids are `[BindNever]`; a service returning `OperationResult`; redirect after
   saving with `SetStatusMessage`; `<bilingual-field for="X" for-gu="XGu" />` for two-language fields;
-  `<partial name="_ValidationScriptsPartial" />` in the Scripts section; a line in `AdminNavigation`.
-- **Save an uploaded photo:** `var result = await images.SaveAsync(file, "places", ct);` → store
-  `result.Image.Path`; show it with `MediaUrls.Image(path, ImageSize.Medium)`. Delete a replaced photo
-  (`images.Delete(oldPath)`) only after the database save succeeded (see `SettingsAdminService`).
+  `<partial name="_ValidationScriptsPartial" />` in the Scripts section; a line in `AdminNavigation`. Photo fields:
+  `<partial name="_ImageField" model="…" />` (build the model in a code block) and `[UploadLimit(images: n)]` on the
+  POST actions; deletes go through the shared `ConfirmDelete` view.
+- **Save an uploaded photo:** `var photo = await ImageEdit.PrepareAsync(images, input.Image, input.RemoveImage, "places", ct);`
+  → on `photo.Failed` show `photo.Error`; otherwise `entity.ImagePath = photo.Apply(entity.ImagePath)`, save, then
+  `photo.SaveSucceeded()` (or `photo.SaveFailed()` when the save throws). Show it with
+  `MediaUrls.Image(path, ImageSize.Medium)` plus `srcset="@MediaUrls.SrcSet(path)"`.
 - **Test with curl from Git Bash:** `export MSYS_NO_PATHCONV=1` first, and send Gujarati values from UTF-8 files
   (`--data-urlencode "NameGu@name.txt"`). See §11.
 
@@ -382,17 +395,26 @@ Each feature phase ships its public pages and its admin screens together, and re
 | `UPDATE AspNetUsers` from `sqlcmd` failed with Msg 1934 | `sqlcmd` runs with `QUOTED_IDENTIFIER OFF`, and SQL Server refuses to change tables with filtered indexes then | Use SSMS, or `sqlcmd -I` |
 | curl tests from Git Bash sent `C:/Program Files/Git/admin/…` and `????` | MSYS rewrites arguments that look like paths and passes arguments to `curl.exe` through the ANSI code page | `export MSYS_NO_PATHCONV=1`; non-English values from UTF-8 files |
 | SkiaSharp added ~240 MB to `bin` | Its native package also ships debug symbols (`libSkiaSharp.pdb`, ~80 MB per Windows platform) | Excluded by the `ExcludeSkiaSharpNativeSymbols` target in the `.csproj` |
+| `@section.Title` broke the build (RZ2005) | `section` is a Razor keyword (`@section Scripts { }`), so `@section.` starts a directive | Never name a Razor variable `section`, `model`, `inject`, `functions`, `page` or `using` |
+| `<partial model="new X(a ? "b" : "c")" />` broke the build | The `"` of a C# string ends the HTML attribute | Build the model in an `@{ }` block and pass the variable |
+| MVC1006 in a view helper function | A function that renders tag helpers (`<a asp-route>`, `<icon>`) must be async | `async Task Name() { … }` and `await Name();` |
+| A per-form upload limit was ignored | The global antiforgery check (an authorization filter, order 1000) reads the whole form before resource filters run; after that the limit is locked | `UploadLimitAttribute` is an authorization filter with order 900, like ASP.NET Core's `[RequestSizeLimit]` |
+| An oversized upload shows "connection reset" instead of the 413 page | The server refuses the body as soon as it passes the limit and closes the connection while the browser is still sending | Expected HTTP/1.1 behaviour. The page checks file sizes before sending (`data-max-bytes`), so people never get there |
 
 ## 12. Open items
 
-- From the village: Gujarati spelling of "Khaparwada", taluka, district, state, village-centre coordinates,
-  real text and photos. Until then the database holds clearly marked `[Add …]` / `[Sample]` placeholders.
+- Known (October 2026): taluka Gandevi, district Navsari, state Gujarat (seed defaults in `ReferenceDataSeeder`;
+  Gujarati ગણદેવી, નવસારી, ગુજરાત to be confirmed). Still needed from the village: Gujarati spelling of
+  "Khaparwada", PIN code, village-centre coordinates, real text and photos. Until then the database holds clearly
+  marked `[Add …]` / `[Sample]` placeholders.
+- No "bin" screen yet: soft-deleted content is recoverable only in SQL (`IsDeleted = 0`). Planned with the admin
+  completion in Phase 11, together with permanently deleting old items and their photo files.
 - Native-speaker review of the Gujarati seed names (categories, tagline).
 - Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
   to make; consider making them admin-editable pages later. Its statement that photo location data is removed
   is now true: verified in Phase 3 (no EXIF, GPS or camera details in any saved file).
 - Hosting (Phase 14): set `Storage:*Path` to folders outside the site folder; on IIS raise
-  `maxAllowedContentLength` to 40 MB for the hero video; Linux hosting is possible (SkiaSharp's Linux library
+  `maxAllowedContentLength` to 36 MB (the largest upload form: Site settings); Linux hosting is possible (SkiaSharp's Linux library
   is included).
 - UI text on `/gu` pages stays English until the Phase 12 translations.
 - Hosting choice (affects Phase 14 only). The site must be hosted at the root of its domain (static files use

@@ -69,21 +69,29 @@ public sealed class DashboardService(AppDbContext db, IVillageClock clock) : IDa
             await db.ThenNowComparisons.CountAsync(t => t.Title.StartsWith(SamplePrefix), ct) +
             await db.MemorySubmissions.CountAsync(m => m.Title.StartsWith(SamplePrefix), ct);
 
+        // About sections still holding their "[Add …]" text from the first start.
+        var aboutToWrite = await db.AboutSections.CountAsync(s => s.IsPublished && s.Body.StartsWith("["), ct);
+        var aboutWritten = await db.AboutSections.CountAsync(s => s.IsPublished && !s.Body.StartsWith("["), ct);
+
         return
         [
-            new("Write the village introduction", "Shown on the home page under “About”.", IsFilled(village.ShortIntro), "VillageInfo"),
+            new("Write the village introduction", "Shown on the home page under “About”.", IsFilled(village.ShortIntro), "VillageInfo", AdminOnly: true),
             new("Add taluka, district and state", "Shown in the footer and in the village facts.",
-                IsFilled(village.Taluka) && IsFilled(village.District) && IsFilled(village.State), "VillageInfo"),
-            new("Mark the village centre on the map", "Click the map on the Village info page.", village.Latitude is not null, "VillageInfo"),
-            new("Add the village name in Gujarati", "Used on the Gujarati pages.", IsFilled(village.NameGu), "VillageInfo"),
+                IsFilled(village.Taluka) && IsFilled(village.District) && IsFilled(village.State), "VillageInfo", AdminOnly: true),
+            new("Mark the village centre on the map", "Click the map on the Village info page.", village.Latitude is not null, "VillageInfo", AdminOnly: true),
+            new("Add the village name in Gujarati", "Used on the Gujarati pages.", IsFilled(village.NameGu), "VillageInfo", AdminOnly: true),
             new("Add population and families", "Shown in the statistics on the home page.",
-                village.Population is not null && village.Households is not null, "VillageInfo"),
-            new("Upload a photo of the village", "Replaces the illustration at the top of the home page.", settings.HeroImagePath is not null, "SiteSettings"),
+                village.Population is not null && village.Households is not null, "VillageInfo", AdminOnly: true),
+            new("Write the About page", aboutToWrite == 0
+                    ? "Every section has its own text."
+                    : $"{aboutToWrite} sections still show “[Add …]”. Write them, or switch off the ones you do not need.",
+                aboutToWrite == 0 && aboutWritten > 0, "AboutSections"),
+            new("Upload a photo of the village", "Replaces the illustration at the top of the home page.", settings.HeroImagePath is not null, "SiteSettings", AdminOnly: true),
             new("Add the office contact details", "Shown in the contact strip on the home page.",
-                IsFilled(settings.OfficeEmail) || IsFilled(settings.OfficePhone), "SiteSettings"),
+                IsFilled(settings.OfficeEmail) || IsFilled(settings.OfficePhone), "SiteSettings", AdminOnly: true),
             new("Replace the sample content", sampleItems == 0
                     ? "All sample items are gone."
-                    : $"{sampleItems} items marked [Sample]. Their admin screens arrive from Phase 4.",
+                    : $"{sampleItems} items marked [Sample]. Rewrite or delete them; the timeline and “Then & now” screens are ready, the others follow with their phases.",
                 sampleItems == 0, null)
         ];
     }

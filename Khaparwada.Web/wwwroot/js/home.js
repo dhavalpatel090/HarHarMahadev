@@ -1,17 +1,7 @@
-// Home page: the "then & now" sliders, and the village map, which loads Leaflet only when it is
-// about to scroll into view (most visitors never scroll that far, so most never download it).
+// Home page: the village map, which loads Leaflet only when it is about to scroll into view
+// (most visitors never scroll that far, so most never download it).
 (() => {
     'use strict';
-
-    document.querySelectorAll('[data-then-now]').forEach((frame) => {
-        const range = frame.querySelector('.kc-compare-range');
-        if (!range) {
-            return;
-        }
-        const update = () => frame.style.setProperty('--pos', `${range.value}%`);
-        range.addEventListener('input', update);
-        update();
-    });
 
     const mapElement = document.querySelector('[data-kc-map]');
     if (mapElement && window.KcMap) {

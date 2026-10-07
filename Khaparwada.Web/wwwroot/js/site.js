@@ -39,6 +39,17 @@
         });
     }
 
+    // "Then & now" photo pairs (Home and History): the range input moves the dividing line.
+    document.querySelectorAll('[data-then-now]').forEach((frame) => {
+        const range = frame.querySelector('.kc-compare-range');
+        if (!range) {
+            return;
+        }
+        const update = () => frame.style.setProperty('--pos', `${range.value}%`);
+        range.addEventListener('input', update);
+        update();
+    });
+
     // Hero video: never on phones, with Save-Data on, or for visitors who prefer reduced motion.
     const video = document.querySelector('[data-hero-video]');
     if (video) {

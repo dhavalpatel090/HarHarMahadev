@@ -1,0 +1,18 @@
+@model ConfirmDeleteViewModel
+@* Shared "Delete …?" page for content screens; the buttons go to the current controller. *@
+@{
+    ViewData["Title"] = $"Delete “{Model.Name}”";
+}
+
+<section class="kc-panel kc-panel--narrow">
+    <div class="kc-panel-body">
+        <p>
+            This @Model.Kind disappears from the website at once. It is not erased from the database, so the site
+            administrator can bring it back if it was deleted by mistake.
+        </p>
+        <form method="post" asp-action="DeleteConfirmed" asp-route-id="@Model.Id" class="kc-inline-actions">
+            <button type="submit" class="btn btn-danger"><icon name="trash-can" /> Delete @Model.Kind</button>
+            <a class="btn btn-link" asp-action="Index">Cancel</a>
+        </form>
+    </div>
+</section>

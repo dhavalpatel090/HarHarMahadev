@@ -72,7 +72,7 @@
                             </span>
                             <span class="kc-setup-hint">@step.Hint</span>
                         </span>
-                        @if (!step.Done && step.Controller is not null && User.IsInRole(AppRoles.Admin))
+                        @if (!step.Done && step.Controller is not null && (!step.AdminOnly || User.IsInRole(AppRoles.Admin)))
                         {
                             <a class="btn btn-sm btn-kc-outline" asp-controller="@step.Controller" asp-action="Index">Open</a>
                         }

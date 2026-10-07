@@ -1,0 +1,39 @@
+@model ImageFieldViewModel
+@using Microsoft.Extensions.Options
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.StorageOptions> StorageOptions
+@* One photo field: preview, file input (size checked in the browser by admin.js), the server's message, and a
+   "remove" tick box when a photo is saved. The ids follow the InputModel property names. *@
+@{
+    var storage = StorageOptions.Value;
+    var previewId = Model.Name + "-preview";
+    var hintId = Model.Name + "-hint";
+    var hint = Model.Hint ?? $"JPG, PNG or WebP, up to {storage.MaxImageMegabytes} MB. It is resized automatically, and hidden details such as the GPS location are removed.";
+}
+<div class="kc-image-field">
+    <figure class="kc-media-preview">
+        @if (Model.CurrentUrl is not null)
+        {
+            <img id="@previewId" src="@Model.CurrentUrl" alt="" />
+            <figcaption>The photo on the website now.</figcaption>
+        }
+        else
+        {
+            <img id="@previewId" alt="" hidden />
+            <div class="kc-media-empty" data-preview-empty="@previewId"><icon name="image" /> No photo yet</div>
+        }
+    </figure>
+    <div class="kc-field">
+        <label class="kc-field-label" for="@Model.Name">@Model.Label</label>
+        <p class="kc-field-hint" id="@hintId">@hint</p>
+        <input class="form-control" type="file" id="@Model.Name" name="@Model.Name" accept="image/jpeg,image/png,image/webp"
+               aria-describedby="@hintId" data-max-bytes="@(storage.MaxImageMegabytes * 1024L * 1024L)" data-preview-target="@previewId" />
+        @Html.ValidationMessage(Model.Name, new { @class = "kc-field-error" })
+    </div>
+    @if (Model.CurrentUrl is not null)
+    {
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="@Model.RemoveName" name="@Model.RemoveName" value="true" />
+            <label class="form-check-label" for="@Model.RemoveName">Remove this photo</label>
+        </div>
+    }
+</div>

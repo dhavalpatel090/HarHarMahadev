@@ -1,0 +1,10 @@
+@model string?
+@* Small photo in admin lists (the 480 px version), or an empty tile when there is no photo. *@
+@if (Model is not null)
+{
+    <img class="kc-thumb" src="@MediaUrls.Image(Model, ImageSize.Small)" alt="" loading="lazy" decoding="async" />
+}
+else
+{
+    <span class="kc-thumb is-empty" aria-hidden="true"><icon name="image" /></span>
+}

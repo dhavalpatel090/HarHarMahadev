@@ -58,21 +58,21 @@ public sealed class SettingsAdminService(
     {
         var village = await db.VillageInfo.SingleAsync(cancellationToken);
         village.Name = input.Name.Trim();
-        village.NameGu = Clean(input.NameGu);
+        village.NameGu = AdminText.Optional(input.NameGu);
         village.ShortIntro = input.ShortIntro.Trim();
-        village.ShortIntroGu = Clean(input.ShortIntroGu);
+        village.ShortIntroGu = AdminText.Optional(input.ShortIntroGu);
         village.Population = input.Population;
         village.Households = input.Households;
         village.AreaSqKm = input.AreaSqKm;
-        village.StatsSource = Clean(input.StatsSource);
-        village.StatsSourceGu = Clean(input.StatsSourceGu);
-        village.Taluka = Clean(input.Taluka);
-        village.TalukaGu = Clean(input.TalukaGu);
-        village.District = Clean(input.District);
-        village.DistrictGu = Clean(input.DistrictGu);
-        village.State = Clean(input.State);
-        village.StateGu = Clean(input.StateGu);
-        village.PinCode = Clean(input.PinCode);
+        village.StatsSource = AdminText.Optional(input.StatsSource);
+        village.StatsSourceGu = AdminText.Optional(input.StatsSourceGu);
+        village.Taluka = AdminText.Optional(input.Taluka);
+        village.TalukaGu = AdminText.Optional(input.TalukaGu);
+        village.District = AdminText.Optional(input.District);
+        village.DistrictGu = AdminText.Optional(input.DistrictGu);
+        village.State = AdminText.Optional(input.State);
+        village.StateGu = AdminText.Optional(input.StateGu);
+        village.PinCode = AdminText.Optional(input.PinCode);
         village.Latitude = input.Latitude is { } latitude ? Math.Round(latitude, 6) : null;
         village.Longitude = input.Longitude is { } longitude ? Math.Round(longitude, 6) : null;
         village.MapZoom = input.MapZoom;
@@ -148,20 +148,20 @@ public sealed class SettingsAdminService(
 
         // 2. Update the row.
         settings.SiteName = input.SiteName.Trim();
-        settings.SiteNameGu = Clean(input.SiteNameGu);
+        settings.SiteNameGu = AdminText.Optional(input.SiteNameGu);
         settings.Tagline = input.Tagline.Trim();
-        settings.TaglineGu = Clean(input.TaglineGu);
-        settings.OfficeEmail = Clean(input.OfficeEmail);
-        settings.OfficePhone = Clean(input.OfficePhone);
+        settings.TaglineGu = AdminText.Optional(input.TaglineGu);
+        settings.OfficeEmail = AdminText.Optional(input.OfficeEmail);
+        settings.OfficePhone = AdminText.Optional(input.OfficePhone);
         settings.ShowOfficePhone = input.ShowOfficePhone;
-        settings.OfficeAddress = Clean(input.OfficeAddress);
-        settings.OfficeAddressGu = Clean(input.OfficeAddressGu);
-        settings.FacebookUrl = Clean(input.FacebookUrl);
-        settings.InstagramUrl = Clean(input.InstagramUrl);
-        settings.YouTubeUrl = Clean(input.YouTubeUrl);
-        settings.WhatsAppUrl = Clean(input.WhatsAppUrl);
-        settings.DefaultMetaDescription = Clean(input.DefaultMetaDescription);
-        settings.DefaultMetaDescriptionGu = Clean(input.DefaultMetaDescriptionGu);
+        settings.OfficeAddress = AdminText.Optional(input.OfficeAddress);
+        settings.OfficeAddressGu = AdminText.Optional(input.OfficeAddressGu);
+        settings.FacebookUrl = AdminText.Optional(input.FacebookUrl);
+        settings.InstagramUrl = AdminText.Optional(input.InstagramUrl);
+        settings.YouTubeUrl = AdminText.Optional(input.YouTubeUrl);
+        settings.WhatsAppUrl = AdminText.Optional(input.WhatsAppUrl);
+        settings.DefaultMetaDescription = AdminText.Optional(input.DefaultMetaDescription);
+        settings.DefaultMetaDescriptionGu = AdminText.Optional(input.DefaultMetaDescriptionGu);
 
         string? replacedImage = null, replacedVideo = null;
         if (newImage is not null || input.RemoveHeroImage)
@@ -194,7 +194,4 @@ public sealed class SettingsAdminService(
         siteInfo.Invalidate();
         return result;
     }
-
-    /// <summary>Trimmed text, or null for an empty field (so "Gujarati, else English" falls back correctly).</summary>
-    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

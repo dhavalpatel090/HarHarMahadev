@@ -1,0 +1,75 @@
+@model ThenNowInputModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a photo pair" : $"Edit “{Model.Title}”";
+    ViewData["Lead"] = "Then & now";
+    // Built here: C# string literals inside a model="…" attribute would end the attribute early.
+    var thenField = new ImageFieldViewModel(nameof(Model.ThenImage), nameof(Model.RemoveThenImage),
+        Model.CurrentThenImageUrl is null ? "Old photo" : "Choose a different old photo", Model.CurrentThenImageUrl);
+    var nowField = new ImageFieldViewModel(nameof(Model.NowImage), nameof(Model.RemoveNowImage),
+        Model.CurrentNowImageUrl is null ? "Recent photo" : "Choose a different recent photo", Model.CurrentNowImageUrl);
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">
+        Two photos of the same place, taken from about the same spot. Photos of the same shape (both landscape) compare best.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="photos-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="photos-title">Photos</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <partial name="_ImageField" model="thenField" />
+                </div>
+                <div class="col-lg-6">
+                    <partial name="_ImageField" model="nowField" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="text-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="text-title">Text</h2>
+            <p class="kc-panel-text">Gujarati text is optional.</p>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Title" for-gu="TitleGu" hint="Usually the name of the place, e.g. “Village square”." />
+            <bilingual-field for="ThenLabel" for-gu="ThenLabelGu" hint="When the old photo was taken, e.g. “1985” or “1980s”." />
+            <bilingual-field for="NowLabel" for-gu="NowLabelGu" />
+            <bilingual-field for="Caption" for-gu="CaptionGu" rows="3" hint="Optional: one or two sentences about what changed." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field kc-field--short">
+                <label asp-for="SortOrder" class="kc-field-label"></label>
+                <input asp-for="SortOrder" class="form-control" min="0" max="9999" aria-describedby="order-hint" />
+                <p class="kc-field-hint" id="order-hint">Smaller numbers come first. The first two also appear on the Home page.</p>
+                <span asp-validation-for="SortOrder" class="kc-field-error"></span>
+            </div>
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+            <span asp-validation-for="IsPublished" class="kc-field-error"></span>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add photo pair" : "Save photo pair")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

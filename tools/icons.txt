@@ -86,6 +86,7 @@ solid list-check
 solid inbox
 solid video
 solid upload
+solid arrows-left-right
 
 # Notice categories and priorities
 solid droplet

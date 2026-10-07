@@ -1,0 +1,23 @@
+@model ThenNowViewModel
+@* A before/after photo pair with a slider (site.js). Without JavaScript the two photos stay half and half. *@
+<figure class="kc-compare">
+    <div class="kc-compare-frame" data-then-now>
+        <img class="kc-compare-now" src="@Model.NowImageUrl" alt="@L["{0} today", Model.Title]" loading="lazy" decoding="async" />
+        <img class="kc-compare-then @(Model.ThenIsPlaceholder ? "is-sepia" : null)" src="@Model.ThenImageUrl"
+             alt="@L["{0} in the past", Model.Title]" loading="lazy" decoding="async" />
+        <span class="kc-compare-label is-then">@Model.ThenLabel</span>
+        <span class="kc-compare-label is-now">@Model.NowLabel</span>
+        <span class="kc-compare-handle" aria-hidden="true">
+            <span class="kc-compare-knob"><icon name="chevron-right" class="is-flipped" /><icon name="chevron-right" /></span>
+        </span>
+        <input class="kc-compare-range" type="range" min="0" max="100" value="50"
+               aria-label="@L["Compare then and now: {0}", Model.Title]" />
+    </div>
+    <figcaption>
+        <strong>@Model.Title</strong>
+        @if (!string.IsNullOrWhiteSpace(Model.Caption))
+        {
+            <span>@Model.Caption</span>
+        }
+    </figcaption>
+</figure>

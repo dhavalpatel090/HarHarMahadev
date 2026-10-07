@@ -36,7 +36,6 @@ public sealed class DemoDataSeeder(
         var personCategories = await db.PersonCategories.ToDictionaryAsync(c => c.Slug, cancellationToken);
         var galleryCategories = await db.GalleryCategories.ToDictionaryAsync(c => c.Slug, cancellationToken);
 
-        AddAboutSections();
         AddHistory(clock);
         AddThenNow();
         var places = AddPlaces(placeCategories);
@@ -50,45 +49,6 @@ public sealed class DemoDataSeeder(
 
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Inserted [Sample] demo content (Seed:DemoData = true).");
-    }
-
-    private void AddAboutSections()
-    {
-        (string Slug, string Title, string TitleGu, string Body, string BodyGu)[] sections =
-        [
-            ("introduction", "Introduction", "પરિચય",
-                "[Add an introduction to Khaparwada here: where it is, who lives here and what makes it special.]",
-                "[અહીં ગામનો પરિચય ઉમેરો: ગામ ક્યાં આવેલું છે, અહીં કોણ રહે છે અને ગામની વિશેષતા શું છે.]"),
-            ("history", "History", "ઇતિહાસ",
-                "[Add Khaparwada historical information here]",
-                "[અહીં ગામની ઐતિહાસિક માહિતી ઉમેરો]"),
-            ("culture", "Culture", "સંસ્કૃતિ",
-                "[Add information about Khaparwada's culture here]",
-                "[અહીં ગામની સંસ્કૃતિ વિશે માહિતી ઉમેરો]"),
-            ("traditions", "Traditions", "પરંપરાઓ",
-                "[Add the village's traditions here]",
-                "[અહીં ગામની પરંપરાઓ ઉમેરો]"),
-            ("festivals", "Festivals", "તહેવારો",
-                "[Add how festivals are celebrated in Khaparwada here]",
-                "[અહીં ગામમાં તહેવારો કેવી રીતે ઉજવાય છે તે ઉમેરો]"),
-            ("geography", "Geography", "ભૂગોળ",
-                "[Add the village's geography here: land, water sources, climate, nearby villages]",
-                "[અહીં ગામની ભૂગોળ ઉમેરો: જમીન, પાણીના સ્રોત, આબોહવા, આસપાસનાં ગામ]"),
-            ("development", "Village Development", "ગામનો વિકાસ",
-                "[Add development work and future plans here]",
-                "[અહીં વિકાસનાં કામો અને ભવિષ્યની યોજનાઓ ઉમેરો]")
-        ];
-
-        db.AboutSections.AddRange(sections.Select((s, index) => new AboutSection
-        {
-            Slug = s.Slug,
-            Title = s.Title,
-            TitleGu = s.TitleGu,
-            Body = s.Body,
-            BodyGu = s.BodyGu,
-            SortOrder = index + 1,
-            IsPublished = true
-        }));
     }
 
     private void AddHistory(LocalClock clock)

@@ -1,0 +1,97 @@
+@model HistoryPageViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    var village = Model.Site.VillageName;
+    var title = L["Village history"].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = L["A timeline of the moments that shaped {0}, and photos of how the village has changed.", village].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = L["Moments that shaped {0}, from the earliest records to today.", village],
+        Icon = "clock-rotate-left",
+        Breadcrumbs = [new BreadcrumbItem(title)]
+    };
+}
+@functions {
+    private static bool IsPlaceholder(string text) => text.TrimStart().StartsWith('[');
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-history-page" aria-labelledby="kc-timeline-heading">
+    <div class="container">
+        <h2 class="visually-hidden" id="kc-timeline-heading">@L["Timeline"]</h2>
+        @if (Model.Entries.Count == 0)
+        {
+            <p class="kc-empty">@L["The timeline is being prepared. Please visit again soon."]</p>
+        }
+        else
+        {
+            <ol class="kc-story-timeline">
+                @foreach (var item in Model.Entries)
+                {
+                    <li class="kc-story-item @(item.IsHighlighted ? "is-milestone" : null)" id="@item.Anchor" data-reveal>
+                        <p class="kc-story-year">@item.YearLabel</p>
+                        <span class="kc-story-marker" aria-hidden="true"></span>
+                        <article class="kc-story-card">
+                            <h3 class="kc-story-title">
+                                @item.Title
+                                @if (item.IsHighlighted)
+                                {
+                                    <span class="kc-badge kc-badge--milestone">@L["Milestone"]</span>
+                                }
+                            </h3>
+                            @if (item.ImagePath is not null)
+                            {
+                                <img class="kc-story-image" src="@MediaUrls.Image(item.ImagePath, ImageSize.Medium)" srcset="@MediaUrls.SrcSet(item.ImagePath)"
+                                     sizes="(min-width: 992px) 720px, 100vw" alt="@item.Title" loading="lazy" decoding="async" />
+                            }
+                            <div class="kc-story-text @(IsPlaceholder(item.Description) ? "kc-placeholder-text" : null)">
+                                @foreach (var paragraph in TextHelpers.Paragraphs(item.Description))
+                                {
+                                    <p>@paragraph</p>
+                                }
+                            </div>
+                        </article>
+                    </li>
+                }
+            </ol>
+        }
+    </div>
+</section>
+
+@if (Model.ThenNow.Count > 0)
+{
+    var heading = new SectionHeadingViewModel(
+        L["Then & now"], L["How {0} has changed", village], "then-now-title",
+        L["Drag the slider to compare the same place, years apart."]);
+
+    <section class="kc-section kc-section--indigo kc-then-now" id="then-and-now" aria-labelledby="then-now-title">
+        <div class="container">
+            <partial name="_SectionHeading" model="heading" />
+            <div class="row g-4">
+                @foreach (var item in Model.ThenNow)
+                {
+                    <div class="col-lg-6" data-reveal>
+                        <partial name="_ThenNowFigure" model="item" />
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<section class="kc-section">
+    <div class="container">
+        <aside class="kc-story-cta" data-reveal>
+            <div>
+                <h2>@L["Help us complete the story"]</h2>
+                <p>@L["Do you have old photos, documents or memories of {0}? Share them: after a check, they can become part of this timeline.", village]</p>
+            </div>
+            <div class="kc-story-cta-actions">
+                <a class="btn btn-kc-accent" asp-route="@RouteNames.ShareMemory"><icon name="camera" /> @L["Share a memory"]</a>
+                <a class="btn btn-kc-ghost" asp-route="@RouteNames.About"><icon name="book-open" /> @L["About the village"]</a>
+            </div>
+        </aside>
+    </div>
+</section>

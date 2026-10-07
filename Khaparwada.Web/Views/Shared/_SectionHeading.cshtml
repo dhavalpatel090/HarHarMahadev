@@ -10,6 +10,6 @@
     </div>
     @if (Model.LinkRoute is not null && Model.LinkText is not null)
     {
-        <a class="kc-link-arrow" asp-route="@Model.LinkRoute">@Model.LinkText <icon name="arrow-right" /></a>
+        <a class="kc-link-arrow" asp-route="@Model.LinkRoute" asp-fragment="@Model.LinkFragment">@Model.LinkText <icon name="arrow-right" /></a>
     }
 </div>

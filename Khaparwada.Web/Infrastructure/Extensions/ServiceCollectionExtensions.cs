@@ -10,8 +10,10 @@ using Khaparwada.Web.Infrastructure.ModelBinding;
 using Khaparwada.Web.Infrastructure.Options;
 using Khaparwada.Web.Infrastructure.Security;
 using Khaparwada.Web.Models.Entities;
+using Khaparwada.Web.Services.About;
 using Khaparwada.Web.Services.Admin;
 using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.Home;
 using Khaparwada.Web.Services.Media;
 using Khaparwada.Web.Services.Notices;
@@ -211,6 +213,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISiteInfoService, SiteInfoService>();
         services.AddScoped<INoticeService, NoticeService>();
         services.AddScoped<IHomeService, HomeService>();
+        services.AddScoped<IAboutService, AboutService>();
+        services.AddScoped<IHistoryService, HistoryService>();
 
         // Uploads (stateless, so one instance serves every request).
         services.AddSingleton<IUploadStorage, LocalUploadStorage>();
@@ -223,6 +227,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISettingsAdminService, SettingsAdminService>();
         services.AddScoped<ICategoryAdminService, CategoryAdminService>();
         services.AddScoped<IUsefulLinkAdminService, UsefulLinkAdminService>();
+        services.AddScoped<IAboutSectionAdminService, AboutSectionAdminService>();
+        services.AddScoped<ITimelineAdminService, TimelineAdminService>();
+        services.AddScoped<IThenNowAdminService, ThenNowAdminService>();
 
         return services;
     }

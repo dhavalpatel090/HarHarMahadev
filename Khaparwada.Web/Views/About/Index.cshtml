@@ -1,0 +1,153 @@
+@model AboutPageViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    var village = Model.Site.VillageName;
+    var title = L["About {0}", village].Value;
+    var location = Model.Site.Location;
+    ViewData["Title"] = title;
+    ViewData["Description"] = string.IsNullOrWhiteSpace(location)
+        ? L["The story of {0}: its history, culture, traditions, festivals, geography and development.", village].Value
+        : L["The story of {0}, a village in {1}: its history, culture, traditions, festivals, geography and development.", village, location].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = string.IsNullOrWhiteSpace(location)
+            ? L["Where we come from, how we live and where we are going."]
+            : L["A village in {0}. Where we come from, how we live and where we are going.", location],
+        Icon = "book-open",
+        Breadcrumbs = [new BreadcrumbItem(L["About"])]
+    };
+    var hasContent = Model.Sections.Count > 0 || Model.Milestones.Count > 0;
+}
+<partial name="_PageHeader" model="header" />
+
+@* Placeholder text from the first start ("[Add …]") is shown in a muted style, so it reads as "to be written". *@
+@functions {
+    private static bool IsPlaceholder(string text) => text.TrimStart().StartsWith('[');
+}
+
+@{
+    async Task Milestones()
+    {
+        if (Model.Milestones.Count == 0)
+        {
+            return;
+        }
+
+        <section class="kc-milestones" id="@AboutPageAnchors.Milestones" aria-labelledby="kc-about-milestones-heading" data-reveal>
+            <h2 class="kc-about-title" id="kc-about-milestones-heading">@L["Milestones"]</h2>
+            <ol class="kc-milestone-list">
+                @foreach (var item in Model.Milestones)
+                {
+                    <li>
+                        <span class="kc-milestone-year">@item.YearLabel</span>
+                        <div>
+                            <h3 class="kc-milestone-title"><a asp-route="@RouteNames.History" asp-fragment="@item.Anchor">@item.Title</a></h3>
+                            <p class="kc-milestone-text @(IsPlaceholder(item.Description) ? "kc-placeholder-text" : null)">@item.Description</p>
+                        </div>
+                    </li>
+                }
+            </ol>
+            <a class="kc-link-arrow" asp-route="@RouteNames.History">@L["See the full timeline"] <icon name="arrow-right" /></a>
+        </section>
+    }
+}
+
+<section class="kc-section kc-about-page">
+    <div class="container">
+        @if (!hasContent)
+        {
+            <p class="kc-empty">@L["The village's story is being written. Please visit again soon."]</p>
+        }
+        else
+        {
+            <div class="row g-4 g-lg-5">
+                <aside class="col-lg-4 col-xl-3 order-lg-2">
+                    <nav class="kc-toc" id="@AboutPageAnchors.Contents" aria-labelledby="kc-about-toc-heading">
+                        <p class="kc-toc-title" id="kc-about-toc-heading">@L["On this page"]</p>
+                        <ol class="kc-toc-list">
+                            @if (Model.Facts.Count > 0)
+                            {
+                                <li><a href="#@AboutPageAnchors.Facts">@L["At a glance"]</a></li>
+                            }
+                            @foreach (var part in Model.Sections)
+                            {
+                                <li><a href="#@part.Anchor">@part.Title</a></li>
+                                @if (Model.Milestones.Count > 0 && Model.MilestonesFollow(part))
+                                {
+                                    <li><a href="#@AboutPageAnchors.Milestones">@L["Milestones"]</a></li>
+                                }
+                            }
+                            @if (Model.Sections.Count == 0 && Model.Milestones.Count > 0)
+                            {
+                                <li><a href="#@AboutPageAnchors.Milestones">@L["Milestones"]</a></li>
+                            }
+                        </ol>
+                    </nav>
+                </aside>
+
+                <div class="col-lg-8 col-xl-9 order-lg-1">
+                    @if (Model.Facts.Count > 0)
+                    {
+                        <section class="kc-glance" id="@AboutPageAnchors.Facts" aria-labelledby="kc-about-facts-heading">
+                            <h2 class="kc-glance-title" id="kc-about-facts-heading">@L["At a glance"]</h2>
+                            <dl class="kc-glance-list">
+                                @foreach (var fact in Model.Facts)
+                                {
+                                    <div>
+                                        <dt>@fact.Label</dt>
+                                        <dd>@fact.Value</dd>
+                                    </div>
+                                }
+                            </dl>
+                            @if (!string.IsNullOrWhiteSpace(Model.Site.StatsSource))
+                            {
+                                <p class="kc-glance-source">@L["Source of the figures: {0}", Model.Site.StatsSource]</p>
+                            }
+                        </section>
+                    }
+
+                    @foreach (var part in Model.Sections)
+                    {
+                        <section class="kc-about-section" id="@part.Anchor" data-reveal>
+                            <h2 class="kc-about-title">@part.Title</h2>
+                            @if (part.ImagePath is not null)
+                            {
+                                <figure class="kc-about-figure">
+                                    <img src="@MediaUrls.Image(part.ImagePath, ImageSize.Medium)" srcset="@MediaUrls.SrcSet(part.ImagePath)"
+                                         sizes="(min-width: 1400px) 900px, (min-width: 992px) 66vw, 100vw"
+                                         alt="@part.Title" loading="lazy" decoding="async" />
+                                </figure>
+                            }
+                            <div class="kc-about-body @(IsPlaceholder(part.Body) ? "kc-placeholder-text" : null)">
+                                @foreach (var paragraph in TextHelpers.Paragraphs(part.Body))
+                                {
+                                    <p>@paragraph</p>
+                                }
+                            </div>
+                        </section>
+                        @if (Model.MilestonesFollow(part))
+                        {
+                            await Milestones();
+                        }
+                    }
+                    @if (Model.Sections.Count == 0)
+                    {
+                        await Milestones();
+                    }
+
+                    <aside class="kc-story-cta" data-reveal>
+                        <div>
+                            <h2>@L["Do you remember the old days?"]</h2>
+                            <p>@L["Old photos, stories and memories help write the village's history. Share yours: after a check, it appears on the website."]</p>
+                        </div>
+                        <div class="kc-story-cta-actions">
+                            <a class="btn btn-kc-accent" asp-route="@RouteNames.ShareMemory"><icon name="camera" /> @L["Share a memory"]</a>
+                            <a class="btn btn-kc-ghost" asp-route="@RouteNames.History"><icon name="clock-rotate-left" /> @L["Explore the timeline"]</a>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        }
+    </div>
+</section>

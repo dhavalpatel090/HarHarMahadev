@@ -1,0 +1,77 @@
+@model AboutSectionInputModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a section" : $"Edit “{Model.Title}”";
+    ViewData["Lead"] = "About page";
+    var photoField = new ImageFieldViewModel(nameof(Model.Image), nameof(Model.RemoveImage),
+        Model.CurrentImageUrl is null ? "Choose a photo" : "Choose a new photo", Model.CurrentImageUrl);
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">
+        Plain text only: a blank line starts a new paragraph. The Gujarati text is optional; without it, the Gujarati
+        page shows the English text. Please write only what you know to be true.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="text-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="text-title">Text</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Title" for-gu="TitleGu" />
+            <bilingual-field for="Body" for-gu="BodyGu" rows="12" />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="photo-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="photo-title">Photo</h2>
+            <p class="kc-panel-text">Optional. Shown above the text.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-image-field-wrap">
+                <partial name="_ImageField" model="photoField" />
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="place-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="place-title">Place on the page</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    Lets people link straight to this section, e.g. <code class="kc-code">/about#culture</code>.
+                    Lowercase English letters, numbers and hyphens; filled in from the English title.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.Title)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+
+            <div class="kc-field kc-field--short">
+                <label asp-for="SortOrder" class="kc-field-label"></label>
+                <input asp-for="SortOrder" class="form-control" min="0" max="9999" aria-describedby="order-hint" />
+                <p class="kc-field-hint" id="order-hint">Smaller numbers come first.</p>
+                <span asp-validation-for="SortOrder" class="kc-field-error"></span>
+            </div>
+
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add section" : "Save section")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

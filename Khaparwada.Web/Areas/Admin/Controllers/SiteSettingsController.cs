@@ -1,4 +1,5 @@
 using Khaparwada.Web.Areas.Admin.Models;
+using Khaparwada.Web.Infrastructure.Media;
 using Khaparwada.Web.Infrastructure.Security;
 using Khaparwada.Web.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
@@ -10,17 +11,12 @@ namespace Khaparwada.Web.Areas.Admin.Controllers;
 [Authorize(Policy = Policies.AdminOnly)]
 public class SiteSettingsController(ISettingsAdminService settings) : AdminControllerBase
 {
-    // A photo (10 MB) and a video (25 MB) can arrive in one form. The services enforce the exact limits from
-    // Storage settings; this only caps the whole request. Raise it if you raise those limits.
-    private const long MaxRequestBytes = 40L * 1024 * 1024;
-
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken) =>
         View(await settings.GetSiteSettingsAsync(cancellationToken));
 
     [HttpPost("")]
-    [RequestSizeLimit(MaxRequestBytes)]
-    [RequestFormLimits(MultipartBodyLengthLimit = MaxRequestBytes)]
+    [UploadLimit(images: 1, videos: 1)] // a photo and a video can arrive in one form
     public async Task<IActionResult> Index(SiteSettingsInputModel input, CancellationToken cancellationToken)
     {
         if (ModelState.IsValid)

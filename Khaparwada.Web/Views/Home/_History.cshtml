@@ -14,7 +14,7 @@
                 {
                     <li class="kc-timeline-item" data-reveal>
                         <span class="kc-timeline-year">@item.YearLabel</span>
-                        <h3 class="kc-timeline-title">@item.Title</h3>
+                        <h3 class="kc-timeline-title"><a asp-route="@RouteNames.History" asp-fragment="@item.Anchor">@item.Title</a></h3>
                         <p class="kc-timeline-text">@item.Description</p>
                     </li>
                 }

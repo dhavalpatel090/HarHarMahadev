@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Khaparwada.Web.Data.Seed;
 
 /// <summary>
-/// Inserts the data the site cannot work without: the three category lists and the two settings rows.
-/// Each table is filled only while it is completely empty, so a category an admin deletes later is not
-/// brought back on the next restart. Unknown village facts are clearly marked placeholders, and the
-/// Gujarati names are a first draft for a native speaker to check.
+/// Inserts the data the site cannot work without: the three category lists, the two settings rows and the
+/// About page's sections. Each table is filled only while it is completely empty, so a row an admin deletes
+/// later is not brought back on the next restart. Unknown village facts are clearly marked placeholders, and
+/// the Gujarati names are a first draft for a native speaker to check.
 /// </summary>
 public sealed class ReferenceDataSeeder(AppDbContext db, ILogger<ReferenceDataSeeder> logger)
 {
@@ -63,10 +63,25 @@ public sealed class ReferenceDataSeeder(AppDbContext db, ILogger<ReferenceDataSe
                 Name = "Khaparwada",
                 ShortIntro = "[Add a short introduction to Khaparwada here]",
                 ShortIntroGu = "[અહીં ગામનો ટૂંકો પરિચય ઉમેરો]",
-                Taluka = "[Add taluka]",
-                District = "[Add district]",
-                State = "[Add state]"
+                Taluka = KnownFacts.Taluka,
+                TalukaGu = KnownFacts.TalukaGu,
+                District = KnownFacts.District,
+                DistrictGu = KnownFacts.DistrictGu,
+                State = KnownFacts.State,
+                StateGu = KnownFacts.StateGu
             });
+        }
+        else
+        {
+            await FillKnownFactsAsync(cancellationToken);
+        }
+
+        // The About page's topics (spec: introduction, history, culture, traditions, festivals, geography,
+        // development; milestones come from the timeline). They are the page's structure, so every
+        // environment gets them, as clearly marked placeholders for the admin to replace.
+        if (!await db.AboutSections.IgnoreQueryFilters().AnyAsync(cancellationToken))
+        {
+            AddAboutSections();
         }
 
         if (!await db.SiteSettings.AnyAsync(cancellationToken))
@@ -85,8 +100,84 @@ public sealed class ReferenceDataSeeder(AppDbContext db, ILogger<ReferenceDataSe
         var inserted = await db.SaveChangesAsync(cancellationToken);
         if (inserted > 0)
         {
-            logger.LogInformation("Inserted {Count} rows of reference data.", inserted);
+            logger.LogInformation("Saved {Count} rows of reference data.", inserted);
         }
+    }
+
+    /// <summary>
+    /// Databases created before these facts were known still hold "[Add taluka]" and so on. A value is replaced
+    /// only while it is still that original placeholder, so anything an admin typed is never overwritten.
+    /// </summary>
+    private async Task FillKnownFactsAsync(CancellationToken cancellationToken)
+    {
+        var village = await db.VillageInfo.SingleAsync(cancellationToken);
+        if (village.Taluka == "[Add taluka]")
+        {
+            village.Taluka = KnownFacts.Taluka;
+            village.TalukaGu ??= KnownFacts.TalukaGu;
+        }
+
+        if (village.District == "[Add district]")
+        {
+            village.District = KnownFacts.District;
+            village.DistrictGu ??= KnownFacts.DistrictGu;
+        }
+
+        if (village.State == "[Add state]")
+        {
+            village.State = KnownFacts.State;
+            village.StateGu ??= KnownFacts.StateGu;
+        }
+    }
+
+    private void AddAboutSections()
+    {
+        (string Slug, string Title, string TitleGu, string Body, string BodyGu)[] sections =
+        [
+            ("introduction", "Introduction", "પરિચય",
+                "[Add an introduction to Khaparwada here: where it is, who lives here and what makes it special.]",
+                "[અહીં ગામનો પરિચય ઉમેરો: ગામ ક્યાં આવેલું છે, અહીં કોણ રહે છે અને ગામની વિશેષતા શું છે.]"),
+            ("history", "History", "ઇતિહાસ",
+                "[Add Khaparwada historical information here]",
+                "[અહીં ગામની ઐતિહાસિક માહિતી ઉમેરો]"),
+            ("culture", "Culture", "સંસ્કૃતિ",
+                "[Add information about Khaparwada's culture here]",
+                "[અહીં ગામની સંસ્કૃતિ વિશે માહિતી ઉમેરો]"),
+            ("traditions", "Traditions", "પરંપરાઓ",
+                "[Add the village's traditions here]",
+                "[અહીં ગામની પરંપરાઓ ઉમેરો]"),
+            ("festivals", "Festivals", "તહેવારો",
+                "[Add how festivals are celebrated in Khaparwada here]",
+                "[અહીં ગામમાં તહેવારો કેવી રીતે ઉજવાય છે તે ઉમેરો]"),
+            ("geography", "Geography", "ભૂગોળ",
+                "[Add the village's geography here: land, water sources, climate, nearby villages]",
+                "[અહીં ગામની ભૂગોળ ઉમેરો: જમીન, પાણીના સ્રોત, આબોહવા, આસપાસનાં ગામ]"),
+            ("development", "Village Development", "ગામનો વિકાસ",
+                "[Add development work and future plans here]",
+                "[અહીં વિકાસનાં કામો અને ભવિષ્યની યોજનાઓ ઉમેરો]")
+        ];
+
+        db.AboutSections.AddRange(sections.Select((s, index) => new AboutSection
+        {
+            Slug = s.Slug,
+            Title = s.Title,
+            TitleGu = s.TitleGu,
+            Body = s.Body,
+            BodyGu = s.BodyGu,
+            SortOrder = (index + 1) * 10,
+            IsPublished = true
+        }));
+    }
+
+    /// <summary>Confirmed by the village (October 2026). Gujarati spellings are the official names; please confirm.</summary>
+    private static class KnownFacts
+    {
+        public const string Taluka = "Gandevi";
+        public const string TalukaGu = "ગણદેવી";
+        public const string District = "Navsari";
+        public const string DistrictGu = "નવસારી";
+        public const string State = "Gujarat";
+        public const string StateGu = "ગુજરાત";
     }
 
     private static PlaceCategory NewPlaceCategory(

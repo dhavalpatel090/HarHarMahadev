@@ -1391,6 +1391,253 @@ html[lang="gu"] .kc-hero-title { max-width: 18ch; }
     .kc-notice-arrow { display: none; }
 }
 
+/* Text still holding a "[Add …]" placeholder reads as "to be written", not as content. */
+.kc-placeholder-text,
+.kc-placeholder-text p { color: var(--kc-muted); font-style: italic; }
+
+.kc-timeline-title a { color: inherit; text-decoration: none; }
+.kc-timeline-title a:hover { color: var(--kc-maroon); text-decoration: underline; }
+
+/* About page: contents list (chips that scroll sideways on phones, a sticky list from 992px), "at a glance"
+   facts, the admin-written sections and the milestones taken from the timeline. */
+.kc-toc {
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+}
+.kc-toc-title {
+    margin: 0 0 .6rem;
+    color: var(--kc-muted);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.kc-toc-list {
+    display: flex;
+    gap: .5rem;
+    margin: 0;
+    padding: 0 0 .3rem;
+    overflow-x: auto;
+    list-style: none;
+    scrollbar-width: thin;
+}
+.kc-toc-list a {
+    display: inline-block;
+    padding: .4rem .85rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-ivory);
+    color: var(--kc-text);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.kc-toc-list a:hover { border-color: var(--kc-marigold); color: var(--kc-maroon); }
+@media (min-width: 992px) {
+    .kc-toc { position: sticky; top: 6.5rem; }
+    .kc-toc-list { flex-direction: column; gap: .1rem; padding: 0; overflow: visible; }
+    .kc-toc-list a {
+        display: block;
+        padding: .45rem .75rem;
+        border: 0;
+        border-left: 3px solid transparent;
+        border-radius: 0 var(--kc-radius-sm) var(--kc-radius-sm) 0;
+        background: none;
+        white-space: normal;
+    }
+    .kc-toc-list a:hover { border-left-color: var(--kc-marigold); background: var(--kc-marigold-50); }
+}
+
+.kc-glance {
+    margin-bottom: 2.5rem;
+    padding: 1.4rem 1.5rem;
+    border-radius: var(--kc-radius);
+    background: var(--kc-sand);
+}
+.kc-glance-title { margin: 0 0 1rem; font-size: 1.35rem; }
+.kc-glance-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: 1rem 1.5rem;
+    margin: 0;
+}
+.kc-glance-list dt {
+    color: var(--kc-muted);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.kc-glance-list dd {
+    margin: .1rem 0 0;
+    color: var(--kc-ink);
+    font-family: var(--kc-font-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+.kc-glance-source { margin: 1rem 0 0; color: var(--kc-muted); font-size: .88rem; }
+
+.kc-about-section,
+.kc-milestones {
+    margin-bottom: 2.25rem;
+    padding-bottom: 2.25rem;
+    border-bottom: 1px solid var(--kc-line);
+}
+.kc-about-title { margin: 0 0 1rem; font-size: clamp(1.6rem, 1.3rem + 1vw, 2.1rem); }
+.kc-about-figure { margin: 0 0 1.25rem; }
+.kc-about-figure img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--kc-radius);
+    background: var(--kc-sand);
+    object-fit: cover;
+}
+.kc-about-body p { color: var(--kc-text); font-size: 1.08rem; }
+.kc-about-body p:last-child { margin-bottom: 0; }
+
+.kc-milestone-list {
+    display: grid;
+    gap: .9rem;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
+}
+.kc-milestone-list li {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+}
+.kc-milestone-year {
+    justify-self: start;
+    padding: .2rem .75rem;
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-maroon);
+    color: var(--kc-white);
+    font-size: .9rem;
+    font-weight: 700;
+}
+.kc-milestone-title { margin: 0 0 .25rem; font-size: 1.15rem; }
+.kc-milestone-title a { color: inherit; text-decoration: none; }
+.kc-milestone-title a:hover { color: var(--kc-maroon); text-decoration: underline; }
+.kc-milestone-text { margin: 0; color: var(--kc-muted); font-size: .97rem; }
+@media (max-width: 575.98px) {
+    .kc-milestone-list li { grid-template-columns: minmax(0, 1fr); gap: .5rem; }
+}
+
+.kc-story-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1.75rem;
+    border-radius: var(--kc-radius-lg);
+    background: var(--kc-indigo);
+    color: #D9DEE8;
+}
+.kc-story-cta h2 { margin: 0 0 .35rem; color: var(--kc-white); font-size: 1.5rem; }
+.kc-story-cta p { max-width: 36rem; margin: 0; }
+.kc-story-cta-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+/* History page: a vertical timeline that reads top to bottom (1950 → 1960 → … → Present).
+   Phones: line on the left, the year above each story. From 768px: year | line | story. */
+.kc-story-timeline {
+    position: relative;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+}
+.kc-story-timeline::before {
+    content: "";
+    position: absolute;
+    top: .6rem;
+    bottom: .6rem;
+    left: calc(.875rem - 1px);
+    width: 2px;
+    background: linear-gradient(var(--kc-marigold), var(--kc-maroon));
+}
+.kc-story-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    column-gap: .9rem;
+    padding-bottom: 2rem;
+}
+.kc-story-item:last-child { padding-bottom: 0; }
+.kc-story-year {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0 0 .5rem;
+    color: var(--kc-maroon);
+    font-family: var(--kc-font-heading);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.kc-story-marker {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: center;
+    width: 18px;
+    height: 18px;
+    margin-top: .45rem;
+    border: 3px solid var(--kc-marigold);
+    border-radius: 50%;
+    background: var(--kc-ivory);
+}
+.kc-story-item.is-milestone .kc-story-marker {
+    border-color: var(--kc-maroon);
+    background: var(--kc-maroon);
+    box-shadow: 0 0 0 5px var(--kc-maroon-50);
+}
+.kc-story-card {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 1.25rem 1.35rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-sm);
+}
+.kc-story-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem .6rem;
+    margin: 0 0 .75rem;
+    font-size: 1.3rem;
+}
+.kc-badge--milestone { background: var(--kc-maroon-50); color: var(--kc-maroon); font-family: var(--kc-font-body); }
+html[lang="gu"] .kc-badge--milestone,
+html[lang="gu"] :is(.kc-toc-title, .kc-glance-list dt) { letter-spacing: 0; text-transform: none; }
+.kc-story-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    margin-bottom: 1rem;
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-sand);
+    object-fit: cover;
+}
+.kc-story-text p { color: var(--kc-text); }
+.kc-story-text p:last-child { margin-bottom: 0; }
+@media (min-width: 768px) {
+    .kc-story-timeline::before { left: calc(9rem + 1.25rem - 1px); }
+    .kc-story-item { grid-template-columns: 9rem 2.5rem minmax(0, 1fr); column-gap: 0; padding-bottom: 2.5rem; }
+    .kc-story-year { grid-column: 1; padding-right: .75rem; margin: .1rem 0 0; text-align: right; }
+    .kc-story-marker { grid-column: 2; }
+    .kc-story-card { grid-column: 3; grid-row: 1; }
+}
+
 /* 8. Motion: sections fade up as they scroll into view (js/site.js adds .kc-js). Nothing is
    hidden if JavaScript does not run, and visitors who prefer reduced motion see no animation. */
 .kc-js [data-reveal] {

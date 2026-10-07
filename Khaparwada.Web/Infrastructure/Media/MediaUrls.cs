@@ -33,4 +33,13 @@ public static class MediaUrls
         };
         return $"{RequestPath}/{imagePath}-{suffix}.webp";
     }
+
+    /// <summary>
+    /// The three saved sizes for an img srcset, so phones download the 480 px file and large screens the
+    /// 1920 px one. Widths are each size's longest side (exact for landscape photos).
+    /// </summary>
+    public static string? SrcSet(string? imagePath) =>
+        string.IsNullOrWhiteSpace(imagePath)
+            ? null
+            : $"{Image(imagePath, ImageSize.Small)} 480w, {Image(imagePath, ImageSize.Medium)} 960w, {Image(imagePath, ImageSize.Large)} 1920w";
 }

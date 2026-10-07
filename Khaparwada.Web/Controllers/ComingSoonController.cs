@@ -11,14 +11,6 @@ namespace Khaparwada.Web.Controllers;
 /// </summary>
 public class ComingSoonController : Controller
 {
-    [HttpGet("about", Name = RouteNames.About)]
-    public IActionResult About() =>
-        Placeholder(RouteNames.About, "About the village", "Introduction, culture, traditions, festivals and how the village is growing.", "book-open");
-
-    [HttpGet("history", Name = RouteNames.History)]
-    public IActionResult History() =>
-        Placeholder(RouteNames.History, "Village history", "A timeline of the moments that shaped the village.", "clock-rotate-left");
-
     [HttpGet("places", Name = RouteNames.Places)]
     public IActionResult Places() =>
         Placeholder(RouteNames.Places, "Places", "Temples, schools, offices, water places and other important places.", "location-dot");

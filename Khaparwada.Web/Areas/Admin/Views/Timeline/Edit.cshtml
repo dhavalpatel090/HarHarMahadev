@@ -1,0 +1,80 @@
+@model TimelineEntryInputModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a timeline entry" : $"Edit “{Model.Title}”";
+    ViewData["Lead"] = "History timeline";
+    var photoField = new ImageFieldViewModel(nameof(Model.Image), nameof(Model.RemoveImage),
+        Model.CurrentImageUrl is null ? "Choose a photo" : "Choose a new photo", Model.CurrentImageUrl);
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">
+        Please add only what is known to be true; if a date is uncertain, say so in “Year as shown” (e.g. “Around 1950”).
+        Gujarati text is optional.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="when-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="when-title">When</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field kc-field--short">
+                <label asp-for="SortYear" class="kc-field-label"></label>
+                <input asp-for="SortYear" class="form-control" min="1" max="2200" inputmode="numeric" aria-describedby="year-hint" />
+                <p class="kc-field-hint" id="year-hint">Puts the entries in order.</p>
+                <span asp-validation-for="SortYear" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="YearLabel" for-gu="YearLabelGu"
+                             hint="Optional: what visitors see instead of the plain year, e.g. “1950s”, “Before 1947” or “Present”." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="what-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="what-title">What happened</h2>
+            <p class="kc-panel-text">Plain text: a blank line starts a new paragraph.</p>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Title" for-gu="TitleGu" />
+            <bilingual-field for="Description" for-gu="DescriptionGu" rows="8" />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="photo-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="photo-title">Photo</h2>
+            <p class="kc-panel-text">Optional, e.g. an old photograph or a document from that time.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-image-field-wrap">
+                <partial name="_ImageField" model="photoField" />
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch kc-field">
+                <input asp-for="IsHighlighted" class="form-check-input" role="switch" />
+                <label asp-for="IsHighlighted" class="form-check-label"></label>
+            </div>
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add entry" : "Save entry")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

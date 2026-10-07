@@ -1,4 +1,3 @@
-using Khaparwada.Web.Infrastructure.Media;
 using Khaparwada.Web.ViewModels.Events;
 using Khaparwada.Web.ViewModels.Gallery;
 using Khaparwada.Web.ViewModels.History;
@@ -42,21 +41,3 @@ public sealed class HeroViewModel
 }
 
 public sealed record StatViewModel(string Icon, string Value, string Label);
-
-public sealed record VillageFactViewModel(string Label, string Value);
-
-public sealed class ThenNowViewModel
-{
-    public required string Title { get; init; }
-    public string? Caption { get; init; }
-    public required string ThenLabel { get; init; }
-    public required string NowLabel { get; init; }
-    public string? ThenImagePath { get; init; }
-    public string? NowImagePath { get; init; }
-
-    public string ThenImageUrl => MediaUrls.Image(ThenImagePath, ImageSize.Large) ?? MediaUrls.VillageIllustration;
-    public string NowImageUrl => MediaUrls.Image(NowImagePath, ImageSize.Large) ?? MediaUrls.VillageIllustration;
-
-    /// <summary>Until a real "then" photo exists, the illustration is shown in sepia to suggest an old photograph.</summary>
-    public bool ThenIsPlaceholder => string.IsNullOrWhiteSpace(ThenImagePath);
-}

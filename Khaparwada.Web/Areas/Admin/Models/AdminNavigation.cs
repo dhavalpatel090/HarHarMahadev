@@ -18,7 +18,9 @@ public static class AdminNavigation
         ]),
         new("Content",
         [
-            new Item("About & history", "book-open", null, ComingIn: "Phase 4"),
+            new Item("About page", "book-open", "AboutSections"),
+            new Item("History timeline", "clock-rotate-left", "Timeline"),
+            new Item("Then & now", "arrows-left-right", "ThenNow"),
             new Item("Places", "location-dot", null, ComingIn: "Phase 5"),
             new Item("People", "people-group", null, ComingIn: "Phase 6"),
             new Item("Events", "calendar-days", null, ComingIn: "Phase 7"),

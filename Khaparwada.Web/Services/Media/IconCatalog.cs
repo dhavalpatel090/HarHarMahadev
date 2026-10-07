@@ -19,7 +19,8 @@ public sealed partial class IconCatalog : IIconCatalog
     [
         "bars", "xmark", "arrow-right", "arrow-left", "arrow-up", "chevron-right", "chevron-down", "magnifying-glass",
         "language", "arrow-up-right-from-square", "share-nodes", "quote-left",
-        "right-from-bracket", "key", "pen-to-square", "trash-can", "plus", "eye", "lock", "list-check", "inbox", "upload"
+        "right-from-bracket", "key", "pen-to-square", "trash-can", "plus", "eye", "lock", "list-check", "inbox", "upload",
+        "arrows-left-right"
     ];
 
     private readonly HashSet<string> _categoryIcons;

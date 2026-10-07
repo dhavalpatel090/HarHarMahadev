@@ -49,8 +49,22 @@
 
     function initFileInput(input) {
         const preview = input.dataset.previewTarget ? document.getElementById(input.dataset.previewTarget) : null;
-        const originalSource = preview ? preview.src : null;
+        const originalSource = preview ? preview.getAttribute('src') : null;
+        // Fields without a saved photo show a "No photo yet" tile instead of the (hidden) preview image.
+        const emptyTile = preview ? document.querySelector(`[data-preview-empty="${CSS.escape(preview.id)}"]`) : null;
         let objectUrl = null;
+
+        const showPreview = (source) => {
+            if (source) {
+                preview.src = source;
+            } else {
+                preview.removeAttribute('src');
+            }
+            preview.hidden = !source;
+            if (emptyTile) {
+                emptyTile.hidden = Boolean(source);
+            }
+        };
 
         input.addEventListener('change', () => {
             const file = input.files && input.files[0];
@@ -73,9 +87,9 @@
             const chosen = input.files && input.files[0];
             if (chosen) {
                 objectUrl = URL.createObjectURL(chosen);
-                preview.src = objectUrl;
+                showPreview(objectUrl);
             } else {
-                preview.src = originalSource;
+                showPreview(originalSource);
             }
         });
     }

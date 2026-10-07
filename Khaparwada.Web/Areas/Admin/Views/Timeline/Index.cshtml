@@ -1,0 +1,81 @@
+@model IReadOnlyList<TimelineListItem>
+@{
+    ViewData["Title"] = "History timeline";
+    ViewData["Lead"] = "The village's story, year by year. Milestones also appear on the Home and About pages.";
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/history" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add entry</a>
+}
+
+<section class="kc-panel" aria-label="Timeline entries">
+    @if (Model.Count == 0)
+    {
+        <p class="kc-panel-empty">No entries yet. Add the first one with the button above.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Year</th>
+                        <th scope="col">Entry</th>
+                        <th scope="col">Milestone</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model)
+                    {
+                        <tr>
+                            <td class="kc-nowrap">
+                                <strong>@entry.YearLabel</strong>
+                                @if (entry.YearLabel != entry.SortYear.ToString(CultureInfo.InvariantCulture))
+                                {
+                                    <span class="kc-name-gu">ordered as @entry.SortYear</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="kc-name-cell">
+                                    <partial name="_Thumb" model="entry.ImagePath" />
+                                    <span>
+                                        <strong>@entry.Title</strong>
+                                        @if (!string.IsNullOrWhiteSpace(entry.TitleGu))
+                                        {
+                                            <span class="kc-name-gu" lang="gu">@entry.TitleGu</span>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td>@(entry.IsHighlighted ? "Yes" : "–")</td>
+                            <td>
+                                @if (entry.IsPlaceholder)
+                                {
+                                    <span class="kc-status is-todo">Sample</span>
+                                }
+                                else if (entry.IsPublished)
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status">Hidden</span>
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@entry.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @entry.Title</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@entry.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @entry.Title</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

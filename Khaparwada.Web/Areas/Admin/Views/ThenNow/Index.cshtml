@@ -1,0 +1,75 @@
+@model IReadOnlyList<ThenNowListItem>
+@{
+    ViewData["Title"] = "Then & now";
+    ViewData["Lead"] = "Pairs of photos of the same place, years apart. Visitors drag a slider to compare them.";
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/history#then-and-now" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add photo pair</a>
+}
+
+<section class="kc-panel" aria-label="Photo pairs">
+    @if (Model.Count == 0)
+    {
+        <p class="kc-panel-empty">No photo pairs yet. Add the first one with the button above.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Order</th>
+                        <th scope="col">Photos</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pair in Model)
+                    {
+                        <tr>
+                            <td>@pair.SortOrder</td>
+                            <td>
+                                <div class="kc-pair-thumbs">
+                                    <span><partial name="_Thumb" model="pair.ThenImagePath" /><small>@pair.ThenLabel</small></span>
+                                    <span><partial name="_Thumb" model="pair.NowImagePath" /><small>@pair.NowLabel</small></span>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>@pair.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(pair.TitleGu))
+                                {
+                                    <span class="kc-name-gu" lang="gu">@pair.TitleGu</span>
+                                }
+                            </td>
+                            <td>
+                                @if (pair.ThenImagePath is null || pair.NowImagePath is null)
+                                {
+                                    <span class="kc-status is-todo">Needs photos</span>
+                                }
+                                else if (pair.IsPublished)
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status">Hidden</span>
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@pair.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @pair.Title</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@pair.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @pair.Title</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

@@ -16,5 +16,8 @@ public sealed record DashboardStat(string Label, int Value, string Icon, string?
 /// <summary>Something waiting for a person to act on. Controller is null until that admin screen exists.</summary>
 public sealed record PendingItem(string Label, int Count, string Icon, string? Controller = null);
 
-/// <summary>One step of "finish setting up": replacing a placeholder with real village information.</summary>
-public sealed record SetupStep(string Label, string Hint, bool Done, string? Controller);
+/// <summary>
+/// One step of "finish setting up": replacing a placeholder with real village information. AdminOnly steps
+/// link to screens an Editor may not open, so Editors see no "Open" button for them.
+/// </summary>
+public sealed record SetupStep(string Label, string Hint, bool Done, string? Controller, bool AdminOnly = false);

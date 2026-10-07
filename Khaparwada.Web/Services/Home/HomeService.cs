@@ -5,6 +5,7 @@ using Khaparwada.Web.Infrastructure.TagHelpers;
 using Khaparwada.Web.Infrastructure.Text;
 using Khaparwada.Web.Models.Enums;
 using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.Site;
 using Khaparwada.Web.ViewModels.Events;
 using Khaparwada.Web.ViewModels.Gallery;
@@ -47,7 +48,7 @@ public sealed class HomeService(
             Site = site,
             Hero = BuildHero(site),
             Stats = BuildStats(site, categories, totalPlaces),
-            Facts = BuildFacts(site),
+            Facts = VillageFacts.Location(site, text),
             PlaceCategories = categories.Select(category => category.Tile).ToList(),
             FeaturedPlaces = await GetFeaturedPlacesAsync(cancellationToken),
             HistoryHighlights = await GetHistoryHighlightsAsync(cancellationToken),
@@ -99,24 +100,6 @@ public sealed class HomeService(
 
         stats.Add(new StatViewModel("location-dot", totalPlaces.ToString("N0"), text["Important places"]));
         return stats;
-    }
-
-    private List<VillageFactViewModel> BuildFacts(SiteInfo site)
-    {
-        var facts = new List<VillageFactViewModel>();
-        Add(text["Taluka"], site.Taluka);
-        Add(text["District"], site.District);
-        Add(text["State"], site.State);
-        Add(text["PIN code"], site.PinCode);
-        return facts;
-
-        void Add(string label, string? value)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                facts.Add(new VillageFactViewModel(label, value));
-            }
-        }
     }
 
     private async Task<(IReadOnlyList<CategoryInfo> Categories, int TotalPlaces)> GetCategoriesAsync(CancellationToken cancellationToken)
@@ -183,48 +166,24 @@ public sealed class HomeService(
 
     private async Task<List<TimelineItemViewModel>> GetHistoryHighlightsAsync(CancellationToken cancellationToken)
     {
-        var gu = AppLanguage.IsGujarati;
-        var rows = await db.HistoryEntries.AsNoTracking()
+        var items = await db.HistoryEntries.AsNoTracking()
             .Visible()
             .Where(entry => entry.IsHighlighted)
-            .OrderBy(entry => entry.SortYear)
+            .InTimelineOrder()
             .Take(5)
-            .Select(entry => new
-            {
-                YearLabel = gu ? entry.YearLabelGu ?? entry.YearLabel : entry.YearLabel,
-                Title = gu ? entry.TitleGu ?? entry.Title : entry.Title,
-                Description = gu ? entry.DescriptionGu ?? entry.Description : entry.Description,
-                entry.ImagePath
-            })
+            .SelectTimelineItems(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
 
-        return rows.Select(row => new TimelineItemViewModel
-        {
-            YearLabel = row.YearLabel,
-            Title = row.Title,
-            Description = TextHelpers.Excerpt(row.Description, 140),
-            ImagePath = row.ImagePath
-        }).ToList();
+        return items.Select(item => item with { Description = TextHelpers.Excerpt(item.Description, 140) }).ToList();
     }
 
-    private Task<List<ThenNowViewModel>> GetThenNowAsync(CancellationToken cancellationToken)
-    {
-        var gu = AppLanguage.IsGujarati;
-        return db.ThenNowComparisons.AsNoTracking()
+    private Task<List<ThenNowViewModel>> GetThenNowAsync(CancellationToken cancellationToken) =>
+        db.ThenNowComparisons.AsNoTracking()
             .Visible()
-            .OrderBy(comparison => comparison.SortOrder)
+            .InDisplayOrder()
             .Take(2)
-            .Select(comparison => new ThenNowViewModel
-            {
-                Title = gu ? comparison.TitleGu ?? comparison.Title : comparison.Title,
-                Caption = gu ? comparison.CaptionGu ?? comparison.Caption : comparison.Caption,
-                ThenLabel = gu ? comparison.ThenLabelGu ?? comparison.ThenLabel : comparison.ThenLabel,
-                NowLabel = gu ? comparison.NowLabelGu ?? comparison.NowLabel : comparison.NowLabel,
-                ThenImagePath = comparison.ThenImagePath,
-                NowImagePath = comparison.NowImagePath
-            })
+            .SelectThenNow(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
-    }
 
     private async Task<List<EventCardViewModel>> GetUpcomingEventsAsync(CancellationToken cancellationToken)
     {

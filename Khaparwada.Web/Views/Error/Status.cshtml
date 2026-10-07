@@ -1,9 +1,13 @@
 @model int
 @{
-    // 429 comes from the sign-in rate limit: say what to do instead of a generic error.
-    var (title, text) = Model == StatusCodes.Status429TooManyRequests
-        ? (L["Too many attempts"].Value, L["Please wait a few minutes, then try again."].Value)
-        : (L["Something went wrong"].Value, L["The request could not be completed."].Value);
+    // Say what to do instead of a generic error: 429 comes from the sign-in rate limit, 413 from an upload
+    // larger than its form allows (normally caught earlier in the browser).
+    var (title, text) = Model switch
+    {
+        StatusCodes.Status429TooManyRequests => (L["Too many attempts"].Value, L["Please wait a few minutes, then try again."].Value),
+        StatusCodes.Status413PayloadTooLarge => (L["The files were too large"].Value, L["Go back, choose smaller photos and try again."].Value),
+        _ => (L["Something went wrong"].Value, L["The request could not be completed."].Value)
+    };
     ViewData["Title"] = title;
 }
 <section class="kc-section">

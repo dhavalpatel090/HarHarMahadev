@@ -816,6 +816,24 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
     background: currentColor;
 }
 .kc-status.is-on { background: var(--kc-success-50); color: var(--kc-success); }
+.kc-status.is-todo { background: var(--kc-marigold-50); color: var(--kc-marigold-600); }
+.kc-nowrap { white-space: nowrap; }
+
+.kc-thumb {
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 4rem;
+    height: 2.75rem;
+    border: 1px solid var(--kc-line);
+    border-radius: 8px;
+    background: var(--kc-ivory);
+    color: var(--kc-sand-200);
+    object-fit: cover;
+}
+.kc-pair-thumbs { display: flex; gap: .5rem; }
+.kc-pair-thumbs > span { display: grid; gap: .15rem; justify-items: center; }
+.kc-pair-thumbs small { color: var(--kc-muted); font-size: .75rem; white-space: nowrap; }
 
 /* 7. Pickers & previews -------------------------------------------------------- */
 .kc-icon-picker {
@@ -892,6 +910,8 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
     font-weight: 600;
 }
 .kc-media-empty .icon { width: 2rem; height: 2rem; opacity: .6; }
+.kc-image-field-wrap { max-width: 36rem; }
+.kc-media-preview img[hidden] { display: none; }
 .kc-media-preview figcaption {
     margin-top: .4rem;
     color: var(--kc-muted);
