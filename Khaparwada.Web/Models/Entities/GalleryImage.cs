@@ -16,6 +16,10 @@ public class GalleryImage : BaseEntity, ISoftDeletable
     public string? CaptionGu { get; set; }
     public int SortOrder { get; set; }
 
+    /// <summary>Who uploaded it, so the reviewer knows whose photo it is (and later, who to ask).</summary>
+    public string? UploadedByUserId { get; set; }
+    public ApplicationUser? UploadedBy { get; set; }
+
     public ModerationStatus Status { get; set; } = ModerationStatus.Pending;
     public string? ReviewedByUserId { get; set; }
     public ApplicationUser? ReviewedBy { get; set; }

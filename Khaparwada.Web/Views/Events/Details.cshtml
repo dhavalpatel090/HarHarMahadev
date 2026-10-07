@@ -83,6 +83,21 @@
                         <p>@Model.Summary</p>
                     </div>
                 }
+
+                @if (Model.Albums.Count > 0)
+                {
+                    <section class="kc-detail-block" aria-labelledby="albums-title">
+                        <h2 class="kc-subheading" id="albums-title"><icon name="images" /> @L["Photos from this event"]</h2>
+                        <div class="row g-4">
+                            @foreach (var album in Model.Albums)
+                            {
+                                <div class="col-md-6">
+                                    <partial name="Cards/_AlbumCard" model="album" />
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
             </div>
 
             <aside class="kc-detail-aside">

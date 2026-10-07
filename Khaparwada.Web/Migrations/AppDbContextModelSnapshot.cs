@@ -466,12 +466,17 @@ namespace Khaparwada.Web.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("UploadedByUserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("Width")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("UploadedByUserId");
 
                     b.HasIndex("AlbumId", "Status", "SortOrder");
 
@@ -1619,9 +1624,16 @@ namespace Khaparwada.Web.Migrations
                         .HasForeignKey("ReviewedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Khaparwada.Web.Models.Entities.ApplicationUser", "UploadedBy")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Album");
 
                     b.Navigation("ReviewedBy");
+
+                    b.Navigation("UploadedBy");
                 });
 
             modelBuilder.Entity("Khaparwada.Web.Models.Entities.MemoryImage", b =>

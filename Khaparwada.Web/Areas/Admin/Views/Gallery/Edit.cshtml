@@ -1,0 +1,94 @@
+@model AlbumInputModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add an album" : $"Edit “{Model.Title}”";
+    ViewData["Lead"] = "Gallery";
+}
+@section Actions {
+    @if (!Model.IsNew)
+    {
+        <a class="btn btn-kc-outline" asp-action="Photos" asp-route-id="@Model.Id"><icon name="images" /> Photos</a>
+    }
+}
+
+<form method="post" class="kc-admin-form" asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">
+        @(Model.IsNew ? "Start with the album's details; the next page is for its photos." : "The photos are on the album's Photos page.")
+        Gujarati text is optional.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="about-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="about-title">About the album</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field kc-field--medium">
+                <label asp-for="CategoryId" class="kc-field-label"></label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">Choose…</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@(category.Name + (category.IsActive ? "" : " (hidden category)"))</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="Title" for-gu="TitleGu" hint="e.g. “Navratri 2026” or “The village in the 1970s”." />
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    The album's address on the website: <code class="kc-code">/gallery/<strong>navratri-2026</strong></code>.
+                    Filled in from the English name. Changing it later breaks links people have shared.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.Title)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="Description" for-gu="DescriptionGu" rows="4"
+                             hint="Optional: what, where and who. Write only what you know to be true. A blank line starts a new paragraph." />
+            <div class="row g-3">
+                <div class="col-sm-6 col-lg-4">
+                    <label asp-for="TakenOn" class="kc-field-label"></label>
+                    <input asp-for="TakenOn" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" aria-describedby="taken-hint" />
+                    <span asp-validation-for="TakenOn" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-6 col-lg-8">
+                    <label asp-for="EventId" class="kc-field-label"></label>
+                    <select asp-for="EventId" class="form-select" aria-describedby="event-hint">
+                        <option value="">None</option>
+                        @foreach (var item in Model.Events)
+                        {
+                            <option value="@item.Id">@item.Label</option>
+                        }
+                    </select>
+                    <span asp-validation-for="EventId" class="kc-field-error"></span>
+                </div>
+            </div>
+            <p class="kc-field-hint mt-2 mb-0" id="taken-hint">
+                Both optional. Leave the date empty for old photos whose day nobody knows.
+                <span id="event-hint">With an event, the album is also shown on that event's page.</span>
+            </p>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add album and continue to photos" : "Save album")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

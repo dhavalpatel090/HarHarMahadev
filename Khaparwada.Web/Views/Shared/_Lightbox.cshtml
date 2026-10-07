@@ -1,0 +1,16 @@
+@* The photo viewer used by lightbox.js for [data-lightbox] lists (album pages, a place's photos). Written here, not
+   by the script, so its labels come in the page's language and its icons from the sprite. A <dialog> brings the
+   Esc key, the focus handling and the backdrop with it. *@
+<dialog class="kc-lightbox" aria-label="@L["Photo viewer"]" data-lightbox-dialog>
+    <figure class="kc-lightbox-figure">
+        <img class="kc-lightbox-image" alt="" />
+        <figcaption class="kc-lightbox-caption">
+            <span class="kc-lightbox-text"></span>
+            <span class="kc-lightbox-meta"></span>
+        </figcaption>
+    </figure>
+    <p class="kc-lightbox-counter" aria-live="polite"></p>
+    <button type="button" class="kc-lightbox-button kc-lightbox-prev" data-lightbox-prev aria-label="@L["Previous photo"]"><icon name="arrow-left" /></button>
+    <button type="button" class="kc-lightbox-button kc-lightbox-next" data-lightbox-next aria-label="@L["Next photo"]"><icon name="arrow-right" /></button>
+    <button type="button" class="kc-lightbox-button kc-lightbox-close" data-lightbox-close aria-label="@L["Close"]" autofocus><icon name="xmark" /></button>
+</dialog>

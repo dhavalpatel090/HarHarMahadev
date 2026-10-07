@@ -29,7 +29,8 @@ public sealed class PageHeaderViewModel
     public IReadOnlyList<BreadcrumbItem> Breadcrumbs { get; init; } = [];
 }
 
-public sealed record BreadcrumbItem(string Text, string? RouteName = null);
+/// <summary>A link in the trail; RouteValues for links with a query, e.g. a gallery category.</summary>
+public sealed record BreadcrumbItem(string Text, string? RouteName = null, IDictionary<string, string>? RouteValues = null);
 
 /// <summary>Eyebrow, title, lead and an optional "see all" link above a section (to a route, optionally an anchor on it).</summary>
 public sealed record SectionHeadingViewModel(

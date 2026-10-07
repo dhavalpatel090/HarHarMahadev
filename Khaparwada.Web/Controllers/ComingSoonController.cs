@@ -11,13 +11,6 @@ namespace Khaparwada.Web.Controllers;
 /// </summary>
 public class ComingSoonController : Controller
 {
-    [HttpGet("gallery", Name = RouteNames.Gallery)]
-    public IActionResult Gallery() =>
-        Placeholder(RouteNames.Gallery, "Gallery", "Photos of festivals, people, places and the old village.", "images");
-
-    [HttpGet("gallery/{slug}", Name = RouteNames.AlbumDetails)]
-    public IActionResult AlbumDetails(string slug) => Gallery();
-
     [HttpGet("notices", Name = RouteNames.Notices)]
     public IActionResult Notices() =>
         Placeholder(RouteNames.Notices, "Notice board", "Announcements, government schemes, water and electricity updates, meetings and emergencies.", "bullhorn");

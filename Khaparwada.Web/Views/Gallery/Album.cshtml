@@ -1,0 +1,107 @@
+@model AlbumDetailsViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    ViewData["Title"] = Model.Pagination.Page > 1 ? L["{0} (page {1})", Model.Title, Model.Pagination.Page].Value : Model.Title;
+    ViewData["Description"] = Model.Description is { } description && !description.TrimStart().StartsWith('[')
+        ? TextHelpers.Excerpt(description, 160)
+        : L["Photos: {0}", Model.Title].Value;
+    ViewData["CanonicalQuery"] = Model.Pagination.Page > 1 ? "?page=" + Model.Pagination.Page : null;
+    var gallery = L["Gallery"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = Model.Title,
+        Icon = "images",
+        Breadcrumbs =
+        [
+            new BreadcrumbItem(gallery, RouteNames.Gallery),
+            new BreadcrumbItem(Model.Category.Name, RouteNames.Gallery, new Dictionary<string, string> { ["category"] = Model.Category.Slug }),
+            new BreadcrumbItem(Model.Title)
+        ]
+    };
+    var culture = CultureInfo.CurrentCulture;
+    var count = Model.Pagination.TotalItems;
+    var first = (Model.Pagination.Page - 1) * Model.Pagination.PageSize;
+}
+@functions {
+    private static bool IsPlaceholder(string? text) => text?.TrimStart().StartsWith('[') == true;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-album-page">
+    <div class="container">
+        <ul class="kc-album-facts">
+            <li>
+                <a class="kc-chip" asp-route="@RouteNames.Gallery" asp-route-category="@Model.Category.Slug">@Model.Category.Name</a>
+            </li>
+            <li><icon name="images" /> @(count == 1 ? L["1 photo"] : L["{0} photos", count])</li>
+            @if (Model.TakenOn is { } takenOn)
+            {
+                <li><icon name="calendar-days" /> @L["Taken on {0}", takenOn.ToString("d MMMM yyyy", culture)]</li>
+            }
+            @if (Model.EventSlug is not null)
+            {
+                <li><icon name="star" /> <a asp-route="@RouteNames.EventDetails" asp-route-slug="@Model.EventSlug">@Model.EventTitle</a></li>
+            }
+        </ul>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Description) && Model.Pagination.Page == 1)
+        {
+            <div class="kc-album-text @(IsPlaceholder(Model.Description) ? "kc-placeholder-text" : null)">
+                @foreach (var paragraph in TextHelpers.Paragraphs(Model.Description))
+                {
+                    <p>@paragraph</p>
+                }
+            </div>
+        }
+
+        @* Masonry with CSS columns: no script, and the width and height on each photo keep the layout still while
+           photos load. Each link opens the large photo; lightbox.js turns that into the photo viewer. *@
+        <ul class="kc-masonry" data-lightbox>
+            @for (var i = 0; i < Model.Photos.Count; i++)
+            {
+                var photo = Model.Photos[i];
+                var alt = photo.Caption ?? L["{0}, photo {1}", Model.Title, first + i + 1].Value;
+                var added = L["Added {0}", photo.AddedOn.ToString("d MMM yyyy", culture)].Value;
+                <li>
+                    <figure>
+                        <a href="@photo.LargeUrl" data-lightbox-item data-srcset="@photo.SrcSet" data-alt="@alt"
+                           data-caption="@photo.Caption" data-meta="@added">
+                            <img src="@photo.MediumUrl" width="@photo.Width" height="@photo.Height" srcset="@photo.SrcSet"
+                                 sizes="(min-width: 1400px) 320px, (min-width: 992px) 30vw, 50vw"
+                                 alt="@alt" loading="@(i < 6 ? "eager" : "lazy")" decoding="async" />
+                        </a>
+                        @if (!string.IsNullOrWhiteSpace(photo.Caption))
+                        {
+                            <figcaption>@photo.Caption</figcaption>
+                        }
+                    </figure>
+                </li>
+            }
+        </ul>
+        <partial name="_Pagination" model="Model.Pagination" />
+
+        @if (Model.MoreAlbums.Count > 0)
+        {
+            <section class="kc-detail-more" aria-labelledby="more-title">
+                <div class="kc-subheading-row">
+                    <h2 class="kc-subheading" id="more-title">@L["More: {0}", Model.Category.Name]</h2>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.Gallery" asp-route-category="@Model.Category.Slug">@L["See all"] <icon name="arrow-right" /></a>
+                </div>
+                <div class="row g-4">
+                    @foreach (var album in Model.MoreAlbums)
+                    {
+                        <div class="col-sm-6 col-lg-4">
+                            <partial name="Cards/_AlbumCard" model="album" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</section>
+
+<partial name="_Lightbox" />
+
+@section Scripts {
+    <script src="/js/lightbox.js" asp-append-version="true" defer></script>
+}

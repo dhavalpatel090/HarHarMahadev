@@ -14,6 +14,7 @@ using Khaparwada.Web.Services.About;
 using Khaparwada.Web.Services.Admin;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.Services.Events;
+using Khaparwada.Web.Services.Gallery;
 using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.Home;
 using Khaparwada.Web.Services.Media;
@@ -221,6 +222,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPlaceService, PlaceService>();
         services.AddScoped<IPeopleService, PeopleService>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IGalleryService, GalleryService>();
 
         // Uploads (stateless, so one instance serves every request).
         services.AddSingleton<IUploadStorage, LocalUploadStorage>();
@@ -239,6 +241,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPlaceAdminService, PlaceAdminService>();
         services.AddScoped<IPersonAdminService, PersonAdminService>();
         services.AddScoped<IEventAdminService, EventAdminService>();
+        services.AddScoped<IGalleryAdminService, GalleryAdminService>();
 
         return services;
     }

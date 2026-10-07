@@ -110,6 +110,13 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | Share on WhatsApp is a plain `https://wa.me/?text=` link | Third-party share scripts tracking visitors; nothing is sent until the visitor taps it |
 | An event's venue is linked, with address and directions, only while that place's page is public | Links to "not found" pages; directions to a place an admin has hidden |
 | Shared layout classes `kc-detail-*` (places, events, people) and `MapLinks` for directions/OpenStreetMap links | Copies of the same layout and URL code per page |
+| An album is public only when published, its category is on **and** it has an approved photo (`PublicVisibility`); photos need `Status = Published` too | Album cards with a camera placeholder leading to empty pages; a hidden category's albums still listed |
+| Gallery review = the people rule: an Admin's photos are shown at once, an Editor's wait in `/admin/gallery/review` (Editors may look, only Admins decide). `GalleryImage.UploadedByUserId` records who uploaded | Photos of villagers published on one person's word; a reviewer not knowing whose photo it is |
+| Removing or rejecting a gallery photo deletes the row **and its files** (`ExecuteDelete`, bypassing soft delete); albums are soft-deleted | A photo taken down on request staying reachable at its old, possibly shared, address |
+| Several photos are uploaded one per request by `admin.js` (`data-upload-each`, JSON answers, progress, `?added=n` at the end); the plain form still takes up to 6 | One request of hundreds of MB for a festival (refused by the server and by IIS); one bad file losing the whole upload |
+| Masonry with CSS columns; every photo has width and height; 30 photos per album page, the rest on the next page, lazy-loaded after the first 6 | A masonry script; layout jumping while photos load; a 200-photo album loaded at once on mobile data |
+| Own lightbox (`lightbox.js` + `_Lightbox.cshtml`) on `<dialog>`: keyboard, swipe, focus returned to the photo, labels in the page's language; the links still open the photo without JavaScript | A lightbox plugin and its CSS for one feature; inaccessible overlays; English labels on Gujarati pages |
+| Album cards come from `Services/Gallery/GalleryQueries.cs` (Home, `/gallery`, an album's "more", an event's photos) | Photo counts and covers differing between pages (counts include only approved photos) |
 | All UI text through `IStringLocalizer` (`@L["…"]`) from Phase 2 | Rewriting every view in Phase 12 |
 | Unicode-wide HTML encoder (`WebEncoderOptions`) | The default encoder sent every Gujarati letter as `&#xAAE;`, making Gujarati pages 2–3× larger |
 | Icon sprite instead of the Font Awesome icon font | ~320 KB of fonts and CSS for 2,600 icons when the site uses ~70 (sprite: ~15 KB compressed) |
@@ -276,7 +283,7 @@ No foreign keys: VillageInfo · SiteSettings · AboutSections · HistoryEntries 
 | Event | Village events | Title⁺, Slug, Summary⁺, Description⁺, StartsAt, EndsAt, IsAllDay, PlaceId, LocationText⁺, ImagePath, IsFeatured | Published · soft delete |
 | GalleryCategory | Old Khaparwada, Navratri, … | Name⁺, Slug, SortOrder | IsActive |
 | GalleryAlbum | A set of photos | CategoryId, EventId, Title⁺, Slug, Description⁺, TakenOn | Published · soft delete |
-| GalleryImage | One photo | AlbumId, ImagePath, Width, Height, Caption⁺, SortOrder, ReviewedBy, ReviewedAt | Status · soft delete |
+| GalleryImage | One photo (upload date = CreatedAt) | AlbumId, ImagePath, Width, Height, Caption⁺, SortOrder, UploadedBy, ReviewedBy, ReviewedAt | Status · removal is permanent (row and files) |
 | Notice | Notice board | Title⁺, Slug, Description⁺, Category, Priority, PublishedAt, ExpiresAt, ImagePath, AttachmentPath, AttachmentName | Published · soft delete |
 | MemorySubmission | Resident memory / story | Title, Story, EraLabel, SubmitterName, SubmitterContact (admin-only), ConsentToPublish, ReviewNote (admin-only), ReviewedBy, ReviewedAt, PublishedAt, Slug | Status · soft delete |
 | MemoryImage | Photos sent with a memory | MemorySubmissionId, ImagePath, Width, Height, Caption, SortOrder | via memory |
@@ -301,7 +308,7 @@ Enums (stored as text): `ModerationStatus` (Pending, UnderReview, Approved, Publ
 | `Site:PublicBaseUrl` | empty (the request's own address is used) | the real address, e.g. `https://khaparwada.in` — canonical and share links depend on it |
 | `Map:TileUrl`, `Map:Attribution`, `Map:MaxZoom` | OpenStreetMap | same, or another tile provider if traffic outgrows OSM's fair-use policy |
 | `Storage:UploadsPath`, `Storage:PrivateUploadsPath` | `App_Data/uploads`, `App_Data/private-uploads` (inside the project, git-ignored) | **absolute folders outside the site folder**, e.g. `D:\KhaparwadaData\uploads`, so a redeploy can never delete villagers' photos; back them up with the database |
-| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` | 10 / 40 / 25 | same. Each upload form's request limit follows from these (`[UploadLimit]`: Site settings = 1 photo + 1 video + 1 MB = 36 MB); on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
+| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` | 10 / 40 / 25 | same. Each upload form's request limit follows from these (`[UploadLimit]`: Site settings = 1 photo + 1 video + 1 MB = 36 MB; place and gallery photos without JavaScript = 6 photos + 1 MB = 61 MB); on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
 
 Do not copy SSMS's connection string into the app: it has no `Database=` (tables would go into `master`),
 `Pooling=False` (slow for a website), `Command Timeout=0` (a stuck query hangs forever) and
@@ -350,7 +357,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 5 | Places + Map | **Done** |
 | 6 | People (approval + consent) | **Done** |
 | 7 | Events | **Done** |
-| 8 | Gallery (approval, masonry, lightbox) | |
+| 8 | Gallery (approval, masonry, lightbox) | **Done** |
 | 9 | Notices + Contact (inbox) | |
 | 10 | Memories (submission + review workflow) | |
 | 11 | Admin completion: users, pending queue, dashboard polish | |
@@ -401,6 +408,11 @@ Each feature phase ships its public pages and its admin screens together, and re
 - **Show a list with pages:** fill a `PaginationViewModel` (page, size, total, route name, the filter values) and
   `<partial name="_Pagination" model="…" />`; `PaginationViewModel.Clamp` keeps a typed-in page number valid. An admin
   list needs a named route (`[HttpGet("", Name = "admin-places")]`).
+- **Add a photo album:** Admin → Gallery → Add album → (next page) choose the photos, as many as you like → captions
+  and order below → Save photos. An Editor's photos then wait under Gallery → "Review them" for an Admin.
+- **Open photos in the viewer on another page:** mark the list `data-lightbox`, each link (to the large photo)
+  `data-lightbox-item` with `data-srcset`, `data-alt`, `data-caption`, `data-meta`; add `<partial name="_Lightbox" />`
+  and `/js/lightbox.js` (see `Views/Gallery/Album.cshtml`).
 - **Show a map:** build a `MapViewModel` and render `<partial name="_MapCanvas" model="new MapCanvasViewModel(…)" />`
   (model built in a code block), then load `/js/map.js` in the Scripts section. Category buttons:
   `data-map-for="<map id>"` with `data-map-filter="<category slug>"` buttons (see `Views/Map/Index.cshtml`).
@@ -452,6 +464,9 @@ Each feature phase ships its public pages and its admin screens together, and re
 | Names in admin lists squeezed to one word per line on phones | A table shrinks its widest text column first, and the name column has the most text | `.kc-table .kc-name-cell { min-width: 12rem }` for every admin list; the table scrolls sideways instead |
 | A test sent "Test Garba, music" for the title "Test Garba, music; dance" | curl's `-F name=value` treats `;` as the start of options such as `type=` | Use `--form-string` for values with `;` |
 | `CONVERT(varchar, StartsAt, 127)` showed `…18:30:00Z` for a 00:00 IST date | Style 127 converts a `datetimeoffset` to UTC; the stored value was right (`+05:30`) | Use style 126 to see the stored offset |
+| "Choose an event from the list" never appeared; the album form just came back | The service put the error on `EventId`, but the form had no `asp-validation-for="EventId"` (the summary shows only form-wide errors) | Every field a service can fail on needs its validation message in the view; all admin forms were checked |
+| A test looked for `/js/lightbox.js` and did not find it | `MapStaticAssets` writes fingerprinted URLs (`/js/lightbox.4jzeyy6v5a.js`) | Check for `/js/lightbox.` in tests |
+| The photo viewer let the page show through | A semi-transparent dialog background over a light page | Solid background for the viewer |
 | An oversized upload shows "connection reset" instead of the 413 page | The server refuses the body as soon as it passes the limit and closes the connection while the browser is still sending | Expected HTTP/1.1 behaviour. The page checks file sizes before sending (`data-max-bytes`), so people never get there |
 
 ## 12. Open items
@@ -460,7 +475,6 @@ Each feature phase ships its public pages and its admin screens together, and re
   Gujarati ગણદેવી, નવસારી, ગુજરાત to be confirmed). Still needed from the village: Gujarati spelling of
   "Khaparwada", PIN code, village-centre coordinates, real text and photos. Until then the database holds clearly
   marked `[Add …]` / `[Sample]` placeholders.
-- Place photos open as plain image pages; the Gallery phase (8) adds a lightbox that the place gallery will reuse.
 - The `[Sample]` places sit around a demo point in central Gujarat, not in Gandevi taluka; real places get their
   real locations from the map picker.
 - No "bin" screen yet: soft-deleted content is recoverable only in SQL (`IsDeleted = 0`). Planned with the admin
@@ -472,12 +486,16 @@ Each feature phase ships its public pages and its admin screens together, and re
 - Editor accounts can only be created in Phase 11 (Users screen); until then every admin account is an Admin.
 - Events have no "cancelled / postponed" state: for now edit the date, or the summary ("Postponed to …"), or hide the
   event. A status (and schema.org `eventStatus`) can be added if the village needs it.
-- Photo albums linked to an event (`GalleryAlbum.EventId`) are shown with the Gallery phase (8).
+- Editors' caption changes on approved photos go live without review (only new photos are reviewed). Captions
+  are short text; if the village wants them reviewed too, apply the People rule to captions.
+- The `[Sample]` albums have no photos, so they stay off the website until real photos are added (or are deleted).
+- Soft-deleted albums keep their photos' files for a restore; permanent clean-up comes with Phase 11.
 - Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
   to make; consider making them admin-editable pages later. Its statement that photo location data is removed
   is now true: verified in Phase 3 (no EXIF, GPS or camera details in any saved file).
 - Hosting (Phase 14): set `Storage:*Path` to folders outside the site folder; on IIS raise
-  `maxAllowedContentLength` to 36 MB (the largest upload form: Site settings); Linux hosting is possible (SkiaSharp's Linux library
+  `maxAllowedContentLength` to 61 MB (the largest request: 6 place or gallery photos sent together without
+  JavaScript; with JavaScript, gallery photos go one per request); Linux hosting is possible (SkiaSharp's Linux library
   is included).
 - UI text on `/gu` pages stays English until the Phase 12 translations.
 - Hosting choice (affects Phase 14 only). The site must be hosted at the root of its domain (static files use

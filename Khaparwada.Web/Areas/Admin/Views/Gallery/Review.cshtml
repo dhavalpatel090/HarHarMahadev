@@ -1,0 +1,76 @@
+@model PhotoReviewViewModel
+@inject Khaparwada.Web.Services.Common.IVillageClock Clock
+@{
+    ViewData["Title"] = "Photos to approve";
+    ViewData["Lead"] = "Photos uploaded by Editors, oldest first. Approved photos appear on the website at once.";
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+}
+@section Actions {
+    <a class="btn btn-kc-outline" asp-action="Index"><icon name="images" /> Albums</a>
+}
+
+@if (Model.Items.Count == 0)
+{
+    <section class="kc-panel">
+        <p class="kc-panel-empty">Nothing is waiting for review.</p>
+    </section>
+}
+else
+{
+    <form method="post" asp-action="Review" class="kc-admin-form kc-admin-form--wide">
+        @if (isAdmin)
+        {
+            <div class="kc-review-toolbar">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="select-all" data-check-all="Selected" />
+                    <label class="form-check-label" for="select-all">Select all on this page</label>
+                </div>
+                <p class="kc-field-hint mb-0">Open a photo to see it full size before deciding.</p>
+            </div>
+        }
+        else
+        {
+            <div class="kc-admin-alert kc-admin-alert--warning">
+                <icon name="circle-info" />
+                <span>Only an Admin can approve or remove these photos.</span>
+            </div>
+        }
+
+        <ul class="kc-review-grid">
+            @foreach (var item in Model.Items)
+            {
+                var uploaded = Clock.ToVillageTime(item.UploadedAt).ToString("d MMM yyyy, h:mm tt", CultureInfo.CurrentCulture);
+                <li class="kc-review-item">
+                    <a href="@MediaUrls.Image(item.ImagePath, ImageSize.Large)" target="_blank" rel="noopener" class="kc-review-photo">
+                        <img src="@MediaUrls.Image(item.ImagePath, ImageSize.Small)" width="@item.Width" height="@item.Height"
+                             alt="Photo @item.Id in @item.AlbumTitle (opens full size in a new tab)" loading="lazy" />
+                    </a>
+                    <div class="kc-review-body">
+                        @if (isAdmin)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Selected" value="@item.Id" id="photo-@item.Id" />
+                                <label class="form-check-label" for="photo-@item.Id">Select</label>
+                            </div>
+                        }
+                        <p class="kc-review-album"><a asp-action="Photos" asp-route-id="@item.AlbumId">@item.AlbumTitle</a></p>
+                        @if (!string.IsNullOrWhiteSpace(item.Caption))
+                        {
+                            <p class="kc-review-caption">@item.Caption</p>
+                        }
+                        <p class="kc-review-meta">@(item.UploadedBy ?? "Unknown") · @uploaded</p>
+                    </div>
+                </li>
+            }
+        </ul>
+
+        @if (isAdmin)
+        {
+            <div class="kc-form-actions">
+                <button type="submit" class="btn btn-kc-primary" name="Decision" value="approve"><icon name="circle-check" /> Approve selected</button>
+                <button type="submit" class="btn btn-danger" name="Decision" value="delete"><icon name="trash-can" /> Remove selected for good</button>
+            </div>
+        }
+    </form>
+    <partial name="_Pagination" model="Model.Pagination" />
+}

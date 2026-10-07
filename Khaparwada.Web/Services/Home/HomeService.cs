@@ -6,6 +6,7 @@ using Khaparwada.Web.Infrastructure.Text;
 using Khaparwada.Web.Models.Enums;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.Services.Events;
+using Khaparwada.Web.Services.Gallery;
 using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.People;
 using Khaparwada.Web.Services.Places;
@@ -182,28 +183,13 @@ public sealed class HomeService(
         }).ToList();
     }
 
-    private Task<List<AlbumCardViewModel>> GetAlbumsAsync(CancellationToken cancellationToken)
-    {
-        var gu = AppLanguage.IsGujarati;
-        return db.GalleryAlbums.AsNoTracking()
+    private Task<List<AlbumCardViewModel>> GetAlbumsAsync(CancellationToken cancellationToken) =>
+        db.GalleryAlbums.AsNoTracking()
             .Visible()
-            .OrderByDescending(album => album.CreatedAt)
+            .InListOrder()
             .Take(3)
-            .Select(album => new AlbumCardViewModel
-            {
-                Slug = album.Slug,
-                Title = gu ? album.TitleGu ?? album.Title : album.Title,
-                CategoryName = gu ? album.Category.NameGu ?? album.Category.Name : album.Category.Name,
-                TakenOn = album.TakenOn,
-                PhotoCount = album.Images.AsQueryable().Count(PublicVisibility.GalleryImageIsVisible),
-                CoverImagePath = album.Images.AsQueryable()
-                    .Where(PublicVisibility.GalleryImageIsVisible)
-                    .OrderBy(image => image.SortOrder)
-                    .Select(image => image.ImagePath)
-                    .FirstOrDefault()
-            })
+            .SelectAlbumCards(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
-    }
 
     private Task<List<PersonCardViewModel>> GetFeaturedPeopleAsync(CancellationToken cancellationToken) =>
         db.People.AsNoTracking()

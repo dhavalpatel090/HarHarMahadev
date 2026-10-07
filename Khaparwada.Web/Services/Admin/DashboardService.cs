@@ -39,7 +39,7 @@ public sealed class DashboardService(AppDbContext db, IVillageClock clock) : IDa
         {
             new("Memories to review", await db.MemorySubmissions.CountAsync(m => m.Status == ModerationStatus.Pending || m.Status == ModerationStatus.UnderReview, ct), "camera"),
             new("Profiles to approve", await db.People.CountAsync(p => p.Status == ModerationStatus.Pending || p.Status == ModerationStatus.UnderReview, ct), "people-group", "People", "review"),
-            new("Photos to approve", await db.GalleryImages.CountAsync(i => i.Status == ModerationStatus.Pending || i.Status == ModerationStatus.UnderReview, ct), "images"),
+            new("Photos to approve", await db.GalleryImages.CountAsync(i => i.Status == ModerationStatus.Pending || i.Status == ModerationStatus.UnderReview, ct), "images", "Gallery", Action: "Review"),
             new("Unread messages", await db.ContactMessages.CountAsync(m => !m.IsRead, ct), "envelope")
         };
         stats.Add(new DashboardStat("Waiting for review", pending.Sum(item => item.Count), "inbox", "memories, profiles, photos, messages"));
@@ -91,7 +91,7 @@ public sealed class DashboardService(AppDbContext db, IVillageClock clock) : IDa
                 IsFilled(settings.OfficeEmail) || IsFilled(settings.OfficePhone), "SiteSettings", AdminOnly: true),
             new("Replace the sample content", sampleItems == 0
                     ? "All sample items are gone."
-                    : $"{sampleItems} items marked [Sample]. Rewrite or delete them; gallery, notices and memories get their screens in later phases.",
+                    : $"{sampleItems} items marked [Sample]. Rewrite or delete them; notices and memories get their screens in later phases.",
                 sampleItems == 0, null)
         ];
     }

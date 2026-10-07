@@ -12,9 +12,12 @@ namespace Khaparwada.Web.Services.Common;
 /// </summary>
 public static class PublicVisibility
 {
-    /// <summary>Also usable inside projections, e.g. <c>album.Images.AsQueryable().Count(GalleryImageIsVisible)</c>.</summary>
+    /// <summary>
+    /// An approved photo in a published album whose category is switched on. Also usable inside projections, e.g.
+    /// <c>album.Images.AsQueryable().Count(GalleryImageIsVisible)</c>.
+    /// </summary>
     public static readonly Expression<Func<GalleryImage, bool>> GalleryImageIsVisible =
-        image => image.Status == ModerationStatus.Published && image.Album.IsPublished;
+        image => image.Status == ModerationStatus.Published && image.Album.IsPublished && image.Album.Category.IsActive;
 
     /// <summary>
     /// Published, in a category that is switched on. Switching a category off hides its places too; otherwise a
@@ -44,8 +47,14 @@ public static class PublicVisibility
     public static IQueryable<Person> Visible(this IQueryable<Person> people) =>
         people.Where(person => person.Status == ModerationStatus.Published && person.HasConsent && person.Category.IsActive);
 
+    /// <summary>
+    /// Published, in a category that is switched on, with at least one approved photo: an album with nothing to
+    /// show (all its photos still waiting for approval) would be a dead end for visitors.
+    /// </summary>
     public static IQueryable<GalleryAlbum> Visible(this IQueryable<GalleryAlbum> albums) =>
-        albums.Where(album => album.IsPublished);
+        albums.Where(album => album.IsPublished
+                              && album.Category.IsActive
+                              && album.Images.Any(image => image.Status == ModerationStatus.Published));
 
     public static IQueryable<GalleryImage> Visible(this IQueryable<GalleryImage> images) =>
         images.Where(GalleryImageIsVisible);

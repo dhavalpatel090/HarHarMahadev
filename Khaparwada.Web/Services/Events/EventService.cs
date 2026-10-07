@@ -2,6 +2,7 @@ using Khaparwada.Web.Data;
 using Khaparwada.Web.Infrastructure.Localization;
 using Khaparwada.Web.Infrastructure.Routing;
 using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.Gallery;
 using Khaparwada.Web.ViewModels.Events;
 using Khaparwada.Web.ViewModels.Shared;
 using Microsoft.EntityFrameworkCore;
@@ -105,6 +106,14 @@ public sealed class EventService(AppDbContext db, IVillageClock clock) : IEventS
             .SelectCardRows(gujarati)
             .ToCardsAsync(clock, cancellationToken);
 
+        var albums = await db.GalleryAlbums.AsNoTracking()
+            .Visible()
+            .Where(album => album.EventId == item.Id)
+            .InListOrder()
+            .Take(6)
+            .SelectAlbumCards(gujarati)
+            .ToListAsync(cancellationToken);
+
         // A hidden venue keeps its name, but no link, address or directions: those belong to its page.
         return new EventDetailsViewModel
         {
@@ -123,7 +132,8 @@ public sealed class EventService(AppDbContext db, IVillageClock clock) : IEventS
             Latitude = item.VenueIsPublic ? item.Latitude : null,
             Longitude = item.VenueIsPublic ? item.Longitude : null,
             LocationText = item.LocationText,
-            MoreEvents = more
+            MoreEvents = more,
+            Albums = albums
         };
     }
 

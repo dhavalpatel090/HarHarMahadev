@@ -1608,6 +1608,128 @@ a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon)
 .kc-event-state.is-now { background: var(--kc-marigold-50); color: var(--kc-maroon); }
 .kc-info-note { color: var(--kc-muted); font-size: .92rem; }
 
+/* An album: facts (category, number of photos, date, event), then the photos in masonry columns. CSS columns
+   need no script; the width and height on every photo keep the columns still while photos load. */
+.kc-album-facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.25rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    color: var(--kc-muted);
+    list-style: none;
+}
+.kc-album-facts li { display: inline-flex; align-items: center; gap: .4rem; }
+.kc-album-facts .icon { color: var(--kc-marigold-600); }
+.kc-album-facts .kc-chip { text-decoration: none; }
+.kc-album-text { max-width: 48rem; margin-bottom: 2rem; }
+.kc-album-text p { font-size: 1.08rem; }
+
+.kc-masonry {
+    columns: 2;
+    column-gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+@media (min-width: 992px) {
+    .kc-masonry { columns: 3; column-gap: 1rem; }
+}
+@media (min-width: 1400px) {
+    .kc-masonry { columns: 4; }
+}
+.kc-masonry li { margin-bottom: .75rem; break-inside: avoid; }
+@media (min-width: 992px) {
+    .kc-masonry li { margin-bottom: 1rem; }
+}
+.kc-masonry figure { margin: 0; }
+.kc-masonry a { display: block; overflow: hidden; border-radius: var(--kc-radius-sm); }
+.kc-masonry img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--kc-sand);
+    transition: transform .25s var(--kc-ease);
+}
+.kc-masonry a:hover img { transform: scale(1.03); }
+.kc-masonry a:focus-visible { outline: 3px solid var(--kc-marigold); outline-offset: 2px; }
+.kc-masonry figcaption { margin-top: .35rem; color: var(--kc-muted); font-size: .88rem; }
+
+/* The photo viewer (lightbox.js + _Lightbox.cshtml): the whole screen, the photo as large as fits. */
+.kc-lightbox {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgb(16 12 10); /* solid: nothing of the page shows through around the photo */
+    color: var(--kc-white);
+}
+.kc-lightbox::backdrop { background: rgb(0 0 0 / .7); }
+.kc-lightbox[open] { display: block; }
+html:has(.kc-lightbox[open]) { overflow: hidden; } /* the page behind does not scroll */
+.kc-lightbox-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    height: 100%;
+    margin: 0;
+    padding: 4rem 4.5rem 1.5rem;
+}
+.kc-lightbox-image {
+    min-height: 0;
+    max-width: 100%;
+    max-height: calc(100dvh - 9rem);
+    object-fit: contain;
+    touch-action: pan-y; /* horizontal swipes are ours, vertical scrolling stays the browser's */
+}
+.kc-lightbox-caption { max-width: 48rem; text-align: center; }
+.kc-lightbox-text { display: block; }
+.kc-lightbox-meta { display: block; color: rgb(255 255 255 / .65); font-size: .85rem; }
+.kc-lightbox-counter {
+    position: absolute;
+    top: 1.35rem;
+    left: 1.25rem;
+    margin: 0;
+    color: rgb(255 255 255 / .75);
+    font-size: .9rem;
+}
+.kc-lightbox-button {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / .12);
+    color: var(--kc-white);
+    font-size: 1.15rem;
+    transition: background-color .15s;
+}
+.kc-lightbox-button:hover { background: rgb(255 255 255 / .24); }
+.kc-lightbox-button:focus-visible { outline: 3px solid var(--kc-marigold); outline-offset: 2px; }
+.kc-lightbox-button[hidden] { display: none; }
+.kc-lightbox-close { top: .75rem; right: .75rem; }
+.kc-lightbox-prev,
+.kc-lightbox-next { top: 50%; transform: translateY(-50%); }
+.kc-lightbox-prev { left: .75rem; }
+.kc-lightbox-next { right: .75rem; }
+@media (max-width: 575.98px) {
+    /* Phones: the photo uses the full width; previous/next sit at the bottom, within thumb reach. */
+    .kc-lightbox-figure { padding: 3.75rem .5rem 5rem; }
+    .kc-lightbox-image { max-height: calc(100dvh - 12rem); }
+    .kc-lightbox-prev,
+    .kc-lightbox-next { top: auto; bottom: 1rem; transform: none; }
+    .kc-lightbox-prev { left: calc(50% - 3.5rem); }
+    .kc-lightbox-next { right: calc(50% - 3.5rem); }
+}
+
 /* A person's page: the profile card (photo or initials, name, role) and the text. Phones: card on top.
    From 768px: card on the left, text beside it. */
 .kc-profile {
@@ -1957,6 +2079,7 @@ html[lang="gu"] :is(.kc-toc-title, .kc-glance-list dt) { letter-spacing: 0; text
     .kc-js [data-reveal] { opacity: 1; transform: none; transition: none; }
     .kc-card,
     .kc-card-media img,
+    .kc-masonry img,
     .kc-notice,
     .kc-category,
     .kc-brand img { transition: none; }
@@ -1964,5 +2087,6 @@ html[lang="gu"] :is(.kc-toc-title, .kc-glance-list dt) { letter-spacing: 0; text
     .kc-notice:hover,
     .kc-category:hover { transform: none; }
     .kc-card:hover .kc-card-media img,
-    .kc-brand:hover img { transform: none; }
+    .kc-brand:hover img,
+    .kc-masonry a:hover img { transform: none; }
 }

@@ -68,12 +68,13 @@
                 {
                     <section class="kc-detail-block" aria-labelledby="photos-title">
                         <h2 class="kc-subheading" id="photos-title">@L["Photos"]</h2>
-                        <ul class="kc-photo-grid">
+                        <ul class="kc-photo-grid" data-lightbox>
                             @foreach (var photo in Model.Photos)
                             {
                                 <li>
                                     <figure>
-                                        <a href="@MediaUrls.Image(photo.ImagePath, ImageSize.Large)">
+                                        <a href="@MediaUrls.Image(photo.ImagePath, ImageSize.Large)" data-lightbox-item data-srcset="@MediaUrls.SrcSet(photo.ImagePath)"
+                                           data-alt="@(photo.Caption ?? Model.Name)" data-caption="@photo.Caption">
                                             <img src="@MediaUrls.Image(photo.ImagePath, ImageSize.Medium)" width="@photo.Width" height="@photo.Height"
                                                  alt="@(photo.Caption ?? Model.Name)" loading="lazy" decoding="async" />
                                         </a>
@@ -183,9 +184,18 @@
 
 <script type="application/ld+json">@Json.Serialize(structuredData)</script>
 
+@if (Model.Photos.Count > 0)
+{
+    <partial name="_Lightbox" />
+}
+
 @section Scripts {
     @if (Model.Map is not null)
     {
         <script src="/js/map.js" asp-append-version="true" defer></script>
+    }
+    @if (Model.Photos.Count > 0)
+    {
+        <script src="/js/lightbox.js" asp-append-version="true" defer></script>
     }
 }

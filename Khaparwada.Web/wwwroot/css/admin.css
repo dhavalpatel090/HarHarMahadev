@@ -1096,3 +1096,58 @@ a.kc-pending-label { color: var(--kc-maroon); }
 /* Names keep room in every admin list: on phones the table scrolls sideways instead of squeezing the name
    column (the first to shrink) to one word per line. */
 .kc-table .kc-name-cell { min-width: 12rem; }
+
+/* Gallery: the upload progress (admin.js, data-upload-each), the state line on each photo row, and the review
+   queue as a grid of photos. */
+.kc-upload-progress {
+    flex-basis: 100%;
+    display: grid;
+    gap: .5rem;
+    margin-top: .5rem;
+}
+.kc-upload-progress[hidden] { display: none; }
+.kc-upload-progress-text { margin: 0; font-weight: 600; }
+.kc-upload-errors { margin: 0; padding-left: 1.1rem; color: #8F1D14; }
+.kc-upload-errors:empty { display: none; }
+.kc-upload-progress .btn { justify-self: start; }
+.kc-photo-row-state { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .75rem; }
+
+.kc-admin-form--wide { max-width: none; }
+.kc-review-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1.5rem;
+    margin-bottom: 1rem;
+}
+.kc-review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 1rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+.kc-review-item {
+    display: grid;
+    align-content: start;
+    overflow: hidden;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-white);
+}
+.kc-review-item:has(input:checked) { border-color: var(--kc-maroon); box-shadow: 0 0 0 2px var(--kc-maroon); }
+.kc-review-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    background: var(--kc-ivory);
+    object-fit: cover;
+}
+.kc-review-body { display: grid; gap: .3rem; padding: .75rem .9rem .9rem; }
+.kc-review-body p { margin: 0; }
+.kc-review-album { font-weight: 600; }
+.kc-review-caption { font-size: .92rem; }
+.kc-review-meta { color: var(--kc-muted); font-size: .85rem; }

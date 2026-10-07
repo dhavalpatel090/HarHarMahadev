@@ -3,6 +3,8 @@
 //   data-slug-from="Name"           fill the web address from the English name (new items only);
 //                                   data-slug-year-from="StartDate" adds the year from a date box
 //   data-hidden-by="IsAllDay"       hide while a tick box is ticked
+//   form data-upload-each           send several chosen photos one per request, with progress
+//   data-check-all="Selected"       a "select all" tick box for the tick boxes of that name
 //   data-max-bytes / data-max-files / data-preview-target   check file sizes and count before uploading; preview a photo
 //   data-icon-filter="grid-id"      search box for the icon picker
 //   data-kc-picker                  map for choosing the village centre (needs map.js)
@@ -91,6 +93,9 @@
             }
         };
 
+        // In a data-upload-each form one oversized photo is skipped (and reported), not the whole selection.
+        const uploadsEach = Boolean(input.form && input.form.hasAttribute('data-upload-each'));
+
         input.addEventListener('change', () => {
             const files = Array.from(input.files || []);
             const maxBytes = Number(input.dataset.maxBytes || 0);
@@ -100,6 +105,8 @@
             if (maxFiles && files.length > maxFiles) {
                 input.value = '';
                 setFieldError(input, `You chose ${files.length} files. Choose at most ${maxFiles} at a time.`);
+            } else if (tooBig && uploadsEach && files.length > 1) {
+                setFieldError(input, `“${tooBig.name}” is ${megabytes(tooBig.size)} MB, over the ${megabytes(maxBytes)} MB limit. It will be skipped.`);
             } else if (tooBig) {
                 input.value = '';
                 const name = files.length > 1 ? `“${tooBig.name}” is` : 'This file is';
@@ -122,6 +129,113 @@
             } else {
                 showPreview(originalSource);
             }
+        });
+    }
+
+    // data-upload-each on an upload form: several photos go one per request (fetch, "Accept: application/json"),
+    // with a progress bar. Every request stays small (a whole festival would otherwise be one request of hundreds of
+    // MB, refused by the server) and one refused file does not stop the others. When all succeed the page reloads
+    // with ?added=n, which shows the usual message. A single photo goes as a normal form post.
+    function initUploadEach(form) {
+        const input = form.querySelector('input[type="file"]');
+        const status = form.querySelector('[data-upload-status]');
+        const token = form.querySelector('input[name="__RequestVerificationToken"]');
+        const button = form.querySelector('button[type="submit"]');
+        if (!input || !status || !token || !button || !window.fetch) {
+            return;
+        }
+        const bar = status.querySelector('progress');
+        const text = status.querySelector('.kc-upload-progress-text');
+        const errors = status.querySelector('.kc-upload-errors');
+        const done = status.querySelector('[data-upload-done]');
+        const maxBytes = Number(input.dataset.maxBytes || 0);
+        let busy = false;
+
+        const report = (message) => {
+            const item = document.createElement('li');
+            item.textContent = message;
+            errors.append(item);
+        };
+
+        form.addEventListener('submit', async (event) => {
+            const files = Array.from(input.files || []);
+            if (files.length < 2) {
+                return;
+            }
+            event.preventDefault();
+            if (busy) {
+                return;
+            }
+            busy = true;
+            button.disabled = true;
+            input.disabled = true;
+            status.hidden = false;
+            errors.replaceChildren();
+            done.hidden = true;
+            bar.max = files.length;
+            bar.value = 0;
+
+            let added = 0;
+            let signedOut = false;
+            for (const [position, file] of files.entries()) {
+                text.textContent = `Uploading ${position + 1} of ${files.length}: ${file.name}`;
+                if (maxBytes && file.size > maxBytes) {
+                    report(`${file.name}: ${megabytes(file.size)} MB, over the ${megabytes(maxBytes)} MB limit.`);
+                } else if (signedOut) {
+                    report(`${file.name}: not sent.`);
+                } else {
+                    const data = new FormData();
+                    data.append('__RequestVerificationToken', token.value);
+                    data.append(input.name, file, file.name);
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: data,
+                            headers: { Accept: 'application/json' },
+                            credentials: 'same-origin'
+                        });
+                        const isJson = (response.headers.get('content-type') || '').includes('application/json');
+                        if (response.ok && isJson) {
+                            const result = await response.json();
+                            added += result.added || 0;
+                            if (result.error) {
+                                report(result.error);
+                            }
+                        } else if (response.redirected || (response.ok && !isJson)) {
+                            // The sign-in has expired: the server sent the sign-in page instead.
+                            signedOut = true;
+                            report(`${file.name}: you were signed out. Sign in again, then upload the rest.`);
+                        } else {
+                            report(`${file.name}: ${response.status === 413 ? 'the file is too large.' : `the server answered ${response.status}.`}`);
+                        }
+                    } catch {
+                        report(`${file.name}: the connection failed. Check the internet connection and try again.`);
+                    }
+                }
+                bar.value = position + 1;
+            }
+
+            setFieldError(input, null); // a "will be skipped" warning is now in the list below
+            const next = window.location.pathname + (added > 0 ? `?added=${added}` : '');
+            if (errors.children.length === 0) {
+                window.location.assign(next);
+                return;
+            }
+            text.textContent = `${added} of ${files.length} photos uploaded. These were not:`;
+            done.href = next;
+            done.hidden = false;
+            input.value = '';
+            input.disabled = false;
+            button.disabled = false;
+            busy = false;
+        });
+    }
+
+    // data-check-all="Selected": ticks or clears every tick box of that name in the same form.
+    function initCheckAll(box) {
+        box.addEventListener('change', () => {
+            box.form?.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(box.dataset.checkAll)}"]`)
+                .forEach((item) => { item.checked = box.checked; });
         });
     }
 
@@ -277,6 +391,8 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[data-slug-from]').forEach(initSlug);
         document.querySelectorAll('[data-hidden-by]').forEach(initHiddenBy);
+        document.querySelectorAll('form[data-upload-each]').forEach(initUploadEach);
+        document.querySelectorAll('[data-check-all]').forEach(initCheckAll);
         document.querySelectorAll('input[type="file"][data-max-bytes], input[type="file"][data-preview-target]').forEach(initFileInput);
         document.querySelectorAll('[data-icon-filter]').forEach(initIconFilter);
         document.querySelectorAll('[data-kc-picker]').forEach(initPicker);

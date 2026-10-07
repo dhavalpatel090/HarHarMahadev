@@ -15,9 +15,9 @@ public sealed record DashboardStat(string Label, int Value, string Icon, string?
 
 /// <summary>
 /// Something waiting for a person to act on. Controller is null until that admin screen exists; Status is the
-/// list tab it opens (e.g. "review").
+/// list tab it opens (e.g. "review"), Action the screen (default: the list).
 /// </summary>
-public sealed record PendingItem(string Label, int Count, string Icon, string? Controller = null, string? Status = null);
+public sealed record PendingItem(string Label, int Count, string Icon, string? Controller = null, string? Status = null, string Action = "Index");
 
 /// <summary>
 /// One step of "finish setting up": replacing a placeholder with real village information. AdminOnly steps

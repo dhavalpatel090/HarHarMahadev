@@ -34,7 +34,7 @@
                         <icon name="@item.Icon" />
                         @if (item.Controller is not null)
                         {
-                            <a class="kc-pending-label" asp-controller="@item.Controller" asp-action="Index" asp-route-status="@item.Status">@item.Label</a>
+                            <a class="kc-pending-label" asp-controller="@item.Controller" asp-action="@item.Action" asp-route-status="@item.Status">@item.Label</a>
                         }
                         else
                         {

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Khaparwada.Web.ViewModels.Gallery;
 using Khaparwada.Web.ViewModels.Shared;
 
 namespace Khaparwada.Web.ViewModels.Events;
@@ -53,6 +54,9 @@ public sealed class EventDetailsViewModel
     public string? LocationText { get; init; }
 
     public required IReadOnlyList<EventCardViewModel> MoreEvents { get; init; }
+
+    /// <summary>Photo albums from this event (Gallery), newest first.</summary>
+    public IReadOnlyList<AlbumCardViewModel> Albums { get; init; } = [];
 
     public string DateText => EventSchedule.DateText(StartsAt, EndsAt, IsAllDay, CultureInfo.CurrentCulture);
     public string? TimeText => EventSchedule.TimeText(StartsAt, EndsAt, IsAllDay, CultureInfo.CurrentCulture);

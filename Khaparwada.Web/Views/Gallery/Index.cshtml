@@ -1,0 +1,73 @@
+@model GalleryListViewModel
+@{
+    var all = L["Gallery"].Value;
+    var title = Model.Category?.Name ?? all;
+    var lead = L["Festivals, people, places and old photographs of Khaparwada."].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = lead;
+
+    // The category and each page are pages of their own for search engines (see PageMeta).
+    var canonical = new List<string>();
+    if (Model.Category is not null) { canonical.Add("category=" + Uri.EscapeDataString(Model.Category.Slug)); }
+    if (Model.Pagination.Page > 1) { canonical.Add("page=" + Model.Pagination.Page); }
+    ViewData["CanonicalQuery"] = canonical.Count == 0 ? null : "?" + string.Join("&", canonical);
+
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = lead,
+        Icon = "images",
+        Breadcrumbs = Model.Category is null
+            ? [new BreadcrumbItem(all)]
+            : [new BreadcrumbItem(all, RouteNames.Gallery), new BreadcrumbItem(Model.Category.Name)]
+    };
+    var withAlbums = Model.Categories.Where(c => c.Count > 0).ToList();
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-gallery-page">
+    <div class="container">
+        @if (withAlbums.Count > 0)
+        {
+            <nav class="kc-filter-chips" aria-label="@L["Categories"]">
+                <a class="kc-filter-chip @(Model.Category is null ? "is-active" : null)" aria-current="@(Model.Category is null ? "page" : null)"
+                   asp-route="@RouteNames.Gallery">@L["All"]</a>
+                @foreach (var category in withAlbums)
+                {
+                    var current = category.Slug == Model.Category?.Slug;
+                    <a class="kc-filter-chip @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+                       asp-route="@RouteNames.Gallery" asp-route-category="@category.Slug">
+                        @category.Name <span class="kc-filter-count">@category.Count</span>
+                    </a>
+                }
+            </nav>
+        }
+
+        @if (Model.Albums.Count == 0)
+        {
+            <p class="kc-empty">
+                @if (Model.Category is null)
+                {
+                    @L["Photos will appear here soon."]
+                }
+                else
+                {
+                    @L["No albums in this category yet."]
+                    <a asp-route="@RouteNames.Gallery">@L["All photos"]</a>
+                }
+            </p>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var album in Model.Albums)
+                {
+                    <div class="col-sm-6 col-lg-4">
+                        <partial name="Cards/_AlbumCard" model="album" />
+                    </div>
+                }
+            </div>
+            <partial name="_Pagination" model="Model.Pagination" />
+        }
+    </div>
+</section>

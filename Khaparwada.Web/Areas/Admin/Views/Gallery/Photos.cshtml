@@ -1,0 +1,138 @@
+@model AlbumPhotosForm
+@using Microsoft.Extensions.Options
+@using Khaparwada.Web.Models.Enums
+@using Khaparwada.Web.Services.Admin
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.StorageOptions> StorageOptions
+@{
+    ViewData["Title"] = $"Photos of “{Model.AlbumTitle}”";
+    ViewData["Lead"] = "Shown on the album's page in the order below; the first photo is the album's cover.";
+    var storage = StorageOptions.Value;
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var waiting = Model.Photos.Count(photo => photo.Status is ModerationStatus.Pending or ModerationStatus.UnderReview);
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/gallery/@Model.AlbumSlug" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-outline" asp-action="Edit" asp-route-id="@Model.AlbumId"><icon name="pen-to-square" /> Edit album</a>
+}
+
+@if (!Model.AlbumIsPublished)
+{
+    <div class="kc-admin-alert kc-admin-alert--warning">
+        <icon name="triangle-exclamation" />
+        <span>This album is hidden: its photos are not on the website. Switch it on with “Edit album”.</span>
+    </div>
+}
+@if (waiting > 0)
+{
+    <div class="kc-admin-alert kc-admin-alert--warning">
+        <icon name="inbox" />
+        <span>
+            @(waiting == 1 ? "1 photo is" : $"{waiting} photos are") waiting for an Admin's approval.
+            @if (isAdmin)
+            {
+                <a asp-action="Review">Review them</a>
+            }
+        </span>
+    </div>
+}
+
+<section class="kc-panel kc-admin-form" aria-labelledby="add-title">
+    <header class="kc-panel-header">
+        <h2 class="kc-panel-title" id="add-title">Add photos</h2>
+        @if (!isAdmin)
+        {
+            <p class="kc-panel-text">Your photos appear on the website once an Admin approves them.</p>
+        }
+    </header>
+    <div class="kc-panel-body">
+        @* data-upload-each: admin.js sends the photos one per request, with progress, so a whole festival fits and one
+           bad file does not stop the rest. Without JavaScript the form sends up to the server's limit at once. *@
+        <form method="post" enctype="multipart/form-data" asp-action="AddPhotos" asp-route-id="@Model.AlbumId" class="kc-upload-row" data-upload-each>
+            <div class="kc-field">
+                <label class="kc-field-label" for="NewPhotos">Choose photos</label>
+                <p class="kc-field-hint" id="new-photos-hint">
+                    As many as you like: they are uploaded one after another. JPG, PNG or WebP, up to
+                    @storage.MaxImageMegabytes MB each. They are resized automatically and hidden details such as the GPS
+                    location are removed. Add captions below once they are uploaded.
+                    <noscript>Without JavaScript, choose at most @GalleryAdminService.MaxPhotosPerUpload at a time.</noscript>
+                </p>
+                <input class="form-control" type="file" id="NewPhotos" name="NewPhotos" multiple accept="image/jpeg,image/png,image/webp"
+                       aria-describedby="new-photos-hint" data-max-bytes="@(storage.MaxImageMegabytes * 1024L * 1024L)" />
+                <span class="kc-field-error field-validation-valid" data-valmsg-for="NewPhotos" data-valmsg-replace="true"></span>
+            </div>
+            <button type="submit" class="btn btn-kc-primary"><icon name="upload" /> Upload</button>
+            <div class="kc-upload-progress" data-upload-status hidden>
+                <progress class="kc-progress" max="1" value="0"></progress>
+                <p class="kc-upload-progress-text" role="status"></p>
+                <ul class="kc-upload-errors"></ul>
+                <a class="btn btn-kc-outline" href="" data-upload-done hidden>Show the photos</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+@if (Model.Photos.Count == 0)
+{
+    <section class="kc-panel">
+        <p class="kc-panel-empty">No photos yet. The album appears on the website once it has an approved photo.</p>
+    </section>
+}
+else
+{
+    <form method="post" asp-action="Photos" asp-route-id="@Model.AlbumId" class="kc-admin-form">
+        <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+        <section class="kc-panel" aria-labelledby="list-title">
+            <header class="kc-panel-header">
+                <h2 class="kc-panel-title" id="list-title">@Model.Photos.Count photos</h2>
+                <p class="kc-panel-text">Smaller order numbers come first. “Remove for good” deletes the photo and its files: it is gone from the website at once.</p>
+            </header>
+            <ul class="kc-photo-rows">
+                @for (var i = 0; i < Model.Photos.Count; i++)
+                {
+                    var photo = Model.Photos[i];
+                    var isWaiting = photo.Status is ModerationStatus.Pending or ModerationStatus.UnderReview;
+                    <li class="kc-photo-row">
+                        <input type="hidden" asp-for="Photos[i].Id" />
+                        <img src="@MediaUrls.Image(photo.ImagePath, ImageSize.Small)" alt="" loading="lazy" />
+                        <div class="kc-photo-row-fields">
+                            <p class="kc-photo-row-state">
+                                @if (isWaiting)
+                                {
+                                    <span class="kc-status is-todo">Waiting for approval</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                                @if (photo.UploadedBy is not null)
+                                {
+                                    <span class="kc-review-meta">Uploaded by @photo.UploadedBy</span>
+                                }
+                            </p>
+                            <bilingual-field for="Photos[i].Caption" for-gu="Photos[i].CaptionGu" />
+                            <div class="kc-photo-row-meta">
+                                <div class="kc-field kc-field--tiny">
+                                    <label asp-for="Photos[i].SortOrder" class="kc-field-label"></label>
+                                    <input asp-for="Photos[i].SortOrder" class="form-control" min="0" max="999999" />
+                                    <span asp-validation-for="Photos[i].SortOrder" class="kc-field-error"></span>
+                                </div>
+                                <div class="form-check">
+                                    <input asp-for="Photos[i].Remove" class="form-check-input" />
+                                    <label asp-for="Photos[i].Remove" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+        <div class="kc-form-actions">
+            <button type="submit" class="btn btn-kc-primary">Save photos</button>
+            <a class="btn btn-link" asp-action="Index">Back to albums</a>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

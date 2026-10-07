@@ -23,6 +23,12 @@ public class GalleryImageConfiguration : IEntityTypeConfiguration<GalleryImage>
             .HasForeignKey(i => i.ReviewedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Accounts are switched off, never deleted (see ApplicationUser), so Restrict never blocks anything.
+        builder.HasOne(i => i.UploadedBy)
+            .WithMany()
+            .HasForeignKey(i => i.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(i => new { i.AlbumId, i.Status, i.SortOrder });
 
         // Hidden when the photo itself or its album is deleted.

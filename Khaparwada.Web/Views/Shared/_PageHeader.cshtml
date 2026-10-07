@@ -14,7 +14,7 @@
                     }
                     else
                     {
-                        <li class="breadcrumb-item"><a asp-route="@crumb.RouteName">@crumb.Text</a></li>
+                        <li class="breadcrumb-item"><a asp-route="@crumb.RouteName" asp-all-route-data="crumb.RouteValues">@crumb.Text</a></li>
                     }
                 }
             </ol>
