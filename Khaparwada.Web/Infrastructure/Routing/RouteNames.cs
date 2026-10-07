@@ -21,10 +21,12 @@ public static class RouteNames
     public const string AlbumDetails = "album-details";
     public const string Notices = "notices";
     public const string NoticeDetails = "notice-details";
+    public const string NoticeAttachment = "notice-attachment";
     public const string Memories = "memories";
     public const string MemoryDetails = "memory-details";
     public const string ShareMemory = "share-memory";
     public const string Contact = "contact";
+    public const string ContactSent = "contact-sent";
     public const string Privacy = "privacy";
     public const string Terms = "terms";
 }

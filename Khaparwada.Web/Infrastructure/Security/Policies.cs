@@ -14,4 +14,8 @@ public static class Policies
     /// many passwords against many accounts.
     /// </summary>
     public const string LoginRateLimit = "login";
+
+    /// <summary>Contact-form messages per network address: enough for people (also several on one shared village
+    /// connection), too few for a flood of spam.</summary>
+    public const string ContactRateLimit = "contact";
 }

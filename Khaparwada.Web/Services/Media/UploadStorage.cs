@@ -23,6 +23,11 @@ public interface IUploadStorage
     string PublicPath(string relativePath);
 
     void DeletePublicFile(string relativePath);
+
+    /// <summary>Full path of a private file. Throws if the key would point outside the private folder.</summary>
+    string PrivatePath(string relativePath);
+
+    void DeletePrivateFile(string relativePath);
 }
 
 public sealed class LocalUploadStorage : IUploadStorage
@@ -55,6 +60,17 @@ public sealed class LocalUploadStorage : IUploadStorage
     public void DeletePublicFile(string relativePath)
     {
         var path = PublicPath(relativePath);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
+
+    public string PrivatePath(string relativePath) => Combine(PrivateRoot, relativePath);
+
+    public void DeletePrivateFile(string relativePath)
+    {
+        var path = PrivatePath(relativePath);
         if (File.Exists(path))
         {
             File.Delete(path);

@@ -1,0 +1,31 @@
+@model NoticeLookup
+@{
+    // Answered with 410 Gone (NoticesController): search engines drop the address; the old text is not shown.
+    ViewData["Title"] = L["This notice has ended"].Value;
+    ViewData["NoIndex"] = true;
+    var board = L["Notice board"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = L["This notice has ended"],
+        Icon = "clock-rotate-left",
+        Breadcrumbs = [new BreadcrumbItem(board, RouteNames.Notices), new BreadcrumbItem(Model.EndedTitle ?? "")]
+    };
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section">
+    <div class="container kc-narrow">
+        <p class="kc-lead-text">
+            @if (Model.EndedOn is { } endedOn)
+            {
+                @L["“{0}” was on the notice board until {1}.", Model.EndedTitle ?? "", endedOn.ToString("d MMMM yyyy", CultureInfo.CurrentCulture)]
+            }
+            else
+            {
+                @L["“{0}” is no longer on the notice board.", Model.EndedTitle ?? ""]
+            }
+        </p>
+        <p>@L["Notices are removed when they end, so that outdated information is not passed on. The notice board shows what is current."]</p>
+        <a class="btn btn-kc-primary" asp-route="@RouteNames.Notices"><icon name="bullhorn" /> @L["See current notices"]</a>
+    </div>
+</section>

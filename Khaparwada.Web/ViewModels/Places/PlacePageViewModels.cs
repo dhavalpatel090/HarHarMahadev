@@ -42,20 +42,7 @@ public sealed class PlaceDetailsViewModel
 
     public bool HasCoordinates => Latitude is not null && Longitude is not null;
 
-    /// <summary>"tel:" link: a leading + and the digits only, since spaces and brackets are not allowed there.</summary>
-    public string? PhoneHref
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(Phone))
-            {
-                return null;
-            }
-
-            var number = Phone.Trim();
-            return "tel:" + (number.StartsWith('+') ? "+" : string.Empty) + new string(number.Where(char.IsAsciiDigit).ToArray());
-        }
-    }
+    public string? PhoneHref => PhoneLinks.Tel(Phone);
 
     public string? DirectionsUrl => MapLinks.Directions(Latitude, Longitude);
 

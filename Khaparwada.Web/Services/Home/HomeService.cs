@@ -7,6 +7,7 @@ using Khaparwada.Web.Models.Enums;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.Services.Events;
 using Khaparwada.Web.Services.Gallery;
+using Khaparwada.Web.Services.Notices;
 using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.People;
 using Khaparwada.Web.Services.Places;
@@ -153,35 +154,12 @@ public sealed class HomeService(
         return cards.OrderBy(card => card.StartsAt).ToList();
     }
 
-    private async Task<List<NoticeItemViewModel>> GetLatestNoticesAsync(CancellationToken cancellationToken)
-    {
-        var gu = AppLanguage.IsGujarati;
-        var rows = await db.Notices.AsNoTracking()
+    private Task<List<NoticeItemViewModel>> GetLatestNoticesAsync(CancellationToken cancellationToken) =>
+        db.Notices.AsNoTracking()
             .Active(clock.UtcNow)
-            // Priority is stored as text, so ORDER BY Priority would sort alphabetically; rank it explicitly.
-            .OrderByDescending(notice => notice.Priority == NoticePriority.Urgent)
-            .ThenByDescending(notice => notice.Priority == NoticePriority.Important)
-            .ThenByDescending(notice => notice.PublishedAt)
+            .InBoardOrder()
             .Take(4)
-            .Select(notice => new
-            {
-                notice.Slug,
-                Title = gu ? notice.TitleGu ?? notice.Title : notice.Title,
-                notice.Category,
-                notice.Priority,
-                notice.PublishedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        return rows.Select(row => new NoticeItemViewModel
-        {
-            Slug = row.Slug,
-            Title = row.Title,
-            Category = row.Category,
-            Priority = row.Priority,
-            PublishedAt = clock.ToVillageTime(row.PublishedAt)
-        }).ToList();
-    }
+            .ToItemsAsync(AppLanguage.IsGujarati, withExcerpt: false, clock, cancellationToken);
 
     private Task<List<AlbumCardViewModel>> GetAlbumsAsync(CancellationToken cancellationToken) =>
         db.GalleryAlbums.AsNoTracking()
@@ -220,25 +198,6 @@ public sealed class HomeService(
         }).ToList();
     }
 
-    private async Task<MapViewModel?> GetMapAsync(SiteInfo site, CancellationToken cancellationToken)
-    {
-        var markers = await db.Places.AsNoTracking()
-            .Visible()
-            .InListOrder()
-            .SelectMarkers(AppLanguage.IsGujarati)
-            .ToListAsync(cancellationToken);
-
-        if (markers.Count == 0 && !site.HasCoordinates)
-        {
-            return null;
-        }
-
-        return new MapViewModel
-        {
-            CenterLatitude = site.Latitude,
-            CenterLongitude = site.Longitude,
-            Zoom = site.MapZoom,
-            Markers = markers
-        };
-    }
+    private Task<MapViewModel?> GetMapAsync(SiteInfo site, CancellationToken cancellationToken) =>
+        db.LoadVillageMapAsync(site, AppLanguage.IsGujarati, cancellationToken);
 }

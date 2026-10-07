@@ -1,0 +1,54 @@
+@model MessageDetailsViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    ViewData["Title"] = Model.Subject;
+    ViewData["Lead"] = "Message";
+}
+@section Actions {
+    <a class="btn btn-kc-outline" asp-action="Index"><icon name="inbox" /> Back to messages</a>
+}
+
+<article class="kc-panel kc-message">
+    <header class="kc-panel-header">
+        <dl class="kc-message-meta">
+            <div><dt>From</dt><dd>@Model.Name</dd></div>
+            @if (Model.Email is not null)
+            {
+                <div><dt>Email</dt><dd><a href="mailto:@Model.Email">@Model.Email</a></dd></div>
+            }
+            @if (Model.Phone is not null)
+            {
+                <div><dt>Phone</dt><dd><a href="@Model.PhoneHref">@Model.Phone</a></dd></div>
+            }
+            <div><dt>Received</dt><dd>@Model.ReceivedAt.ToString("d MMMM yyyy, h:mm tt", CultureInfo.CurrentCulture)</dd></div>
+        </dl>
+    </header>
+    <div class="kc-panel-body kc-message-text">
+        @foreach (var paragraph in TextHelpers.Paragraphs(Model.Message))
+        {
+            <p>@paragraph</p>
+        }
+    </div>
+</article>
+
+<div class="kc-inline-actions kc-message-actions">
+    @if (Model.ReplyMailto is not null)
+    {
+        <a class="btn btn-kc-primary" href="@Model.ReplyMailto"><icon name="envelope" /> Reply by email</a>
+    }
+    @if (Model.PhoneHref is not null)
+    {
+        <a class="btn btn-kc-outline" href="@Model.PhoneHref"><icon name="phone" /> Call</a>
+    }
+    <form method="post" asp-action="MarkUnread" asp-route-id="@Model.Id" class="d-inline">
+        <button type="submit" class="btn btn-kc-outline">Mark as unread</button>
+    </form>
+    @* Two steps without a script: opening "Delete…" shows the real button. *@
+    <details class="kc-confirm">
+        <summary class="btn btn-sm kc-btn-delete"><icon name="trash-can" /> Delete…</summary>
+        <form method="post" asp-action="Delete" asp-route-id="@Model.Id" class="kc-confirm-body">
+            <span>The message is deleted for good, with the sender's details. This cannot be undone.</span>
+            <button type="submit" class="btn btn-danger">Delete for good</button>
+        </form>
+    </details>
+</div>

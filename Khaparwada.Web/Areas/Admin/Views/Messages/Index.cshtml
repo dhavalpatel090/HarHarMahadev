@@ -1,0 +1,46 @@
+@model MessageListViewModel
+@{
+    ViewData["Title"] = "Messages";
+    ViewData["Lead"] = "Messages from the Contact form. Only Admins see them; they are never shown on the website.";
+    var culture = CultureInfo.CurrentCulture;
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/contact" target="_blank" rel="noopener"><icon name="eye" /> View the form<span class="visually-hidden"> (opens in a new tab)</span></a>
+}
+
+<nav class="kc-tabs" aria-label="Messages">
+    <a class="kc-tab @(Model.Filter == MessageListFilter.Unread ? "is-active" : null)" aria-current="@(Model.Filter == MessageListFilter.Unread ? "page" : null)"
+       asp-route="admin-messages">Unread <span class="kc-tab-count @(Model.Counts[MessageListFilter.Unread] > 0 ? "is-hot" : null)">@Model.Counts[MessageListFilter.Unread]</span></a>
+    <a class="kc-tab @(Model.Filter == MessageListFilter.All ? "is-active" : null)" aria-current="@(Model.Filter == MessageListFilter.All ? "page" : null)"
+       asp-route="admin-messages" asp-route-show="all">All <span class="kc-tab-count">@Model.Counts[MessageListFilter.All]</span></a>
+</nav>
+
+<section class="kc-panel" aria-label="Messages">
+    @if (Model.Items.Count == 0)
+    {
+        <p class="kc-panel-empty">@(Model.Filter == MessageListFilter.Unread ? "No unread messages." : "No messages yet.")</p>
+    }
+    else
+    {
+        <ul class="kc-message-list">
+            @foreach (var item in Model.Items)
+            {
+                <li class="kc-message-item @(item.IsRead ? null : "is-unread")">
+                    <a asp-action="Details" asp-route-id="@item.Id">
+                        <span class="kc-message-head">
+                            <strong class="kc-message-from">@item.Name</strong>
+                            @if (!item.IsRead)
+                            {
+                                <span class="kc-status is-todo">New</span>
+                            }
+                            <time class="kc-message-time" datetime="@item.ReceivedAt.ToString("O", CultureInfo.InvariantCulture)">@item.ReceivedAt.ToString("d MMM yyyy, h:mm tt", culture)</time>
+                        </span>
+                        <span class="kc-message-subject">@item.Subject</span>
+                        <span class="kc-message-excerpt">@item.Excerpt</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</section>
+<partial name="_Pagination" model="Model.Pagination" />

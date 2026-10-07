@@ -1,6 +1,6 @@
 @model int
 @{
-    // Say what to do instead of a generic error: 429 comes from the sign-in rate limit, 413 from an upload
+    // Say what to do instead of a generic error: 429 comes from the sign-in or contact-form rate limit, 413 from an upload
     // larger than its form allows (normally caught earlier in the browser).
     var (title, text) = Model switch
     {

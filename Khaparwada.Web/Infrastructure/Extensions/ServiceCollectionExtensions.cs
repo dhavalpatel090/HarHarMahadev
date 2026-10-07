@@ -13,6 +13,7 @@ using Khaparwada.Web.Models.Entities;
 using Khaparwada.Web.Services.About;
 using Khaparwada.Web.Services.Admin;
 using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.Contact;
 using Khaparwada.Web.Services.Events;
 using Khaparwada.Web.Services.Gallery;
 using Khaparwada.Web.Services.History;
@@ -170,6 +171,9 @@ public static class ServiceCollectionExtensions
             options.AddPolicy(Policies.LoginRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(5) }));
+            options.AddPolicy(Policies.ContactRateLimit, context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) }));
         });
 
         return services;
@@ -223,11 +227,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPeopleService, PeopleService>();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IGalleryService, GalleryService>();
+        services.AddScoped<IContactService, ContactService>();
 
         // Uploads (stateless, so one instance serves every request).
         services.AddSingleton<IUploadStorage, LocalUploadStorage>();
         services.AddSingleton<IImageUploadService, ImageUploadService>();
         services.AddSingleton<IVideoUploadService, VideoUploadService>();
+        services.AddSingleton<IDocumentUploadService, DocumentUploadService>();
         services.AddSingleton<IIconCatalog, IconCatalog>();
 
         // Admin area.
@@ -242,6 +248,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPersonAdminService, PersonAdminService>();
         services.AddScoped<IEventAdminService, EventAdminService>();
         services.AddScoped<IGalleryAdminService, GalleryAdminService>();
+        services.AddScoped<INoticeAdminService, NoticeAdminService>();
+        services.AddScoped<IMessageAdminService, MessageAdminService>();
 
         return services;
     }

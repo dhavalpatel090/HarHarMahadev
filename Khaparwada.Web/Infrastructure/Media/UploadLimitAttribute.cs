@@ -18,7 +18,7 @@ namespace Khaparwada.Web.Infrastructure.Media;
 /// longer change. So this is an authorization filter with order 900, like ASP.NET Core's own [RequestSizeLimit].
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class UploadLimitAttribute(int images = 0, int videos = 0) : Attribute, IFilterFactory, IOrderedFilter
+public sealed class UploadLimitAttribute(int images = 0, int videos = 0, int documents = 0) : Attribute, IFilterFactory, IOrderedFilter
 {
     public bool IsReusable => true;
 
@@ -27,7 +27,8 @@ public sealed class UploadLimitAttribute(int images = 0, int videos = 0) : Attri
     public IFilterMetadata CreateInstance(IServiceProvider serviceProvider)
     {
         var storage = serviceProvider.GetRequiredService<IOptions<StorageOptions>>().Value;
-        var megabytes = (long)images * storage.MaxImageMegabytes + (long)videos * storage.MaxVideoMegabytes + 1;
+        var megabytes = (long)images * storage.MaxImageMegabytes + (long)videos * storage.MaxVideoMegabytes
+                        + (long)documents * storage.MaxDocumentMegabytes + 1;
         return new LimitFilter(megabytes * 1024 * 1024);
     }
 

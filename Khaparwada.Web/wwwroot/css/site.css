@@ -1608,6 +1608,88 @@ a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon)
 .kc-event-state.is-now { background: var(--kc-marigold-50); color: var(--kc-maroon); }
 .kc-info-note { color: var(--kc-muted); font-size: .92rem; }
 
+/* The notice board (the list is shared with Home) and a notice's page. */
+.kc-notices-page .kc-filter-chips { margin-bottom: 1.5rem; }
+.kc-notice-excerpt { margin: .35rem 0 0; color: var(--kc-muted); font-size: .95rem; }
+.kc-notice-priority {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 1.25rem;
+    padding: .45rem 1rem;
+    border-radius: var(--kc-radius-pill);
+    font-weight: 600;
+}
+.kc-notice-priority.is-urgent { background: #FCEBE9; color: var(--kc-urgent); }
+.kc-notice-priority.is-important { background: var(--kc-marigold-50); color: var(--kc-marigold-600); }
+/* A notice's image is often a poster or a circular: shown whole, not cropped to 16:9 like a place's photo. */
+/* A notice: text → card → poster on phones; text and poster on the left, the card beside them from 992px. */
+.kc-notice-layout { display: grid; grid-template-areas: "main" "aside" "poster"; gap: 1.75rem; }
+.kc-notice-main { grid-area: main; min-width: 0; }
+.kc-notice-aside { grid-area: aside; }
+.kc-notice-figure { grid-area: poster; }
+@media (min-width: 992px) {
+    .kc-notice-layout {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        grid-template-areas: "main aside" "poster aside";
+        align-items: start;
+        column-gap: 3rem;
+    }
+}
+.kc-notice-figure img { aspect-ratio: auto; max-height: 80vh; object-fit: contain; }
+.kc-attachment-link { display: inline-flex; align-items: center; gap: .6rem; text-align: left; }
+.kc-attachment-link small { display: block; font-size: .8rem; font-weight: 400; opacity: .85; overflow-wrap: anywhere; }
+.kc-narrow { max-width: 46rem; }
+.kc-lead-text { color: var(--kc-ink); font-size: 1.2rem; }
+
+/* The Contact page: the message form beside the village's details; the map below. */
+.kc-form-card {
+    padding: 1.5rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-sm);
+}
+@media (min-width: 768px) {
+    .kc-form-card { padding: 2rem; }
+}
+.kc-form-intro-public { margin-bottom: 1.5rem; color: var(--kc-muted); }
+.kc-contact-form .form-label { margin-bottom: .35rem; font-weight: 600; }
+.kc-contact-form .form-control { padding: .6rem .85rem; border-color: var(--kc-line); border-radius: var(--kc-radius-sm); }
+.kc-contact-form .form-control:focus { border-color: var(--kc-marigold); box-shadow: 0 0 0 .2rem rgb(232 163 61 / .28); }
+.kc-contact-form .input-validation-error { border-color: var(--kc-urgent); }
+.kc-form-error { display: block; margin-top: .3rem; color: var(--kc-urgent); font-size: .9rem; }
+.kc-form-error:empty { display: none; }
+.kc-form-hint { color: var(--kc-muted); font-size: .9rem; }
+.kc-form-alert.validation-summary-valid { display: none; }
+.kc-form-alert {
+    margin-bottom: 1rem;
+    padding: .75rem 1rem;
+    border-radius: var(--kc-radius-sm);
+    background: #FCEBE9;
+    color: var(--kc-urgent);
+}
+.kc-form-alert ul { margin: 0; padding-left: 1.1rem; }
+/* The honeypot: off-screen rather than display:none, which some robots know to skip. */
+.kc-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.kc-info-heading { margin: 0 0 .5rem; color: var(--kc-muted); font-family: var(--kc-font-body); font-size: .9rem; font-weight: 700; }
+.kc-social-list,
+.kc-link-list { display: grid; gap: .45rem; margin: 0; padding: 0; list-style: none; }
+.kc-social-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.kc-social-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .35rem .85rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    color: var(--kc-text);
+    text-decoration: none;
+}
+.kc-social-list a:hover { border-color: var(--kc-marigold); color: var(--kc-maroon); }
+.kc-link-list a { display: inline-flex; align-items: center; gap: .4rem; }
+.kc-link-list .icon { font-size: .75em; opacity: .7; }
+
 /* An album: facts (category, number of photos, date, event), then the photos in masonry columns. CSS columns
    need no script; the width and height on every photo keep the columns still while photos load. */
 .kc-album-facts {
@@ -1778,8 +1860,8 @@ html:has(.kc-lightbox[open]) { overflow: hidden; } /* the page behind does not s
 .kc-profile-block { margin-top: 2.25rem; }
 .kc-profile-block .kc-subheading .icon { color: var(--kc-marigold-600); }
 
-/* "Shown with consent" note under the people list and on each profile. */
-.kc-people-note {
+/* A short note at the foot of a page: "shown with consent" (people), "notices are removed when they end". */
+.kc-page-note {
     display: flex;
     align-items: flex-start;
     gap: .5rem;
@@ -1790,7 +1872,7 @@ html:has(.kc-lightbox[open]) { overflow: hidden; } /* the page behind does not s
     color: var(--kc-muted);
     font-size: .92rem;
 }
-.kc-people-note .icon { flex-shrink: 0; margin-top: .2em; color: var(--kc-marigold-600); }
+.kc-page-note .icon { flex-shrink: 0; margin-top: .2em; color: var(--kc-marigold-600); }
 
 /* The /map page: category buttons above a tall map, and the same places as a list below. */
 .kc-map-filters {

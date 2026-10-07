@@ -16,7 +16,7 @@
             }
             @if (!string.IsNullOrWhiteSpace(Model.OfficePhone))
             {
-                <li><icon name="phone" /> <a href="tel:@Model.OfficePhone">@Model.OfficePhone</a></li>
+                <li><icon name="phone" /> <a href="@PhoneLinks.Tel(Model.OfficePhone)">@Model.OfficePhone</a></li>
             }
             @if (!string.IsNullOrWhiteSpace(Model.OfficeEmail))
             {

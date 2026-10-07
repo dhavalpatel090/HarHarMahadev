@@ -1,0 +1,165 @@
+@model ContactPageViewModel
+@{
+    var site = Model.Site;
+    var title = L["Contact"].Value;
+    var lead = L["Location, contact details and useful links. Write to the village office with the form."].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = lead;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = lead,
+        Icon = "envelope",
+        Breadcrumbs = [new BreadcrumbItem(title)]
+    };
+    var hasContacts = site.OfficeAddress is not null || site.OfficePhone is not null || site.OfficeEmail is not null;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-contact-page">
+    <div class="container">
+        <div class="row g-4 g-lg-5">
+            @* Details first: on a phone the office's number and the directions come before the long form. *@
+            <div class="col-lg-5 order-lg-last">
+                <aside class="kc-info-card" aria-labelledby="village-title">
+                    <h2 class="kc-subheading mb-0" id="village-title">@site.VillageName</h2>
+                    <dl class="kc-info-list">
+                        @if (!string.IsNullOrWhiteSpace(site.Location))
+                        {
+                            <div>
+                                <dt><icon name="location-dot" /> @L["Location"]</dt>
+                                <dd>@site.Location@(string.IsNullOrWhiteSpace(site.PinCode) ? null : $" – {L["PIN"]} {site.PinCode}")</dd>
+                            </div>
+                        }
+                        @if (site.OfficeAddress is not null)
+                        {
+                            <div><dt><icon name="landmark" /> @L["Office"]</dt><dd>@site.OfficeAddress</dd></div>
+                        }
+                        @if (site.OfficePhone is not null)
+                        {
+                            <div><dt><icon name="phone" /> @L["Phone"]</dt><dd><a href="@PhoneLinks.Tel(site.OfficePhone)">@site.OfficePhone</a></dd></div>
+                        }
+                        @if (site.OfficeEmail is not null)
+                        {
+                            <div><dt><icon name="envelope" /> @L["Email"]</dt><dd><a href="mailto:@site.OfficeEmail">@site.OfficeEmail</a></dd></div>
+                        }
+                    </dl>
+                    @if (!hasContacts)
+                    {
+                        <p class="kc-placeholder-text mb-0">@L["The office's contact details will be added soon. Until then, please use the form."]</p>
+                    }
+                    @if (site.DirectionsUrl is not null)
+                    {
+                        <div class="kc-info-actions">
+                            <a class="btn btn-kc-outline" href="@site.DirectionsUrl" target="_blank" rel="noopener noreferrer">
+                                <icon name="route" /> @L["Get directions"]<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                            </a>
+                        </div>
+                    }
+                    @if (site.SocialLinks.Count > 0)
+                    {
+                        <div>
+                            <h3 class="kc-info-heading">@L["Follow the village"]</h3>
+                            <ul class="kc-social-list">
+                                @foreach (var social in site.SocialLinks)
+                                {
+                                    <li>
+                                        <a href="@social.Url" target="_blank" rel="noopener noreferrer">
+                                            <icon brand="@social.BrandIcon" /> @social.Name<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (Model.UsefulLinks.Count > 0)
+                    {
+                        <div>
+                            <h3 class="kc-info-heading">@L["Useful links"]</h3>
+                            <ul class="kc-link-list">
+                                @foreach (var link in Model.UsefulLinks)
+                                {
+                                    <li>
+                                        <a href="@link.Url" target="_blank" rel="noopener noreferrer">
+                                            @link.Title <icon name="arrow-up-right-from-square" /><span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </aside>
+            </div>
+
+            <div class="col-lg-7">
+                <section class="kc-form-card" aria-labelledby="form-title">
+                    <h2 class="kc-subheading" id="form-title">@L["Send a message"]</h2>
+                    <p class="kc-form-intro-public">
+                        @L["Your message goes to the website's administrators at the village office. It is never shown on the website."]
+                    </p>
+                    <form method="post" asp-route="@RouteNames.Contact" class="kc-contact-form" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="kc-form-alert" role="alert"></div>
+                        <div class="mb-3">
+                            <label asp-for="Form.Name" class="form-label">@L["Your name"]</label>
+                            <input asp-for="Form.Name" class="form-control" autocomplete="name" />
+                            <span asp-validation-for="Form.Name" class="kc-form-error"></span>
+                        </div>
+                        <div class="row g-3 mb-1">
+                            <div class="col-sm-6">
+                                <label asp-for="Form.Email" class="form-label">@L["Email"]</label>
+                                <input asp-for="Form.Email" type="email" class="form-control" autocomplete="email" aria-describedby="reply-hint" />
+                                <span asp-validation-for="Form.Email" class="kc-form-error"></span>
+                            </div>
+                            <div class="col-sm-6">
+                                <label asp-for="Form.Phone" class="form-label">@L["Phone"]</label>
+                                <input asp-for="Form.Phone" type="tel" class="form-control" autocomplete="tel" aria-describedby="reply-hint" />
+                                <span asp-validation-for="Form.Phone" class="kc-form-error"></span>
+                            </div>
+                        </div>
+                        <p class="kc-form-hint mb-3" id="reply-hint">@L["An email address or a phone number, so the office can reply."]</p>
+                        <div class="mb-3">
+                            <label asp-for="Form.Subject" class="form-label">@L["Subject"]</label>
+                            <input asp-for="Form.Subject" class="form-control" />
+                            <span asp-validation-for="Form.Subject" class="kc-form-error"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Form.Message" class="form-label">@L["Message"]</label>
+                            <textarea asp-for="Form.Message" class="form-control" rows="6"></textarea>
+                            <span asp-validation-for="Form.Message" class="kc-form-error"></span>
+                        </div>
+                        @* The honeypot: off-screen, unreachable by keyboard and hidden from screen readers. People never
+                           fill it in; spam robots fill in every field (ContactController drops those messages). *@
+                        <div class="kc-hp" aria-hidden="true">
+                            <label for="Form_Website">Leave this field empty</label>
+                            <input type="text" id="Form_Website" name="Form.Website" tabindex="-1" autocomplete="off" />
+                        </div>
+                        <p class="kc-form-hint">
+                            @L["Your details are used only to reply to you."]
+                            <a asp-route="@RouteNames.Privacy">@L["Privacy policy"]</a>
+                        </p>
+                        <button type="submit" class="btn btn-kc-primary"><icon name="envelope" /> @L["Send message"]</button>
+                    </form>
+                </section>
+            </div>
+        </div>
+
+        @if (Model.Map is { } map)
+        {
+            var canvas = new MapCanvasViewModel("contact-map", map, L["Map of {0}", site.VillageName]);
+            <section class="kc-detail-more" aria-labelledby="map-title">
+                <div class="kc-subheading-row">
+                    <h2 class="kc-subheading" id="map-title">@L["Find the village"]</h2>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.Map">@L["Open the village map"] <icon name="arrow-right" /></a>
+                </div>
+                <partial name="_MapCanvas" model="canvas" />
+            </section>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    @if (Model.Map is not null)
+    {
+        <script src="/js/map.js" asp-append-version="true" defer></script>
+    }
+}

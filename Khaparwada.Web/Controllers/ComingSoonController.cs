@@ -11,13 +11,6 @@ namespace Khaparwada.Web.Controllers;
 /// </summary>
 public class ComingSoonController : Controller
 {
-    [HttpGet("notices", Name = RouteNames.Notices)]
-    public IActionResult Notices() =>
-        Placeholder(RouteNames.Notices, "Notice board", "Announcements, government schemes, water and electricity updates, meetings and emergencies.", "bullhorn");
-
-    [HttpGet("notices/{slug}", Name = RouteNames.NoticeDetails)]
-    public IActionResult NoticeDetails(string slug) => Notices();
-
     [HttpGet("memories", Name = RouteNames.Memories)]
     public IActionResult Memories() =>
         Placeholder(RouteNames.Memories, "Village memories", "Old photos, stories and memories shared by residents.", "camera");
@@ -27,10 +20,6 @@ public class ComingSoonController : Controller
 
     [HttpGet("memories/{slug}", Name = RouteNames.MemoryDetails)]
     public IActionResult MemoryDetails(string slug) => Memories();
-
-    [HttpGet("contact", Name = RouteNames.Contact)]
-    public IActionResult Contact() =>
-        Placeholder(RouteNames.Contact, "Contact", "Location, contact details and useful links.", "envelope");
 
     private ViewResult Placeholder(string section, string title, string lead, string icon)
     {

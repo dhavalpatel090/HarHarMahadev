@@ -3,6 +3,7 @@ using Khaparwada.Web.Models.Entities;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.ViewModels.Map;
 using Khaparwada.Web.ViewModels.Places;
+using Khaparwada.Web.ViewModels.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace Khaparwada.Web.Services.Places;
@@ -46,6 +47,33 @@ public static class PlaceQueries
     /// <summary>Category order first (as the admin arranged them), then by name.</summary>
     public static IOrderedQueryable<Place> InListOrder(this IQueryable<Place> places) =>
         places.OrderBy(place => place.Category.SortOrder).ThenBy(place => place.Name);
+
+    /// <summary>
+    /// The village map of Home and the Contact page: centred on the village, with every visible place. Null when
+    /// there is nothing to show yet (no centre and no places with a location).
+    /// </summary>
+    public static async Task<MapViewModel?> LoadVillageMapAsync(
+        this AppDbContext db, SiteInfo site, bool gujarati, CancellationToken cancellationToken)
+    {
+        var markers = await db.Places.AsNoTracking()
+            .Visible()
+            .InListOrder()
+            .SelectMarkers(gujarati)
+            .ToListAsync(cancellationToken);
+
+        if (markers.Count == 0 && !site.HasCoordinates)
+        {
+            return null;
+        }
+
+        return new MapViewModel
+        {
+            CenterLatitude = site.Latitude,
+            CenterLongitude = site.Longitude,
+            Zoom = site.MapZoom,
+            Markers = markers
+        };
+    }
 
     /// <summary>
     /// The categories that are switched on, in the admin's order, each with its number of visible places.

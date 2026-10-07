@@ -66,11 +66,11 @@
                     </section>
                 }
 
-                <p class="kc-people-note">
+                <p class="kc-page-note">
                     <icon name="circle-info" />
                     <span>
                         @L["This profile is shown with the consent of the person or their family."]
-                        <a asp-route="@RouteNames.Contact">@L["Ask for a change or for removal"]</a>
+                        <a asp-route="@RouteNames.Contact" asp-route-subject="@L["Change or removal of the profile: {0}", Model.FullName]">@L["Ask for a change or for removal"]</a>
                     </span>
                 </p>
             </div>

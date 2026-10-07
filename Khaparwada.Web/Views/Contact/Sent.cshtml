@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = L["Message sent"].Value;
+    ViewData["NoIndex"] = true;
+    var contact = L["Contact"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = L["Thank you"],
+        Icon = "circle-check",
+        Breadcrumbs = [new BreadcrumbItem(contact, RouteNames.Contact), new BreadcrumbItem(L["Message sent"])]
+    };
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section">
+    <div class="container kc-narrow">
+        <p class="kc-lead-text" role="status">@L["Your message has been sent to the village office."]</p>
+        <p>@L["Someone will reply by email or phone. If it is urgent, please also call or visit the office."]</p>
+        <div class="kc-info-actions">
+            <a class="btn btn-kc-primary" asp-route="@RouteNames.Home"><icon name="house" /> @L["Back to the home page"]</a>
+            <a class="btn btn-kc-outline" asp-route="@RouteNames.Notices"><icon name="bullhorn" /> @L["Notice board"]</a>
+        </div>
+    </div>
+</section>

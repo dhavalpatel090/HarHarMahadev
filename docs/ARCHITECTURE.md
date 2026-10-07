@@ -117,6 +117,18 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | Masonry with CSS columns; every photo has width and height; 30 photos per album page, the rest on the next page, lazy-loaded after the first 6 | A masonry script; layout jumping while photos load; a 200-photo album loaded at once on mobile data |
 | Own lightbox (`lightbox.js` + `_Lightbox.cshtml`) on `<dialog>`: keyboard, swipe, focus returned to the photo, labels in the page's language; the links still open the photo without JavaScript | A lightbox plugin and its CSS for one feature; inaccessible overlays; English labels on Gujarati pages |
 | Album cards come from `Services/Gallery/GalleryQueries.cs` (Home, `/gallery`, an album's "more", an event's photos) | Photo counts and covers differing between pages (counts include only approved photos) |
+| A notice is on the board while published, started and not ended (`PublicVisibility.Active`); an ended notice's address answers **410 Gone** with a short page, never its old text | An old WhatsApp link passing on an outdated water timing as current; search engines keeping dead notices |
+| Notices end on a "last day" (stored as midnight after it); a typed address must be free, a generated one gets "-2", "-3"… | Admins doing time arithmetic; a monthly "Water supply update" failing on its second month |
+| Notice order (urgent, important, newest) and list items come from `Services/Notices/NoticeQueries.cs` (Home and `/notices`) | Priority sorted alphabetically (it is stored as text); Home and the board disagreeing |
+| Notice PDFs are kept in the **private** folder and sent by `/notices/{slug}/attachment` only while the notice is on the board: `inline` (opens in the phone's viewer) with the original file name. PDF only, checked by extension, size and the `%PDF-` signature | Random-named downloads ("3f2a9c….pdf"); a hidden or ended notice's file staying reachable; Word/Excel macros |
+| A notice's poster is shown whole after the text (own grid: text → card → poster on phones) | Posters and circulars cropped to 16:9; the information pushed below a large image |
+| Saving or deleting a notice clears the urgent-bar cache | An urgent notice appearing (or staying) up to a minute late |
+| After a save, the notice and event lists open on the tab the item is on (Scheduled, Hidden, Ended, Past) | An item seeming to vanish after saving |
+| Contact page: details first (on phones), office phone only when the Admin switches it on, the village map, all active useful links, social links | People hunting for the number below a long form; a phone number published without consent |
+| Contact form: antiforgery + honeypot (robots get the same thank-you, the message is dropped) + 5 posts per address per 15 minutes; Post/Redirect/Get to `/contact/sent`; an email or a phone is required | Spam; resending on reload; messages the office cannot answer |
+| No network address, browser details or tracking stored with a message; the inbox is Admin-only; deleting a message is permanent | Collecting personal data that is never needed; Editors seeing residents' details |
+| `tel:` links from one helper (`PhoneLinks.Tel`: + and digits only) | Spaces and brackets in phone links (the Home strip had them) |
+| The village map (centre + places) is built once (`PlaceQueries.LoadVillageMapAsync`) for Home and Contact | Two copies of the map query |
 | All UI text through `IStringLocalizer` (`@L["…"]`) from Phase 2 | Rewriting every view in Phase 12 |
 | Unicode-wide HTML encoder (`WebEncoderOptions`) | The default encoder sent every Gujarati letter as `&#xAAE;`, making Gujarati pages 2–3× larger |
 | Icon sprite instead of the Font Awesome icon font | ~320 KB of fonts and CSS for 2,600 icons when the site uses ~70 (sprite: ~15 KB compressed) |
@@ -125,7 +137,7 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | Map data in `<script type="application/json">`, no inline JavaScript anywhere | A strict Content-Security-Policy becoming impossible in Phase 13 |
 | Public visibility rules in one file (`PublicVisibility.cs`) | One page forgetting a condition and showing unpublished or unconsented content |
 | Identity with our own login page, no registration, first admin from User Secrets / env vars | A public `/Register` page; a password in code or git |
-| Global antiforgery filter, lockout after 5 failures, rate-limited sign-in (public forms + honeypot from Phase 9) | A forgotten `[ValidateAntiForgeryToken]`; bot spam; password guessing |
+| Global antiforgery filter, lockout after 5 failures, rate-limited sign-in; the Contact form adds a honeypot and 5 messages per address per 15 minutes | A forgotten `[ValidateAntiForgeryToken]`; bot spam; password guessing |
 | Database CHECK constraints for the critical rules | Invalid data saved by a bug or a manual SQL edit (see §5) |
 
 ## 4. Folder structure
@@ -284,12 +296,12 @@ No foreign keys: VillageInfo · SiteSettings · AboutSections · HistoryEntries 
 | GalleryCategory | Old Khaparwada, Navratri, … | Name⁺, Slug, SortOrder | IsActive |
 | GalleryAlbum | A set of photos | CategoryId, EventId, Title⁺, Slug, Description⁺, TakenOn | Published · soft delete |
 | GalleryImage | One photo (upload date = CreatedAt) | AlbumId, ImagePath, Width, Height, Caption⁺, SortOrder, UploadedBy, ReviewedBy, ReviewedAt | Status · removal is permanent (row and files) |
-| Notice | Notice board | Title⁺, Slug, Description⁺, Category, Priority, PublishedAt, ExpiresAt, ImagePath, AttachmentPath, AttachmentName | Published · soft delete |
+| Notice | Notice board | Title⁺, Slug, Description⁺, Category, Priority, PublishedAt, ExpiresAt (midnight after the last day), ImagePath, AttachmentPath (private folder), AttachmentName | Published · soft delete |
 | MemorySubmission | Resident memory / story | Title, Story, EraLabel, SubmitterName, SubmitterContact (admin-only), ConsentToPublish, ReviewNote (admin-only), ReviewedBy, ReviewedAt, PublishedAt, Slug | Status · soft delete |
 | MemoryImage | Photos sent with a memory | MemorySubmissionId, ImagePath, Width, Height, Caption, SortOrder | via memory |
 | SiteSetting (1 row) | Website settings | SiteName⁺, Tagline⁺, OfficeEmail, OfficePhone, ShowOfficePhone, OfficeAddress⁺, social URLs, HeroImagePath, HeroVideoPath, DefaultMetaDescription⁺ | — |
 | UsefulLink | Contact links + footer "Important Links" | Title⁺, Url, ShowInFooter, SortOrder | IsActive |
-| ContactMessage | Contact form inbox (admin-only) | Name, Email, Phone, Subject, Message, IsRead | soft delete |
+| ContactMessage | Contact form inbox (Admins only) | Name, Email, Phone, Subject, Message, IsRead (no network address or browser details) | deleting is permanent |
 
 Enums (stored as text): `ModerationStatus` (Pending, UnderReview, Approved, Published, Rejected),
 `NoticeCategory` (General, GovernmentScheme, Water, Electricity, Meeting, Emergency),
@@ -308,7 +320,7 @@ Enums (stored as text): `ModerationStatus` (Pending, UnderReview, Approved, Publ
 | `Site:PublicBaseUrl` | empty (the request's own address is used) | the real address, e.g. `https://khaparwada.in` — canonical and share links depend on it |
 | `Map:TileUrl`, `Map:Attribution`, `Map:MaxZoom` | OpenStreetMap | same, or another tile provider if traffic outgrows OSM's fair-use policy |
 | `Storage:UploadsPath`, `Storage:PrivateUploadsPath` | `App_Data/uploads`, `App_Data/private-uploads` (inside the project, git-ignored) | **absolute folders outside the site folder**, e.g. `D:\KhaparwadaData\uploads`, so a redeploy can never delete villagers' photos; back them up with the database |
-| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` | 10 / 40 / 25 | same. Each upload form's request limit follows from these (`[UploadLimit]`: Site settings = 1 photo + 1 video + 1 MB = 36 MB; place and gallery photos without JavaScript = 6 photos + 1 MB = 61 MB); on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
+| `Storage:MaxImageMegabytes` / `MaxImageMegapixels` / `MaxVideoMegabytes` / `MaxDocumentMegabytes` | 10 / 40 / 25 / 10 | same. Each upload form's request limit follows from these (`[UploadLimit]`: Site settings = 1 photo + 1 video + 1 MB = 36 MB; place and gallery photos without JavaScript = 6 photos + 1 MB = 61 MB); on IIS also raise `maxAllowedContentLength` (default ~28.6 MB) in `web.config` |
 
 Do not copy SSMS's connection string into the app: it has no `Database=` (tables would go into `master`),
 `Pooling=False` (slow for a website), `Command Timeout=0` (a stuck query hangs forever) and
@@ -358,7 +370,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 6 | People (approval + consent) | **Done** |
 | 7 | Events | **Done** |
 | 8 | Gallery (approval, masonry, lightbox) | **Done** |
-| 9 | Notices + Contact (inbox) | |
+| 9 | Notices + Contact (inbox) | **Done** |
 | 10 | Memories (submission + review workflow) | |
 | 11 | Admin completion: users, pending queue, dashboard polish | |
 | 12 | Gujarati / English (resx, hreflang review, Gujarati Privacy & Terms) | |
@@ -408,6 +420,10 @@ Each feature phase ships its public pages and its admin screens together, and re
 - **Show a list with pages:** fill a `PaginationViewModel` (page, size, total, route name, the filter values) and
   `<partial name="_Pagination" model="…" />`; `PaginationViewModel.Clamp` keeps a typed-in page number valid. An admin
   list needs a named route (`[HttpGet("", Name = "admin-places")]`).
+- **Post a notice:** Admin → Notices → Add notice → kind, priority ("Urgent" adds the red bar on every page: emergencies
+  only), text, "Show from" (now, or later to schedule it), "Last day" (empty = no end), optional poster and PDF.
+- **Answer a message:** Admin → Messages → open it (it is marked read) → "Reply by email" opens your email program with
+  "Re: subject"; "Call" dials the number. Delete it once handled (permanent).
 - **Add a photo album:** Admin → Gallery → Add album → (next page) choose the photos, as many as you like → captions
   and order below → Save photos. An Editor's photos then wait under Gallery → "Review them" for an Admin.
 - **Open photos in the viewer on another page:** mark the list `data-lightbox`, each link (to the large photo)
@@ -464,6 +480,8 @@ Each feature phase ships its public pages and its admin screens together, and re
 | Names in admin lists squeezed to one word per line on phones | A table shrinks its widest text column first, and the name column has the most text | `.kc-table .kc-name-cell { min-width: 12rem }` for every admin list; the table scrolls sideways instead |
 | A test sent "Test Garba, music" for the title "Test Garba, music; dance" | curl's `-F name=value` treats `;` as the start of options such as `type=` | Use `--form-string` for values with `;` |
 | `CONVERT(varchar, StartsAt, 127)` showed `…18:30:00Z` for a 00:00 IST date | Style 127 converts a `datetimeoffset` to UTC; the stored value was right (`+05:30`) | Use style 126 to see the stored offset |
+| A test posted `Category=99` and expected the service's message | ASP.NET Core's enum binder already refuses undefined values ("The value '99' is invalid.") before the service runs | The service keeps its check as a second line; tests expect the binder's message |
+| A test's "hidden" notice was saved as shown | The test posted no `IsPublished`; a browser always sends the hidden `false` that the checkbox tag helper adds | Tests post what a browser posts |
 | "Choose an event from the list" never appeared; the album form just came back | The service put the error on `EventId`, but the form had no `asp-validation-for="EventId"` (the summary shows only form-wide errors) | Every field a service can fail on needs its validation message in the view; all admin forms were checked |
 | A test looked for `/js/lightbox.js` and did not find it | `MapStaticAssets` writes fingerprinted URLs (`/js/lightbox.4jzeyy6v5a.js`) | Check for `/js/lightbox.` in tests |
 | The photo viewer let the page show through | A semi-transparent dialog background over a light page | Solid background for the viewer |
@@ -490,6 +508,9 @@ Each feature phase ships its public pages and its admin screens together, and re
   are short text; if the village wants them reviewed too, apply the People rule to captions.
 - The `[Sample]` albums have no photos, so they stay off the website until real photos are added (or are deleted).
 - Soft-deleted albums keep their photos' files for a restore; permanent clean-up comes with Phase 11.
+- New messages are not e-mailed to the office: there is no email service yet (it needs an SMTP account or a provider
+  and a secret, decided with hosting in Phase 14). Until then the dashboard shows the unread count.
+- Expired notices stay in the admin list ("Ended"); deleting old ones is manual until Phase 11.
 - Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
   to make; consider making them admin-editable pages later. Its statement that photo location data is removed
   is now true: verified in Phase 3 (no EXIF, GPS or camera details in any saved file).

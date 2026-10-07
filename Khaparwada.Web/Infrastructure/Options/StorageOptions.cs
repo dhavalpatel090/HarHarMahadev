@@ -15,7 +15,10 @@ public sealed class StorageOptions
     [Required]
     public string UploadsPath { get; set; } = "App_Data/uploads";
 
-    /// <summary>Files waiting for review (residents' submissions, Phase 10). Never served directly.</summary>
+    /// <summary>
+    /// Files that are never served directly: residents' submissions waiting for review (Phase 10) and notice
+    /// attachments (sent by /notices/{slug}/attachment only while the notice is shown).
+    /// </summary>
     [Required]
     public string PrivateUploadsPath { get; set; } = "App_Data/private-uploads";
 
@@ -31,4 +34,8 @@ public sealed class StorageOptions
 
     [Range(1, 100)]
     public int MaxVideoMegabytes { get; set; } = 25;
+
+    /// <summary>Largest PDF attachment of a notice (e.g. a scheme's form).</summary>
+    [Range(1, 50)]
+    public int MaxDocumentMegabytes { get; set; } = 10;
 }

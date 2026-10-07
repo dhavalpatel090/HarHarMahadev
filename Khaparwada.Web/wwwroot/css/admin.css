@@ -1151,3 +1151,33 @@ a.kc-pending-label { color: var(--kc-maroon); }
 .kc-review-album { font-weight: 600; }
 .kc-review-caption { font-size: .92rem; }
 .kc-review-meta { color: var(--kc-muted); font-size: .85rem; }
+
+/* Notices: the current attachment above its file box. */
+.kc-current-file { display: flex; align-items: center; gap: .4rem; margin: 0 0 .5rem; }
+
+/* Messages: the inbox list (unread in bold), one message, and the two-step delete. */
+.kc-message-list { margin: 0; padding: 0; list-style: none; }
+.kc-message-item + .kc-message-item { border-top: 1px solid #F0E7D8; }
+.kc-message-item a {
+    display: grid;
+    gap: .2rem;
+    padding: .9rem 1.25rem;
+    color: var(--kc-text);
+    text-decoration: none;
+}
+.kc-message-item a:hover { background: var(--kc-ivory); }
+.kc-message-head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.kc-message-from { font-weight: 600; }
+.kc-message-time { margin-left: auto; color: var(--kc-muted); font-size: .85rem; }
+.kc-message-subject { color: var(--kc-muted); }
+.kc-message-item.is-unread .kc-message-subject { color: var(--kc-ink); font-weight: 600; }
+.kc-message-excerpt { overflow: hidden; color: var(--kc-muted); font-size: .9rem; text-overflow: ellipsis; white-space: nowrap; }
+.kc-message-meta { display: grid; gap: .35rem; margin: 0; }
+.kc-message-meta > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.kc-message-meta dt { min-width: 5.5rem; color: var(--kc-muted); font-weight: 600; }
+.kc-message-meta dd { margin: 0; overflow-wrap: anywhere; }
+.kc-message-text p { white-space: pre-line; }
+.kc-message-actions { flex-wrap: wrap; }
+.kc-confirm summary { list-style: none; cursor: pointer; }
+.kc-confirm summary::-webkit-details-marker { display: none; }
+.kc-confirm-body { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: .75rem; }

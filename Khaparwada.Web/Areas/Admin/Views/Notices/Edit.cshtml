@@ -1,0 +1,158 @@
+@model NoticeInputModel
+@using Khaparwada.Web.Models.Enums
+@using Khaparwada.Web.ViewModels.Notices
+@using Microsoft.Extensions.Options
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.StorageOptions> StorageOptions
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a notice" : $"Edit “{Model.Title}”";
+    ViewData["Lead"] = "Notices";
+    var storage = StorageOptions.Value;
+    var photoField = new ImageFieldViewModel(nameof(Model.Image), nameof(Model.RemoveImage),
+        Model.CurrentImageUrl is null ? "Choose a photo or poster" : "Choose a new photo or poster", Model.CurrentImageUrl,
+        $"Optional. JPG, PNG or WebP, up to {storage.MaxImageMegabytes} MB. Shown whole on the notice's page (a poster is not cut off).");
+    var priorities = new (NoticePriority Priority, string Label, string Hint, string Css)[]
+    {
+        (NoticePriority.Normal, "Normal", "On the notice board.", ""),
+        (NoticePriority.Important, "Important", "Marked and listed first on the board and on the Home page.", "is-todo"),
+        (NoticePriority.Urgent, "Urgent", "Also a red bar at the top of every page. For emergencies only: water cut-offs, storms, health alerts.", "is-off")
+    };
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">Gujarati text is optional. Write only what you know to be true; the notice leaves the board by itself after its last day.</p>
+
+    <section class="kc-panel" aria-labelledby="about-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="about-title">The notice</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Title" for-gu="TitleGu" />
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    The notice's address on the website: <code class="kc-code">/notices/<strong>water-supply-update</strong></code>.
+                    Filled in from the English title; if it is taken, a number is added. Changing it later breaks links people have shared.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.Title)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+            <div class="kc-field kc-field--medium">
+                <label asp-for="Category" class="kc-field-label"></label>
+                <select asp-for="Category" class="form-select">
+                    @foreach (var category in Enum.GetValues<NoticeCategory>())
+                    {
+                        <option value="@category">@NoticeDisplay.LabelFor(category)</option>
+                    }
+                </select>
+                <span asp-validation-for="Category" class="kc-field-error"></span>
+            </div>
+            <fieldset class="kc-field kc-decisions">
+                <legend class="kc-field-label">@Html.DisplayNameFor(m => m.Priority)</legend>
+                @foreach (var option in priorities)
+                {
+                    var id = "priority-" + option.Priority.ToString().ToLowerInvariant();
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" id="@id" name="@Html.NameFor(m => m.Priority)"
+                               value="@option.Priority" checked="@(Model.Priority == option.Priority)" />
+                        <label class="form-check-label" for="@id">
+                            <span class="kc-status @option.Css">@option.Label</span>
+                            <span class="kc-decision-hint">@option.Hint</span>
+                        </label>
+                    </div>
+                }
+                <span asp-validation-for="Priority" class="kc-field-error"></span>
+            </fieldset>
+            <bilingual-field for="Description" for-gu="DescriptionGu" rows="8"
+                             hint="The full notice: what, when, where, who to contact. A blank line starts a new paragraph." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="when-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="when-title">When it is on the board</h2>
+            <p class="kc-panel-text">Village time (IST). A notice with a later date waits under “Scheduled” and appears by itself.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-3">
+                <div class="col-sm-6 col-lg-4">
+                    <label asp-for="PublishDate" class="kc-field-label"></label>
+                    <input asp-for="PublishDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+                    <span asp-validation-for="PublishDate" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label asp-for="PublishTime" class="kc-field-label"></label>
+                    <input asp-for="PublishTime" type="time" asp-format="{0:HH:mm}" class="form-control" />
+                    <span asp-validation-for="PublishTime" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-6 col-lg-5">
+                    <label asp-for="LastDay" class="kc-field-label"></label>
+                    <input asp-for="LastDay" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" aria-describedby="last-day-hint" />
+                    <span asp-validation-for="LastDay" class="kc-field-error"></span>
+                </div>
+            </div>
+            <p class="kc-field-hint mt-2 mb-0" id="last-day-hint">
+                The notice leaves the board at midnight after its last day. Leave it empty for information without an end,
+                such as a government scheme.
+            </p>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="files-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="files-title">Photo and attachment</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-image-field-wrap kc-field">
+                <partial name="_ImageField" model="photoField" />
+            </div>
+            <div class="kc-field">
+                <label asp-for="Attachment" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="attachment-hint">
+                    Optional: a form or an official letter as a PDF, up to @storage.MaxDocumentMegabytes MB. Visitors open it
+                    from the notice's page while the notice is on the board.
+                </p>
+                @if (Model.CurrentAttachmentName is not null)
+                {
+                    <p class="kc-current-file">
+                        <icon name="file-pdf" />
+                        <a asp-action="Attachment" asp-route-id="@Model.Id" target="_blank" rel="noopener">@Model.CurrentAttachmentName<span class="visually-hidden"> (opens in a new tab)</span></a>
+                    </p>
+                }
+                <input asp-for="Attachment" type="file" class="form-control" accept="application/pdf,.pdf" aria-describedby="attachment-hint"
+                       data-max-bytes="@(storage.MaxDocumentMegabytes * 1024L * 1024L)" />
+                <span asp-validation-for="Attachment" class="kc-field-error"></span>
+                @if (Model.CurrentAttachmentName is not null)
+                {
+                    <div class="form-check mt-2">
+                        <input asp-for="RemoveAttachment" class="form-check-input" />
+                        <label asp-for="RemoveAttachment" class="form-check-label"></label>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add notice" : "Save notice")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

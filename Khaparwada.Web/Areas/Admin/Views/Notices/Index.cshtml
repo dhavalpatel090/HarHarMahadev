@@ -1,0 +1,137 @@
+@model NoticeAdminListViewModel
+@using Khaparwada.Web.Models.Enums
+@using Khaparwada.Web.ViewModels.Notices
+@{
+    ViewData["Title"] = "Notices";
+    ViewData["Lead"] = "The notice board. Urgent notices also show in the red bar at the top of every page while they are on the board.";
+    var tabs = new (NoticeListFilter Filter, string Label)[]
+    {
+        (NoticeListFilter.Active, "On the board"),
+        (NoticeListFilter.Scheduled, "Scheduled"),
+        (NoticeListFilter.Ended, "Ended"),
+        (NoticeListFilter.Hidden, "Hidden"),
+        (NoticeListFilter.All, "All")
+    };
+    string? ShowValue(NoticeListFilter filter) => filter == NoticeListFilter.Active ? null : filter.ToString().ToLowerInvariant();
+    var culture = CultureInfo.CurrentCulture;
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/notices" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add notice</a>
+}
+
+<nav class="kc-tabs" aria-label="Notices by state">
+    @foreach (var tab in tabs)
+    {
+        var current = tab.Filter == Model.Filter;
+        <a class="kc-tab @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+           asp-route="admin-notices" asp-route-show="@ShowValue(tab.Filter)" asp-route-q="@Model.Search">
+            @tab.Label <span class="kc-tab-count">@Model.Counts[tab.Filter]</span>
+        </a>
+    }
+</nav>
+
+<form class="kc-admin-filters" method="get" asp-route="admin-notices" role="search">
+    @if (Model.Filter != NoticeListFilter.Active)
+    {
+        <input type="hidden" name="show" value="@ShowValue(Model.Filter)" />
+    }
+    <div class="kc-admin-filters-grow">
+        <label class="kc-field-label" for="filter-q">Title</label>
+        <input class="form-control" type="search" id="filter-q" name="q" value="@Model.Search" maxlength="100" />
+    </div>
+    <button class="btn btn-kc-outline" type="submit"><icon name="magnifying-glass" /> Filter</button>
+</form>
+
+<section class="kc-panel" aria-label="Notices">
+    @if (Model.Items.Count == 0)
+    {
+        <p class="kc-panel-empty">
+            @(Model.Filter == NoticeListFilter.Active && Model.Search is null
+                ? "The notice board is empty. Add a notice with the button above."
+                : "No notices found. Change the filter, or add a notice with the button above.")
+        </p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Notice</th>
+                        <th scope="col">Priority</th>
+                        <th scope="col">Shown</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="kc-name-cell">
+                                    <span class="kc-name-icon"><icon name="@NoticeDisplay.IconFor(item.Category)" /></span>
+                                    <span>
+                                        <strong>@item.Title</strong>
+                                        <span class="kc-name-gu">
+                                            @NoticeDisplay.LabelFor(item.Category)@(item.HasAttachment ? " · PDF attached" : null)
+                                        </span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.Priority == NoticePriority.Urgent)
+                                {
+                                    <span class="kc-status is-off">Urgent</span>
+                                }
+                                else if (item.Priority == NoticePriority.Important)
+                                {
+                                    <span class="kc-status is-todo">Important</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status">Normal</span>
+                                }
+                            </td>
+                            <td class="kc-nowrap">
+                                @item.PublishedAt.ToString("d MMM yyyy", culture)
+                                <span class="kc-name-gu">@(item.LastDay is { } last ? "until " + last.ToString("d MMM yyyy", culture) : "no end")</span>
+                            </td>
+                            <td>
+                                @if (item.IsPlaceholder)
+                                {
+                                    <span class="kc-status is-todo">Sample</span>
+                                }
+                                @switch (item.State)
+                                {
+                                    case NoticeState.Active:
+                                        <span class="kc-status is-on">On the board</span>
+                                        break;
+                                    case NoticeState.Scheduled:
+                                        <span class="kc-status is-todo">Scheduled</span>
+                                        break;
+                                    case NoticeState.Ended:
+                                        <span class="kc-status">Ended</span>
+                                        break;
+                                    default:
+                                        <span class="kc-status">Hidden</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@item.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @item.Title</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@item.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @item.Title</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<partial name="_Pagination" model="Model.Pagination" />

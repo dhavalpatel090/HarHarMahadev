@@ -25,9 +25,9 @@ public static class AdminNavigation
             new Item("People", "people-group", "People"),
             new Item("Events", "calendar-days", "Events"),
             new Item("Gallery", "images", "Gallery"),
-            new Item("Notices", "bullhorn", null, ComingIn: "Phase 9"),
+            new Item("Notices", "bullhorn", "Notices"),
             new Item("Memories", "camera", null, ComingIn: "Phase 10"),
-            new Item("Messages", "envelope", null, ComingIn: "Phase 9")
+            new Item("Messages", "envelope", "Messages", AdminOnly: true)
         ]),
         new("Settings",
         [

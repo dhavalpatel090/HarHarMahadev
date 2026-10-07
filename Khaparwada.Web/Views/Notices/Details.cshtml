@@ -1,0 +1,109 @@
+@model NoticeDetailsViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    ViewData["Title"] = Model.Title;
+    ViewData["Description"] = TextHelpers.Excerpt(Model.Description, 160);
+    var board = L["Notice board"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = Model.Title,
+        Icon = Model.Icon,
+        Breadcrumbs = [new BreadcrumbItem(board, RouteNames.Notices), new BreadcrumbItem(Model.Title)]
+    };
+    var culture = CultureInfo.CurrentCulture;
+    var pageUrl = Url.RouteUrl(RouteNames.NoticeDetails, new { slug = Model.Slug }, Context.Request.Scheme);
+    var whatsAppUrl = "https://wa.me/?text=" + Uri.EscapeDataString($"{Model.Title}\n{pageUrl}");
+    string Size(long bytes) => bytes >= 1024 * 1024
+        ? (bytes / 1048576d).ToString("0.#", culture) + " MB"
+        : Math.Max(1, bytes / 1024).ToString(culture) + " KB";
+}
+@functions {
+    private static bool IsPlaceholder(string? text) => text?.TrimStart().StartsWith('[') == true;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-notice-page">
+    <div class="container">
+        @* Text first, then the poster: for a notice the words are the information and the image supports them
+           (unlike a place or an event, where the photo leads). Grid areas, so phones show text → dates and PDF →
+           poster, and desktops the text and poster on the left with the card beside them. *@
+        <div class="kc-notice-layout">
+            <div class="kc-notice-main">
+                @if (Model.Priority != NoticePriority.Normal)
+                {
+                    <p class="kc-notice-priority @(Model.Priority == NoticePriority.Urgent ? "is-urgent" : "is-important")">
+                        <icon name="triangle-exclamation" />
+                        @(Model.Priority == NoticePriority.Urgent ? L["Urgent notice"] : L["Important notice"])
+                    </p>
+                }
+                <div class="kc-detail-text @(IsPlaceholder(Model.Description) ? "kc-placeholder-text" : null)">
+                    @foreach (var paragraph in TextHelpers.Paragraphs(Model.Description))
+                    {
+                        <p>@paragraph</p>
+                    }
+                </div>
+            </div>
+            @if (Model.ImagePath is not null)
+            {
+                <figure class="kc-detail-figure kc-notice-figure">
+                    <img src="@Model.ImageUrl" srcset="@MediaUrls.SrcSet(Model.ImagePath)"
+                         sizes="(min-width: 1400px) 860px, (min-width: 992px) 66vw, 100vw" alt="@Model.Title" loading="lazy" />
+                </figure>
+            }
+
+            <aside class="kc-notice-aside">
+                <div class="kc-info-card">
+                    <a class="kc-chip" asp-route="@RouteNames.Notices" asp-route-category="@Model.CategorySlug">
+                        <icon name="@Model.Icon" /> @L[Model.CategoryLabel]
+                    </a>
+                    <dl class="kc-info-list">
+                        <div>
+                            <dt><icon name="calendar-days" /> @L["Published"]</dt>
+                            <dd><time datetime="@Model.PublishedAt.ToString("O", CultureInfo.InvariantCulture)">@Model.PublishedAt.ToString("d MMMM yyyy", culture)</time></dd>
+                        </div>
+                        @if (Model.ValidUntil is { } until)
+                        {
+                            <div>
+                                <dt><icon name="clock" /> @L["Valid until"]</dt>
+                                <dd>@until.ToString("d MMMM yyyy", culture)</dd>
+                            </div>
+                        }
+                    </dl>
+                    <div class="kc-info-actions">
+                        @if (Model.AttachmentName is not null)
+                        {
+                            <a class="btn btn-kc-primary kc-attachment-link" asp-route="@RouteNames.NoticeAttachment" asp-route-slug="@Model.Slug"
+                               target="_blank" rel="noopener" type="application/pdf">
+                                <icon name="file-pdf" />
+                                <span>
+                                    @L["Open the PDF"]
+                                    <small>@Model.AttachmentName (@Size(Model.AttachmentBytes ?? 0))</small>
+                                </span>
+                                <span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                            </a>
+                        }
+                        <a class="btn btn-kc-outline" href="@whatsAppUrl" target="_blank" rel="noopener noreferrer">
+                            <icon brand="whatsapp" /> @L["Share on WhatsApp"]<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        @if (Model.MoreNotices.Count > 0)
+        {
+            <section class="kc-detail-more" aria-labelledby="more-title">
+                <div class="kc-subheading-row">
+                    <h2 class="kc-subheading" id="more-title">@L["More notices"]</h2>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.Notices">@L["All notices"] <icon name="arrow-right" /></a>
+                </div>
+                <ul class="kc-notice-list">
+                    @foreach (var notice in Model.MoreNotices)
+                    {
+                        <li><partial name="Cards/_NoticeItem" model="notice" /></li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+</section>

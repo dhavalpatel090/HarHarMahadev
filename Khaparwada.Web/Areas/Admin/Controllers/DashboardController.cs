@@ -9,5 +9,5 @@ public class DashboardController(IDashboardService dashboard) : AdminControllerB
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken) =>
-        View(await dashboard.GetAsync(User.DisplayName(), cancellationToken));
+        View(await dashboard.GetAsync(User.DisplayName(), User.IsInRole(AppRoles.Admin), cancellationToken));
 }

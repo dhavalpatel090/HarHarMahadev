@@ -32,7 +32,8 @@ public static class SiteNavigation
         [RouteNames.PersonDetails] = RouteNames.People,
         [RouteNames.EventDetails] = RouteNames.Events,
         [RouteNames.AlbumDetails] = RouteNames.Gallery,
-        [RouteNames.NoticeDetails] = RouteNames.Notices
+        [RouteNames.NoticeDetails] = RouteNames.Notices,
+        [RouteNames.ContactSent] = RouteNames.Contact
     };
 
     /// <summary>The menu item to highlight for a route: its section's, or its own.</summary>
