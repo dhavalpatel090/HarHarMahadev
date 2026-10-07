@@ -1,6 +1,8 @@
 // Admin panel helpers. Each one is switched on by a data- attribute in the page, and every form also works
 // without JavaScript: the server checks everything again.
-//   data-slug-from="Name"           fill the web address from the English name (new items only)
+//   data-slug-from="Name"           fill the web address from the English name (new items only);
+//                                   data-slug-year-from="StartDate" adds the year from a date box
+//   data-hidden-by="IsAllDay"       hide while a tick box is ticked
 //   data-max-bytes / data-max-files / data-preview-target   check file sizes and count before uploading; preview a photo
 //   data-icon-filter="grid-id"      search box for the icon picker
 //   data-kc-picker                  map for choosing the village centre (needs map.js)
@@ -20,18 +22,41 @@
 
     // Only while the box is empty or still holds the generated value: on an existing item the address is
     // never changed automatically, because that would break links people have already shared.
+    // With data-slug-year-from (a date box), the year is added unless the name has it already, as the server does
+    // (EventAdminService.DefaultSlug): "navratri-garba-night-2026".
     function initSlug(input) {
         const source = document.getElementById(input.dataset.slugFrom);
         if (!source) {
             return;
         }
+        const yearSource = input.dataset.slugYearFrom ? document.getElementById(input.dataset.slugYearFrom) : null;
         let following = input.value === '';
-        input.addEventListener('input', () => { following = input.value === ''; });
-        source.addEventListener('input', () => {
-            if (following) {
-                input.value = slugify(source.value);
+        const update = () => {
+            if (!following) {
+                return;
             }
-        });
+            let slug = slugify(source.value);
+            const year = yearSource && /^\d{4}-/.test(yearSource.value) ? yearSource.value.slice(0, 4) : '';
+            if (slug && year && !slug.split('-').includes(year)) {
+                slug = `${slug}-${year}`;
+            }
+            input.value = slug;
+        };
+        input.addEventListener('input', () => { following = input.value === ''; });
+        source.addEventListener('input', update);
+        yearSource?.addEventListener('change', update);
+    }
+
+    // data-hidden-by="IsAllDay": hidden while that tick box is ticked (an all-day event's times). The server
+    // ignores those fields then, so hiding them only removes clutter.
+    function initHiddenBy(element) {
+        const box = document.getElementById(element.dataset.hiddenBy);
+        if (!box) {
+            return;
+        }
+        const sync = () => { element.hidden = box.checked; };
+        box.addEventListener('change', sync);
+        sync();
     }
 
     // Shows or clears the message under a field, in the same place and style as the server's messages.
@@ -251,6 +276,7 @@
     // Deferred scripts run before DOMContentLoaded, so by then map.js (loaded after this file) is ready too.
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('[data-slug-from]').forEach(initSlug);
+        document.querySelectorAll('[data-hidden-by]').forEach(initHiddenBy);
         document.querySelectorAll('input[type="file"][data-max-bytes], input[type="file"][data-preview-target]').forEach(initFileInput);
         document.querySelectorAll('[data-icon-filter]').forEach(initIconFilter);
         document.querySelectorAll('[data-kc-picker]').forEach(initPicker);

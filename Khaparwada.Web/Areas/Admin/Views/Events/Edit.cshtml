@@ -1,0 +1,153 @@
+@model EventInputModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add an event" : $"Edit “{Model.Title}”";
+    ViewData["Lead"] = "Events";
+    var photoField = new ImageFieldViewModel(nameof(Model.Image), nameof(Model.RemoveImage),
+        Model.CurrentImageUrl is null ? "Choose a photo" : "Choose a new photo", Model.CurrentImageUrl);
+}
+@section Actions {
+    @if (!Model.IsNew)
+    {
+        <a class="btn btn-kc-outline" asp-action="Create" asp-route-copy="@Model.Id"><icon name="copy" /> Copy as a new event</a>
+    }
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    @if (Model.CopiedFrom is not null)
+    {
+        <div class="kc-admin-alert kc-admin-alert--warning">
+            <icon name="copy" />
+            <span>
+                Copied from “@Model.CopiedFrom”. Choose the new date and check the text.
+                The photo is not copied: add this year's photo below.
+            </span>
+        </div>
+    }
+    <p class="kc-form-intro">Gujarati text is optional. Write only what you know to be true.</p>
+
+    <section class="kc-panel" aria-labelledby="about-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="about-title">About the event</h2>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Title" for-gu="TitleGu" />
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    The event's address on the website: <code class="kc-code">/events/<strong>navratri-garba-night-2026</strong></code>.
+                    Filled in from the English name and the year, so next year's event gets its own address.
+                    Changing it later breaks links people have shared.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.Title)" data-slug-year-from="@Html.IdFor(m => m.StartDate)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="Summary" for-gu="SummaryGu" rows="3"
+                             hint="One or two sentences, shown on the event cards, on the Home page and in search results." />
+            <bilingual-field for="Description" for-gu="DescriptionGu" rows="8"
+                             hint="Optional: the programme, who organises it, what to bring. A blank line starts a new paragraph." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="when-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="when-title">When</h2>
+            <p class="kc-panel-text">Village time (IST). The event moves from “Upcoming” to “Past” by itself once it is over.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch kc-field">
+                <input asp-for="IsAllDay" class="form-check-input" role="switch" />
+                <label asp-for="IsAllDay" class="form-check-label"></label>
+            </div>
+            <div class="row g-3">
+                <div class="col-sm-6 col-lg-3">
+                    <label asp-for="StartDate" class="kc-field-label"></label>
+                    <input asp-for="StartDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+                    <span asp-validation-for="StartDate" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-6 col-lg-3" data-hidden-by="@Html.IdFor(m => m.IsAllDay)">
+                    <label asp-for="StartTime" class="kc-field-label"></label>
+                    <input asp-for="StartTime" type="time" asp-format="{0:HH:mm}" class="form-control" />
+                    <span asp-validation-for="StartTime" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-6 col-lg-3" data-hidden-by="@Html.IdFor(m => m.IsAllDay)">
+                    <label asp-for="EndTime" class="kc-field-label"></label>
+                    <input asp-for="EndTime" type="time" asp-format="{0:HH:mm}" class="form-control" aria-describedby="end-hint" />
+                    <span asp-validation-for="EndTime" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label asp-for="EndDate" class="kc-field-label"></label>
+                    <input asp-for="EndDate" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" aria-describedby="end-hint" />
+                    <span asp-validation-for="EndDate" class="kc-field-error"></span>
+                </div>
+            </div>
+            <p class="kc-field-hint mt-2 mb-0" id="end-hint">
+                The end is optional. An end time earlier than the start means the next day (“9:00 PM – 12:30 AM”).
+                Fill in the last day only for events over several days, such as Navratri. With “All day” ticked the
+                times are not used.
+            </p>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="where-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="where-title">Where</h2>
+            <p class="kc-panel-text">Choose a venue from the Places list, write where it happens, or both.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field kc-field--medium">
+                <label asp-for="PlaceId" class="kc-field-label"></label>
+                <select asp-for="PlaceId" class="form-select" aria-describedby="venue-hint">
+                    <option value="">None (written below)</option>
+                    @foreach (var place in Model.Places)
+                    {
+                        <option value="@place.Id">@(place.Name + (place.IsPublic ? "" : " (hidden place)"))</option>
+                    }
+                </select>
+                <p class="kc-field-hint" id="venue-hint">The event page links to the venue's page and offers directions to it.</p>
+                <span asp-validation-for="PlaceId" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="LocationText" for-gu="LocationTextGu"
+                             hint="e.g. “Village square”, or with a venue: “Hall behind the temple”." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="photo-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="photo-title">Photo</h2>
+            <p class="kc-panel-text">Optional. Shown at the top of the event's page: a poster or a photo from last year.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-image-field-wrap">
+                <partial name="_ImageField" model="photoField" />
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch kc-field">
+                <input asp-for="IsFeatured" class="form-check-input" role="switch" />
+                <label asp-for="IsFeatured" class="form-check-label"></label>
+            </div>
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add event" : "Save event")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

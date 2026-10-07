@@ -91,7 +91,7 @@ public sealed class DashboardService(AppDbContext db, IVillageClock clock) : IDa
                 IsFilled(settings.OfficeEmail) || IsFilled(settings.OfficePhone), "SiteSettings", AdminOnly: true),
             new("Replace the sample content", sampleItems == 0
                     ? "All sample items are gone."
-                    : $"{sampleItems} items marked [Sample]. Rewrite or delete them; events, gallery, notices and memories get their screens in later phases.",
+                    : $"{sampleItems} items marked [Sample]. Rewrite or delete them; gallery, notices and memories get their screens in later phases.",
                 sampleItems == 0, null)
         ];
     }

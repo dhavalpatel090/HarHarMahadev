@@ -16,6 +16,7 @@ public static class RouteNames
     public const string PersonDetails = "person-details";
     public const string Events = "events";
     public const string EventDetails = "event-details";
+    public const string EventCalendar = "event-calendar";
     public const string Gallery = "gallery";
     public const string AlbumDetails = "album-details";
     public const string Notices = "notices";

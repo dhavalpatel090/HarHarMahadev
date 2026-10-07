@@ -35,6 +35,7 @@ solid people-group
 solid users
 solid user
 solid calendar-days
+solid calendar-plus
 solid clock
 solid images
 solid image
@@ -78,6 +79,7 @@ solid star
 solid right-from-bracket
 solid key
 solid pen-to-square
+solid copy
 solid trash-can
 solid plus
 solid eye

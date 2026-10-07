@@ -23,7 +23,7 @@ public static class AdminNavigation
             new Item("Then & now", "arrows-left-right", "ThenNow"),
             new Item("Places", "location-dot", "Places"),
             new Item("People", "people-group", "People"),
-            new Item("Events", "calendar-days", null, ComingIn: "Phase 7"),
+            new Item("Events", "calendar-days", "Events"),
             new Item("Gallery", "images", null, ComingIn: "Phase 8"),
             new Item("Notices", "bullhorn", null, ComingIn: "Phase 9"),
             new Item("Memories", "camera", null, ComingIn: "Phase 10"),

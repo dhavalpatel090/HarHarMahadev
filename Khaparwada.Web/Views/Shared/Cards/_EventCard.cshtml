@@ -1,11 +1,6 @@
 @model EventCardViewModel
 @{
     var culture = CultureInfo.CurrentCulture;
-    var time = Model.IsAllDay
-        ? L["All day"].Value
-        : Model.EndsAt is { } end
-            ? $"{Model.StartsAt.ToString("h:mm tt", culture)} – {end.ToString("h:mm tt", culture)}"
-            : Model.StartsAt.ToString("h:mm tt", culture);
 }
 <article class="kc-card kc-event-card">
     <div class="kc-event-date" aria-hidden="true">
@@ -19,9 +14,9 @@
         <ul class="kc-meta-list">
             <li>
                 <icon name="calendar-days" />
-                <time datetime="@Model.StartsAt.ToString("O", CultureInfo.InvariantCulture)">@Model.StartsAt.ToString("ddd, d MMM yyyy", culture)</time>
+                <time datetime="@Model.StartsAt.ToString("O", CultureInfo.InvariantCulture)">@Model.DateText</time>
             </li>
-            <li><icon name="clock" /> @time</li>
+            <li><icon name="clock" /> @(Model.TimeText ?? L["All day"].Value)</li>
             @if (!string.IsNullOrWhiteSpace(Model.Location))
             {
                 <li><icon name="location-dot" /> @Model.Location</li>

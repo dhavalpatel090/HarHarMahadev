@@ -3,8 +3,8 @@ using Khaparwada.Web.Infrastructure.Localization;
 using Khaparwada.Web.Infrastructure.Routing;
 using Khaparwada.Web.Infrastructure.TagHelpers;
 using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.Events;
 using Khaparwada.Web.Services.Site;
-using Khaparwada.Web.ViewModels.Events;
 using Khaparwada.Web.ViewModels.Map;
 using Khaparwada.Web.ViewModels.Places;
 using Khaparwada.Web.ViewModels.Shared;
@@ -126,17 +126,8 @@ public sealed class PlaceService(AppDbContext db, ISiteInfoService siteInfo, IVi
             .Where(item => item.PlaceId == place.Id)
             .OrderBy(item => item.StartsAt)
             .Take(3)
-            .Select(item => new
-            {
-                item.Slug,
-                Title = gujarati ? item.TitleGu ?? item.Title : item.Title,
-                Summary = gujarati ? item.SummaryGu ?? item.Summary : item.Summary,
-                item.StartsAt,
-                item.EndsAt,
-                item.IsAllDay,
-                item.ImagePath
-            })
-            .ToListAsync(cancellationToken);
+            .SelectCardRows(gujarati)
+            .ToCardsAsync(clock, cancellationToken);
 
         var morePlaces = await db.Places.AsNoTracking()
             .Visible()
@@ -170,17 +161,7 @@ public sealed class PlaceService(AppDbContext db, ISiteInfoService siteInfo, IVi
             Longitude = place.Longitude,
             MainImagePath = place.MainImagePath,
             Photos = photos,
-            UpcomingEvents = events.Select(item => new EventCardViewModel
-            {
-                Slug = item.Slug,
-                Title = item.Title,
-                Summary = item.Summary,
-                StartsAt = clock.ToVillageTime(item.StartsAt),
-                EndsAt = item.EndsAt is { } end ? clock.ToVillageTime(end) : null,
-                IsAllDay = item.IsAllDay,
-                Location = place.Name,
-                ImagePath = item.ImagePath
-            }).ToList(),
+            UpcomingEvents = events,
             MorePlaces = morePlaces,
             Map = place.Latitude is { } latitude && place.Longitude is { } longitude
                 ? new MapViewModel

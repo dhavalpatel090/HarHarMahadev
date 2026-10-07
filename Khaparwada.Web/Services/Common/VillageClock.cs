@@ -13,6 +13,9 @@ public interface IVillageClock
 
     /// <summary>The same instant, expressed in the village's time zone (IST).</summary>
     DateTimeOffset ToVillageTime(DateTimeOffset instant);
+
+    /// <summary>The instant of a date and clock time as people in the village mean them (e.g. a form's "9:00 PM").</summary>
+    DateTimeOffset FromVillageTime(DateOnly date, TimeOnly time);
 }
 
 public sealed class VillageClock(TimeProvider timeProvider, IOptions<SiteOptions> options) : IVillageClock
@@ -22,4 +25,10 @@ public sealed class VillageClock(TimeProvider timeProvider, IOptions<SiteOptions
     public DateTimeOffset UtcNow => timeProvider.GetUtcNow();
 
     public DateTimeOffset ToVillageTime(DateTimeOffset instant) => TimeZoneInfo.ConvertTime(instant, _timeZone);
+
+    public DateTimeOffset FromVillageTime(DateOnly date, TimeOnly time)
+    {
+        var local = date.ToDateTime(time, DateTimeKind.Unspecified);
+        return new DateTimeOffset(local, _timeZone.GetUtcOffset(local));
+    }
 }

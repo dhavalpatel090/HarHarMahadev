@@ -1090,7 +1090,9 @@ a.kc-pending-label { color: var(--kc-maroon); }
 .kc-decisions .form-check-label { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .6rem; }
 .kc-decision-hint { color: var(--kc-muted); font-size: .9rem; }
 
-/* In the people list a photo is round like the initials, and the same size, so the names line up; names keep
-   room on phones (the table scrolls sideways instead of squeezing them to one word per line). */
+/* In the people list a photo is round like the initials, and the same size, so the names line up. */
 .kc-people-table .kc-thumb { width: 2.75rem; border-radius: 50%; }
-.kc-people-table .kc-name-cell { min-width: 12rem; }
+
+/* Names keep room in every admin list: on phones the table scrolls sideways instead of squeezing the name
+   column (the first to shrink) to one word per line. */
+.kc-table .kc-name-cell { min-width: 12rem; }

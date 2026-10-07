@@ -1,0 +1,172 @@
+@model EventDetailsViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    ViewData["Title"] = Model.Title;
+    ViewData["Description"] = Model.Summary;
+    var events = L["Events"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = Model.Title,
+        Lead = Model.Summary,
+        Icon = "calendar-days",
+        Breadcrumbs = [new BreadcrumbItem(events, RouteNames.Events), new BreadcrumbItem(Model.Title)]
+    };
+    var invariant = CultureInfo.InvariantCulture;
+    var origin = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var pageUrl = Url.RouteUrl(RouteNames.EventDetails, new { slug = Model.Slug }, Context.Request.Scheme);
+    var shareText = $"{Model.Title} – {Model.DateText}\n{pageUrl}";
+    var whatsAppUrl = "https://wa.me/?text=" + Uri.EscapeDataString(shareText);
+
+    // schema.org data for search engines. All-day events use dates only; Json.Serialize escapes < and >.
+    string When(DateTimeOffset value) => Model.IsAllDay ? value.ToString("yyyy-MM-dd", invariant) : value.ToString("yyyy-MM-dd'T'HH:mm:sszzz", invariant);
+    var structuredData = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "Event",
+        ["name"] = Model.Title,
+        ["description"] = Model.Summary,
+        ["startDate"] = When(Model.StartsAt),
+        ["endDate"] = Model.EndsAt is { } end ? When(end) : null,
+        ["eventStatus"] = "https://schema.org/EventScheduled",
+        ["eventAttendanceMode"] = "https://schema.org/OfflineEventAttendanceMode",
+        ["url"] = pageUrl,
+        ["image"] = Model.ImagePath is null ? null : origin + MediaUrls.Image(Model.ImagePath, ImageSize.Large)
+    };
+    if (Model.HasLocation)
+    {
+        structuredData["location"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "Place",
+            ["name"] = Model.VenueName ?? Model.LocationText,
+            ["address"] = Model.VenueAddress ?? Model.LocationText ?? Model.VenueName
+        };
+    }
+}
+@functions {
+    private static bool IsPlaceholder(string? text) => text?.TrimStart().StartsWith('[') == true;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-event-page">
+    <div class="container">
+        @if (Model.State == EventState.Past)
+        {
+            <p class="kc-event-state is-past" role="status"><icon name="clock-rotate-left" /> @L["This event has ended."]</p>
+        }
+        else if (Model.State == EventState.Now)
+        {
+            <p class="kc-event-state is-now" role="status"><icon name="star" /> @L["Happening now"]</p>
+        }
+
+        <div class="kc-detail-layout @(Model.ImagePath is not null ? "has-media" : null)">
+            @if (Model.ImagePath is not null)
+            {
+                <figure class="kc-detail-figure">
+                    <img src="@MediaUrls.Image(Model.ImagePath, ImageSize.Large)" srcset="@MediaUrls.SrcSet(Model.ImagePath)"
+                         sizes="(min-width: 1400px) 860px, (min-width: 992px) 66vw, 100vw" alt="@Model.Title" fetchpriority="high" />
+                </figure>
+            }
+
+            <div class="kc-detail-main">
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div class="kc-detail-text @(IsPlaceholder(Model.Description) ? "kc-placeholder-text" : null)">
+                        @foreach (var paragraph in TextHelpers.Paragraphs(Model.Description))
+                        {
+                            <p>@paragraph</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="kc-detail-text @(IsPlaceholder(Model.Summary) ? "kc-placeholder-text" : null)">
+                        <p>@Model.Summary</p>
+                    </div>
+                }
+            </div>
+
+            <aside class="kc-detail-aside">
+                <div class="kc-info-card">
+                    <dl class="kc-info-list">
+                        <div>
+                            <dt><icon name="calendar-days" /> @L["Date"]</dt>
+                            <dd><time datetime="@Model.StartsAt.ToString("O", invariant)">@Model.DateText</time></dd>
+                        </div>
+                        <div>
+                            <dt><icon name="clock" /> @L["Time"]</dt>
+                            <dd>@(Model.TimeText ?? L["All day"].Value)</dd>
+                        </div>
+                        @if (Model.HasLocation)
+                        {
+                            <div>
+                                <dt><icon name="location-dot" /> @L["Where"]</dt>
+                                <dd>
+                                    @if (Model.VenueName is not null)
+                                    {
+                                        if (Model.VenueSlug is not null)
+                                        {
+                                            <a asp-route="@RouteNames.PlaceDetails" asp-route-slug="@Model.VenueSlug">@Model.VenueName</a>
+                                        }
+                                        else
+                                        {
+                                            @Model.VenueName
+                                        }
+                                        if (Model.LocationText is not null)
+                                        {
+                                            <br /><span class="kc-info-note">@Model.LocationText</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @Model.LocationText
+                                    }
+                                    @if (Model.VenueAddress is not null)
+                                    {
+                                        <br /><span class="kc-info-note">@Model.VenueAddress</span>
+                                    }
+                                </dd>
+                            </div>
+                        }
+                    </dl>
+                    <div class="kc-info-actions">
+                        @if (Model.State != EventState.Past)
+                        {
+                            <a class="btn btn-kc-primary" asp-route="@RouteNames.EventCalendar" asp-route-slug="@Model.Slug" download>
+                                <icon name="calendar-plus" /> @L["Add to calendar"]
+                            </a>
+                        }
+                        @if (Model.DirectionsUrl is not null)
+                        {
+                            <a class="btn btn-kc-outline" href="@Model.DirectionsUrl" target="_blank" rel="noopener noreferrer">
+                                <icon name="route" /> @L["Get directions"]<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                            </a>
+                        }
+                        <a class="btn btn-kc-outline" href="@whatsAppUrl" target="_blank" rel="noopener noreferrer">
+                            <icon brand="whatsapp" /> @L["Share on WhatsApp"]<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        @if (Model.MoreEvents.Count > 0)
+        {
+            <section class="kc-detail-more" aria-labelledby="more-title">
+                <div class="kc-subheading-row">
+                    <h2 class="kc-subheading" id="more-title">@L["More upcoming events"]</h2>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.Events">@L["All events"] <icon name="arrow-right" /></a>
+                </div>
+                <div class="row g-4">
+                    @foreach (var item in Model.MoreEvents)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <partial name="Cards/_EventCard" model="item" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</section>
+
+<script type="application/ld+json">@Json.Serialize(structuredData)</script>

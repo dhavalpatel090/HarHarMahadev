@@ -1,3 +1,4 @@
+using System.Globalization;
 using Khaparwada.Web.Infrastructure.Media;
 
 namespace Khaparwada.Web.ViewModels.Events;
@@ -18,4 +19,8 @@ public sealed class EventCardViewModel
     public string? ImagePath { get; init; }
 
     public string? ImageUrl => MediaUrls.Image(ImagePath);
+
+    // Read while the page is written, so the request's language (English or Gujarati) is used.
+    public string DateText => EventSchedule.DateText(StartsAt, EndsAt, IsAllDay, CultureInfo.CurrentCulture);
+    public string? TimeText => EventSchedule.TimeText(StartsAt, EndsAt, IsAllDay, CultureInfo.CurrentCulture);
 }

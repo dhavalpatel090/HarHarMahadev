@@ -5,6 +5,7 @@ using Khaparwada.Web.Infrastructure.TagHelpers;
 using Khaparwada.Web.Infrastructure.Text;
 using Khaparwada.Web.Models.Enums;
 using Khaparwada.Web.Services.Common;
+using Khaparwada.Web.Services.Events;
 using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.People;
 using Khaparwada.Web.Services.Places;
@@ -135,38 +136,20 @@ public sealed class HomeService(
             .SelectThenNow(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
 
+    /// <summary>
+    /// The next three events. Featured events always get a place while they are upcoming (the admin's way of
+    /// saying "don't miss this"); the cards are then shown in date order.
+    /// </summary>
     private async Task<List<EventCardViewModel>> GetUpcomingEventsAsync(CancellationToken cancellationToken)
     {
-        var gu = AppLanguage.IsGujarati;
-        var rows = await db.Events.AsNoTracking()
+        var cards = await db.Events.AsNoTracking()
             .Upcoming(clock.UtcNow)
-            .OrderBy(item => item.StartsAt)
+            .OrderByDescending(item => item.IsFeatured)
+            .ThenBy(item => item.StartsAt)
             .Take(3)
-            .Select(item => new
-            {
-                item.Slug,
-                Title = gu ? item.TitleGu ?? item.Title : item.Title,
-                Summary = gu ? item.SummaryGu ?? item.Summary : item.Summary,
-                item.StartsAt,
-                item.EndsAt,
-                item.IsAllDay,
-                item.ImagePath,
-                Venue = item.Place != null ? (gu ? item.Place.NameGu ?? item.Place.Name : item.Place.Name) : null,
-                LocationText = gu ? item.LocationTextGu ?? item.LocationText : item.LocationText
-            })
-            .ToListAsync(cancellationToken);
-
-        return rows.Select(row => new EventCardViewModel
-        {
-            Slug = row.Slug,
-            Title = row.Title,
-            Summary = row.Summary,
-            StartsAt = clock.ToVillageTime(row.StartsAt),
-            EndsAt = row.EndsAt is { } end ? clock.ToVillageTime(end) : null,
-            IsAllDay = row.IsAllDay,
-            Location = row.Venue ?? row.LocationText,
-            ImagePath = row.ImagePath
-        }).ToList();
+            .SelectCardRows(AppLanguage.IsGujarati)
+            .ToCardsAsync(clock, cancellationToken);
+        return cards.OrderBy(card => card.StartsAt).ToList();
     }
 
     private async Task<List<NoticeItemViewModel>> GetLatestNoticesAsync(CancellationToken cancellationToken)

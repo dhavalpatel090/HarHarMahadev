@@ -1,0 +1,80 @@
+@model EventListViewModel
+@{
+    var past = Model.View == EventListView.Past;
+    var all = L["Events"].Value;
+    var title = past ? L["Past events"].Value : all;
+    var lead = L["Festivals, meetings and village programmes, upcoming and past."].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = lead;
+
+    // "Past" and each page are pages of their own for search engines (see PageMeta).
+    var canonical = new List<string>();
+    if (past) { canonical.Add("show=past"); }
+    if (Model.Pagination.Page > 1) { canonical.Add("page=" + Model.Pagination.Page); }
+    ViewData["CanonicalQuery"] = canonical.Count == 0 ? null : "?" + string.Join("&", canonical);
+
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = lead,
+        Icon = "calendar-days",
+        Breadcrumbs = past
+            ? [new BreadcrumbItem(all, RouteNames.Events), new BreadcrumbItem(title)]
+            : [new BreadcrumbItem(all)]
+    };
+
+    // Month headings ("October 2026") over the cards; the events are already in order.
+    var months = Model.Events.GroupBy(item => new { item.StartsAt.Year, item.StartsAt.Month }).ToList();
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-events-page">
+    <div class="container">
+        <nav class="kc-filter-chips" aria-label="@L["Events"]">
+            <a class="kc-filter-chip @(past ? null : "is-active")" aria-current="@(past ? null : "page")" asp-route="@RouteNames.Events">
+                <icon name="calendar-days" /> @L["Upcoming"] <span class="kc-filter-count">@Model.UpcomingCount</span>
+            </a>
+            <a class="kc-filter-chip @(past ? "is-active" : null)" aria-current="@(past ? "page" : null)" asp-route="@RouteNames.Events" asp-route-show="past">
+                <icon name="clock-rotate-left" /> @L["Past"] <span class="kc-filter-count">@Model.PastCount</span>
+            </a>
+        </nav>
+
+        @if (Model.Events.Count == 0)
+        {
+            <p class="kc-empty">
+                @if (past)
+                {
+                    @L["No past events yet."]
+                }
+                else
+                {
+                    @L["No upcoming events right now. Please check again soon."]
+                    @if (Model.PastCount > 0)
+                    {
+                        <a asp-route="@RouteNames.Events" asp-route-show="past">@L["See past events"]</a>
+                    }
+                }
+            </p>
+        }
+        else
+        {
+            @foreach (var month in months)
+            {
+                var first = month.First().StartsAt;
+                var headingId = $"month-{first.Year}-{first.Month:00}";
+                <section class="kc-event-month-group" aria-labelledby="@headingId">
+                    <h2 class="kc-subheading" id="@headingId">@first.ToString("MMMM yyyy", CultureInfo.CurrentCulture)</h2>
+                    <div class="row g-4">
+                        @foreach (var item in month)
+                        {
+                            <div class="col-md-6 col-lg-4">
+                                <partial name="Cards/_EventCard" model="item" />
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+            <partial name="_Pagination" model="Model.Pagination" />
+        }
+    </div>
+</section>

@@ -1,0 +1,124 @@
+@model EventAdminListViewModel
+@{
+    ViewData["Title"] = "Events";
+    ViewData["Lead"] = "Festivals, meetings and programmes. Upcoming events appear on the Home page automatically.";
+    var tabs = new (EventListFilter Filter, string Label)[]
+    {
+        (EventListFilter.Upcoming, "Upcoming"),
+        (EventListFilter.Past, "Past"),
+        (EventListFilter.All, "All")
+    };
+    string? ShowValue(EventListFilter filter) => filter == EventListFilter.Upcoming ? null : filter.ToString().ToLowerInvariant();
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/events" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add event</a>
+}
+
+<nav class="kc-tabs" aria-label="Events by date">
+    @foreach (var tab in tabs)
+    {
+        var current = tab.Filter == Model.Filter;
+        <a class="kc-tab @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+           asp-route="admin-events" asp-route-show="@ShowValue(tab.Filter)" asp-route-q="@Model.Search">
+            @tab.Label <span class="kc-tab-count">@Model.Counts[tab.Filter]</span>
+        </a>
+    }
+</nav>
+
+<form class="kc-admin-filters" method="get" asp-route="admin-events" role="search">
+    @if (Model.Filter != EventListFilter.Upcoming)
+    {
+        <input type="hidden" name="show" value="@ShowValue(Model.Filter)" />
+    }
+    <div class="kc-admin-filters-grow">
+        <label class="kc-field-label" for="filter-q">Name of the event</label>
+        <input class="form-control" type="search" id="filter-q" name="q" value="@Model.Search" maxlength="100" />
+    </div>
+    <button class="btn btn-kc-outline" type="submit"><icon name="magnifying-glass" /> Filter</button>
+</form>
+
+<section class="kc-panel" aria-label="Events">
+    @if (Model.Items.Count == 0)
+    {
+        <p class="kc-panel-empty">
+            @(Model.Filter == EventListFilter.Upcoming && Model.Search is null
+                ? "No upcoming events. Add one with the button above."
+                : "No events found. Change the filter, or add an event with the button above.")
+        </p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table kc-events-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Event</th>
+                        <th scope="col">When</th>
+                        <th scope="col">Where</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="kc-name-cell">
+                                    <partial name="_Thumb" model="item.ImagePath" />
+                                    <span>
+                                        <strong>@item.Title</strong>
+                                        @if (item.IsFeatured)
+                                        {
+                                            <span class="kc-name-gu">Featured on Home</span>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(item.TitleGu))
+                                        {
+                                            <span class="kc-name-gu" lang="gu">@item.TitleGu</span>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="kc-nowrap">
+                                @item.DateText
+                                <span class="kc-name-gu">@item.TimeText</span>
+                            </td>
+                            <td>@item.Location</td>
+                            <td>
+                                @if (item.IsPlaceholder)
+                                {
+                                    <span class="kc-status is-todo">Sample</span>
+                                }
+                                @if (!item.IsPublished)
+                                {
+                                    <span class="kc-status">Hidden</span>
+                                }
+                                else if (item.IsOver)
+                                {
+                                    <span class="kc-status">Past</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@item.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @item.Title</span>
+                                </a>
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Create" asp-route-copy="@item.Id" title="Copy: start a new event from this one">
+                                    <icon name="copy" /><span class="visually-hidden">Copy @item.Title as a new event</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@item.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @item.Title</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<partial name="_Pagination" model="Model.Pagination" />

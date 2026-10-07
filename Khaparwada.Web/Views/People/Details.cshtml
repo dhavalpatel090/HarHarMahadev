@@ -78,7 +78,7 @@
 
         @if (Model.MorePeople.Count > 0)
         {
-            <section class="kc-place-more" aria-labelledby="more-title">
+            <section class="kc-detail-more" aria-labelledby="more-title">
                 <div class="kc-subheading-row">
                     <h2 class="kc-subheading" id="more-title">@L["More: {0}", Model.Category.Name]</h2>
                     <a class="kc-link-arrow" asp-route="@RouteNames.People" asp-route-category="@Model.Category.Slug">@L["See all"] <icon name="arrow-right" /></a>

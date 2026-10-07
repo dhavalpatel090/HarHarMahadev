@@ -11,13 +11,6 @@ namespace Khaparwada.Web.Controllers;
 /// </summary>
 public class ComingSoonController : Controller
 {
-    [HttpGet("events", Name = RouteNames.Events)]
-    public IActionResult Events() =>
-        Placeholder(RouteNames.Events, "Events", "Festivals, meetings and village programmes, upcoming and past.", "calendar-days");
-
-    [HttpGet("events/{slug}", Name = RouteNames.EventDetails)]
-    public IActionResult EventDetails(string slug) => Events();
-
     [HttpGet("gallery", Name = RouteNames.Gallery)]
     public IActionResult Gallery() =>
         Placeholder(RouteNames.Gallery, "Gallery", "Photos of festivals, people, places and the old village.", "images");

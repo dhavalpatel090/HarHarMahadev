@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Khaparwada.Web.Models.Entities;
 using Khaparwada.Web.Models.Enums;
+using Khaparwada.Web.Services.Events;
 
 namespace Khaparwada.Web.Services.Common;
 
@@ -25,12 +26,13 @@ public static class PublicVisibility
     public static IQueryable<Event> Visible(this IQueryable<Event> events) =>
         events.Where(item => item.IsPublished);
 
-    /// <summary>
-    /// Events that have not finished yet. Without an end time, a timed event counts as running for 3 hours
-    /// and an all-day event for the whole day; otherwise a 9 PM event would vanish at 9:01 PM.
-    /// </summary>
+    /// <summary>Published events that are not over yet (the rule for "over" is in <see cref="EventTiming"/>).</summary>
     public static IQueryable<Event> Upcoming(this IQueryable<Event> events, DateTimeOffset now) =>
-        events.Visible().Where(item => (item.EndsAt ?? item.StartsAt.AddHours(item.IsAllDay ? 24 : 3)) >= now);
+        events.Visible().NotOver(now);
+
+    /// <summary>Published events that are over: together with <see cref="Upcoming"/>, every published event once.</summary>
+    public static IQueryable<Event> Past(this IQueryable<Event> events, DateTimeOffset now) =>
+        events.Visible().Over(now);
 
     /// <summary>Published, already started and not yet expired.</summary>
     public static IQueryable<Notice> Active(this IQueryable<Notice> notices, DateTimeOffset now) =>

@@ -99,6 +99,17 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | People pages are `noindex` | Consent covers this village website, not a person's name in search engines |
 | Removal request = delete the profile (soft): it leaves the website at once; the profile page links to Contact for "change or removal" | A removal waiting for a review cycle |
 | Detail pages highlight their section in the menu through `SiteNavigation.SectionFor` (`aria-current="true"`; `"page"` only on the section's own page) | Each detail page setting the highlight by hand, and forgetting to |
+| When an event is over is decided once, in `Services/Events/EventTiming.cs` (SQL `NotOver`/`Over` + C# `EndOf`): all-day events last to the end of their last day (`EndsAt` = that day at midnight, or empty for one day); timed events without an end count 3 hours. "Upcoming" and "Past" are exact complements | Home, `/events`, the admin tabs and the "ended" note disagreeing about the same event |
+| Event dates and times are entered as village date + clock time and turned into exact moments by `IVillageClock.FromVillageTime`; an end time earlier than the start (without a last day) means the next day | Admins doing time-zone arithmetic; "9 PM – 12:30 AM" Garba nights being refused as "ends before it starts" |
+| How a date range reads is in one helper (`ViewModels/Events/EventSchedule.cs`), formatted while the page is written | "17 Oct" vs "17–25 Oct" rules repeated in every view; Gujarati pages showing English month names |
+| Event cards come from `Services/Events/EventQueries.cs` (Home, a place's page, `/events`) | The same event reading differently on three pages (this replaced two copies) |
+| A new event's web address gets its year (`navratri-garba-night-2026`), on the server and in `admin.js` | Next year's festival colliding with this year's address, or taking over its shared links |
+| "Copy as a new event" fills the form from an existing event without dates, web address or photo | Two events sharing one photo file: replacing it on one (ImageEdit deletes the old file) would break the other |
+| Home shows 3 upcoming events: featured ones always get a place, then the soonest; shown in date order | The admin having no say, or the Home cards jumping out of date order |
+| "Add to calendar" is an `.ics` file written in-house (RFC 5545: CRLF, escaping, 75-byte folding by UTF-8 bytes) | A package for one event with eight fields; Gujarati letters cut in half by naive line folding |
+| Share on WhatsApp is a plain `https://wa.me/?text=` link | Third-party share scripts tracking visitors; nothing is sent until the visitor taps it |
+| An event's venue is linked, with address and directions, only while that place's page is public | Links to "not found" pages; directions to a place an admin has hidden |
+| Shared layout classes `kc-detail-*` (places, events, people) and `MapLinks` for directions/OpenStreetMap links | Copies of the same layout and URL code per page |
 | All UI text through `IStringLocalizer` (`@L["…"]`) from Phase 2 | Rewriting every view in Phase 12 |
 | Unicode-wide HTML encoder (`WebEncoderOptions`) | The default encoder sent every Gujarati letter as `&#xAAE;`, making Gujarati pages 2–3× larger |
 | Icon sprite instead of the Font Awesome icon font | ~320 KB of fonts and CSS for 2,600 icons when the site uses ~70 (sprite: ~15 KB compressed) |
@@ -338,7 +349,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 4 | About + History + Then vs Now (public + admin) | **Done** |
 | 5 | Places + Map | **Done** |
 | 6 | People (approval + consent) | **Done** |
-| 7 | Events | |
+| 7 | Events | **Done** |
 | 8 | Gallery (approval, masonry, lightbox) | |
 | 9 | Notices + Contact (inbox) | |
 | 10 | Memories (submission + review workflow) | |
@@ -400,6 +411,10 @@ Each feature phase ships its public pages and its admin screens together, and re
 - **Test the Editor rules before Phase 11 (no "add user" screen yet):** copy the admin row in `AspNetUsers` with a new
   Id, email and SecurityStamp, and add an `AspNetUserRoles` row for the `Editor` role (the Phase 6 test suite does this
   on its throwaway database). Never do this on the live database.
+- **Add next year's festival:** Admin → Events → "Past" tab → the copy button on last year's event → choose the new
+  date, check the text, add this year's photo → Add event. The web address gets the new year automatically.
+- **Event times:** type them as people in the village say them (IST). For an evening that ends after midnight only
+  fill in the end time; the "Last day" is for events over several days (e.g. Navratri, all day or with times).
 - **Test with curl from Git Bash:** `export MSYS_NO_PATHCONV=1` first, and send Gujarati values from UTF-8 files
   (`--data-urlencode "NameGu@name.txt"`). See §11.
 
@@ -414,7 +429,7 @@ Each feature phase ships its public pages and its admin screens together, and re
 | Phone menu cut off at the header's height | `backdrop-filter` on the header made it the containing block for the `position: fixed` menu inside it | Frosted header only at ≥ 1200 px, where the menu is inline |
 | Gujarati conjuncts can break; uppercase means nothing | Letter-spacing and `text-transform` on Gujarati text | Both are switched off under `html[lang="gu"]` |
 | Notices sorted Urgent/Important/Normal alphabetically | Enums are stored as text, so `ORDER BY Priority` sorts by the word | Rank explicitly (`OrderByDescending(n => n.Priority == Urgent)…`) |
-| A 9 PM event without an end time would vanish at 9:01 PM | "Upcoming" compared only the start time | Events without an end count as running 3 hours (all-day: 24 hours) |
+| A 9 PM event without an end time would vanish at 9:01 PM | "Upcoming" compared only the start time | Events without an end count as running 3 hours (all-day: 24 hours); see `EventTiming` |
 | ImageSharp 4 built in Debug with only a warning, but Release builds and `dotnet publish` would fail | ImageSharp 4 checks for a licence key at build time; its target only continues on error in Debug | Image pipeline on SkiaSharp (MIT). Read a package's `build/*.targets` before adopting it |
 | Village info showed latitude `21.12` for `21.123457`; saving unchanged would have moved the pin | The input tag helper formats `decimal` as `0.00` when the property has no edit format | `DecimalEditFormatMetadataProvider` gives all decimals their full digits; round on purpose with `[DisplayFormat(ApplyFormatInEditMode = true)]` |
 | Admin lists made phones scroll sideways (833 px) | `.visually-hidden` labels are `position: absolute`; the static `.table-responsive` was not their containing block, so they escaped its scroll box | `.table-responsive { position: relative; }` in site.css |
@@ -434,6 +449,9 @@ Each feature phase ships its public pages and its admin screens together, and re
 | Test scripts copied with PowerShell lost their Gujarati text | Windows PowerShell 5.1 reads BOM-less UTF-8 files as ANSI (and writes a BOM before `#!`) | Copy or edit such files with `sed`, or pass `-Encoding UTF8` |
 | A place's or a person's page did not highlight "Places" / "People" in the menu | The header compared the menu item's route name with the page's, and detail pages have their own (`place-details`); the coming-soon pages had hidden it by setting the section by hand | `SiteNavigation.SectionFor` maps detail routes to their section; a new detail route gets a line there |
 | `?status=7` would have crashed the admin People list | Enum model binding also accepts numbers, including ones that are not enum values | Check `Enum.IsDefined` on bound enums before using them as keys |
+| Names in admin lists squeezed to one word per line on phones | A table shrinks its widest text column first, and the name column has the most text | `.kc-table .kc-name-cell { min-width: 12rem }` for every admin list; the table scrolls sideways instead |
+| A test sent "Test Garba, music" for the title "Test Garba, music; dance" | curl's `-F name=value` treats `;` as the start of options such as `type=` | Use `--form-string` for values with `;` |
+| `CONVERT(varchar, StartsAt, 127)` showed `…18:30:00Z` for a 00:00 IST date | Style 127 converts a `datetimeoffset` to UTC; the stored value was right (`+05:30`) | Use style 126 to see the stored offset |
 | An oversized upload shows "connection reset" instead of the 413 page | The server refuses the body as soon as it passes the limit and closes the connection while the browser is still sending | Expected HTTP/1.1 behaviour. The page checks file sizes before sending (`data-max-bytes`), so people never get there |
 
 ## 12. Open items
@@ -452,6 +470,9 @@ Each feature phase ships its public pages and its admin screens together, and re
 - Consent is recorded as a note only. If the village prefers signed forms, keep them offline (e.g. at the panchayat
   office) and say so in the note; uploading scans would put signatures on the server and is deliberately not offered.
 - Editor accounts can only be created in Phase 11 (Users screen); until then every admin account is an Admin.
+- Events have no "cancelled / postponed" state: for now edit the date, or the summary ("Postponed to …"), or hide the
+  event. A status (and schema.org `eventStatus`) can be added if the village needs it.
+- Photo albums linked to an event (`GalleryAlbum.EventId`) are shown with the Gallery phase (8).
 - Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
   to make; consider making them admin-editable pages later. Its statement that photo location data is removed
   is now true: verified in Phase 3 (no EXIF, GPS or camera details in any saved file).

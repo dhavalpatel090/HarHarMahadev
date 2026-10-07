@@ -44,19 +44,19 @@
         @* Grid areas, so a phone shows the photo, then the details card (directions!), then the text; a desktop
            shows photo and text on the left with the card beside them. Bootstrap columns could only stack in
            source order. *@
-        <div class="kc-place-layout @(Model.MainImagePath is not null ? "has-media" : null)">
+        <div class="kc-detail-layout @(Model.MainImagePath is not null ? "has-media" : null)">
             @if (Model.MainImagePath is not null)
             {
-                <figure class="kc-place-figure">
+                <figure class="kc-detail-figure">
                     <img src="@MediaUrls.Image(Model.MainImagePath, ImageSize.Large)" srcset="@MediaUrls.SrcSet(Model.MainImagePath)"
                          sizes="(min-width: 1400px) 860px, (min-width: 992px) 66vw, 100vw" alt="@Model.Name" fetchpriority="high" />
                 </figure>
             }
 
-            <div class="kc-place-main">
+            <div class="kc-detail-main">
                 @if (!string.IsNullOrWhiteSpace(Model.Description))
                 {
-                    <div class="kc-place-text @(IsPlaceholder(Model.Description) ? "kc-placeholder-text" : null)">
+                    <div class="kc-detail-text @(IsPlaceholder(Model.Description) ? "kc-placeholder-text" : null)">
                         @foreach (var paragraph in TextHelpers.Paragraphs(Model.Description))
                         {
                             <p>@paragraph</p>
@@ -66,7 +66,7 @@
 
                 @if (Model.Photos.Count > 0)
                 {
-                    <section class="kc-place-block" aria-labelledby="photos-title">
+                    <section class="kc-detail-block" aria-labelledby="photos-title">
                         <h2 class="kc-subheading" id="photos-title">@L["Photos"]</h2>
                         <ul class="kc-photo-grid">
                             @foreach (var photo in Model.Photos)
@@ -90,7 +90,7 @@
 
                 @if (Model.UpcomingEvents.Count > 0)
                 {
-                    <section class="kc-place-block" aria-labelledby="events-title">
+                    <section class="kc-detail-block" aria-labelledby="events-title">
                         <h2 class="kc-subheading" id="events-title">@L["Coming up here"]</h2>
                         <div class="row g-4">
                             @foreach (var item in Model.UpcomingEvents)
@@ -104,7 +104,7 @@
                 }
             </div>
 
-            <aside class="kc-place-aside">
+            <aside class="kc-detail-aside">
                 <div class="kc-info-card">
                     <a class="kc-chip" asp-route="@RouteNames.Places" asp-route-category="@Model.Category.Slug">
                         <icon name="@Model.Category.Icon" color="@Model.Category.Color" /> @Model.Category.Name
@@ -163,7 +163,7 @@
 
         @if (Model.MorePlaces.Count > 0)
         {
-            <section class="kc-place-more" aria-labelledby="more-title">
+            <section class="kc-detail-more" aria-labelledby="more-title">
                 <div class="kc-subheading-row">
                     <h2 class="kc-subheading" id="more-title">@L["More: {0}", Model.Category.Name]</h2>
                     <a class="kc-link-arrow" asp-route="@RouteNames.Places" asp-route-category="@Model.Category.Slug">@L["See all"] <icon name="arrow-right" /></a>

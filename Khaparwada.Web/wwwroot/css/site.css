@@ -1509,28 +1509,28 @@ a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon)
     .kc-page-step span { display: none; }
 }
 
-/* A place's page: photo, text, photos, events; on the side, the details card and a small map.
+/* A place's or an event's page: photo and text; on the side, the details card (when, where, directions).
    Phones: photo → card → text. From 992px: photo and text on the left, the card beside both. */
-.kc-place-layout {
+.kc-detail-layout {
     display: grid;
     grid-template-areas: "aside" "main";
     gap: 1.75rem;
 }
-.kc-place-layout.has-media { grid-template-areas: "media" "aside" "main"; }
-.kc-place-figure { grid-area: media; }
-.kc-place-aside { grid-area: aside; }
-.kc-place-main { grid-area: main; min-width: 0; }
+.kc-detail-layout.has-media { grid-template-areas: "media" "aside" "main"; }
+.kc-detail-figure { grid-area: media; }
+.kc-detail-aside { grid-area: aside; }
+.kc-detail-main { grid-area: main; min-width: 0; }
 @media (min-width: 992px) {
-    .kc-place-layout {
+    .kc-detail-layout {
         grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
         grid-template-areas: "main aside";
         align-items: start;
         column-gap: 3rem;
     }
-    .kc-place-layout.has-media { grid-template-areas: "media aside" "main aside"; }
+    .kc-detail-layout.has-media { grid-template-areas: "media aside" "main aside"; }
 }
-.kc-place-figure { margin: 0; }
-.kc-place-figure img {
+.kc-detail-figure { margin: 0; }
+.kc-detail-figure img {
     display: block;
     width: 100%;
     height: auto;
@@ -1539,8 +1539,8 @@ a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon)
     background: var(--kc-sand);
     object-fit: cover;
 }
-.kc-place-text p { color: var(--kc-text); font-size: 1.08rem; }
-.kc-place-block { margin-top: 2.5rem; }
+.kc-detail-text p { color: var(--kc-text); font-size: 1.08rem; }
+.kc-detail-block { margin-top: 2.5rem; }
 .kc-photo-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
@@ -1588,7 +1588,25 @@ a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon)
 .kc-info-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .kc-place-map { display: grid; gap: .75rem; margin-top: 1.25rem; }
 .kc-map.kc-map--small { height: 260px; border-radius: var(--kc-radius); box-shadow: none; }
-.kc-place-more { margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--kc-line); }
+.kc-detail-more { margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--kc-line); }
+
+/* /events: Upcoming / Past chips, then month headings over the cards. */
+.kc-events-page .kc-filter-chips { margin-bottom: 2rem; }
+.kc-event-month-group + .kc-event-month-group { margin-top: 2.75rem; }
+
+/* An event's page: "ended" / "happening now" above the layout; venue notes under the venue's name. */
+.kc-event-state {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 1.5rem;
+    padding: .45rem 1rem;
+    border-radius: var(--kc-radius-pill);
+    font-weight: 600;
+}
+.kc-event-state.is-past { background: var(--kc-sand); color: var(--kc-muted); }
+.kc-event-state.is-now { background: var(--kc-marigold-50); color: var(--kc-maroon); }
+.kc-info-note { color: var(--kc-muted); font-size: .92rem; }
 
 /* A person's page: the profile card (photo or initials, name, role) and the text. Phones: card on top.
    From 768px: card on the left, text beside it. */

@@ -57,15 +57,9 @@ public sealed class PlaceDetailsViewModel
         }
     }
 
-    // Map links are made from the coordinates, never stored, so they always agree. Invariant culture: a decimal
-    // comma would break the URL.
-    public string? DirectionsUrl => HasCoordinates
-        ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://www.google.com/maps/dir/?api=1&destination={Latitude},{Longitude}")
-        : null;
+    public string? DirectionsUrl => MapLinks.Directions(Latitude, Longitude);
 
-    public string? OpenStreetMapUrl => HasCoordinates
-        ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"https://www.openstreetmap.org/?mlat={Latitude}&mlon={Longitude}#map=17/{Latitude}/{Longitude}")
-        : null;
+    public string? OpenStreetMapUrl => MapLinks.OpenStreetMap(Latitude, Longitude);
 }
 
 public sealed record PlacePhotoViewModel(string ImagePath, int Width, int Height, string? Caption);
