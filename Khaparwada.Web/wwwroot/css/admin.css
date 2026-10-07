@@ -648,6 +648,7 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
 }
 .kc-pending-list li + li { border-top: 1px solid #F0E7D8; }
 .kc-pending-list .icon { color: var(--kc-muted); }
+a.kc-pending-label { color: var(--kc-maroon); }
 .kc-pending-label {
     flex: 1 1 auto;
     font-weight: 500;
@@ -738,6 +739,16 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
 }
 .kc-tab:hover { border-color: var(--kc-marigold); color: var(--kc-maroon); }
 .kc-tab.is-active { border-color: var(--kc-maroon); background: var(--kc-maroon); color: var(--kc-white); }
+.kc-tab-count {
+    margin-left: .35rem;
+    padding: .05rem .5rem;
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-sand);
+    color: var(--kc-muted);
+    font-size: .8rem;
+}
+.kc-tab-count.is-hot { background: var(--kc-maroon); color: var(--kc-white); }
+.kc-tab.is-active .kc-tab-count { background: rgb(255 255 255 / .2); color: var(--kc-white); }
 
 .kc-table {
     --bs-table-bg: transparent;
@@ -817,6 +828,7 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
 }
 .kc-status.is-on { background: var(--kc-success-50); color: var(--kc-success); }
 .kc-status.is-todo { background: var(--kc-marigold-50); color: var(--kc-marigold-600); }
+.kc-status.is-off { background: var(--kc-danger-50); color: #A3261B; }
 .kc-nowrap { white-space: nowrap; }
 
 .kc-thumb {
@@ -1055,3 +1067,30 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
     .kc-admin-nav-link,
     .kc-admin-user-action { transition: none; }
 }
+
+/* People: initials instead of a photo, the review line above the form, and the decision choices. */
+.kc-thumb.kc-thumb--initials {
+    border: 0;
+    background: linear-gradient(135deg, var(--kc-maroon), #B4532A);
+    color: var(--kc-white);
+    font-size: .85rem;
+    font-weight: 700;
+}
+.kc-review-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 1.25rem;
+    font-weight: 600;
+}
+.kc-review-meta { color: var(--kc-muted); font-size: .9rem; font-weight: 400; }
+.kc-decisions { margin: 0 0 1.35rem; padding: 0; border: 0; }
+.kc-decisions .form-check { margin-bottom: .6rem; }
+.kc-decisions .form-check-label { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .6rem; }
+.kc-decision-hint { color: var(--kc-muted); font-size: .9rem; }
+
+/* In the people list a photo is round like the initials, and the same size, so the names line up; names keep
+   room on phones (the table scrolls sideways instead of squeezing them to one word per line). */
+.kc-people-table .kc-thumb { width: 2.75rem; border-radius: 50%; }
+.kc-people-table .kc-name-cell { min-width: 12rem; }

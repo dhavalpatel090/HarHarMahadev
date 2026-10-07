@@ -2,7 +2,7 @@
 @{
     var site = await SiteInfoService.GetAsync(Context.RequestAborted);
     var currentRoute = Context.GetEndpoint()?.Metadata.GetMetadata<RouteNameMetadata>()?.RouteName;
-    var section = ViewData[SiteNavigation.SectionKey] as string ?? currentRoute;
+    var section = ViewData[SiteNavigation.SectionKey] as string ?? SiteNavigation.SectionFor(currentRoute);
     var gujarati = AppLanguage.IsGujarati;
     var nameParts = site.SiteName.Split(' ', 2);
 }
@@ -44,9 +44,11 @@
                         @foreach (var item in SiteNavigation.Main)
                         {
                             var active = item.RouteName == section;
+                            // "page" only on the menu's own page; inside the section (a profile) it is "true".
+                            var current = active ? item.RouteName == currentRoute ? "page" : "true" : null;
                             <li class="nav-item">
                                 <a class="nav-link @(active ? "active" : null)" asp-route="@item.RouteName"
-                                   aria-current="@(active ? "page" : null)">
+                                   aria-current="@current">
                                     <icon name="@item.Icon" class="kc-nav-icon" />
                                     <span>@L[item.Label]</span>
                                 </a>

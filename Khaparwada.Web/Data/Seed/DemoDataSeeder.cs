@@ -171,6 +171,8 @@ public sealed class DemoDataSeeder(
                 Contribution = "[Sample] Add their contribution to the village",
                 ContributionGu = "[નમૂનો] ગામ માટેનું યોગદાન ઉમેરો",
                 HasConsent = status == ModerationStatus.Published,
+                ConsentNote = status == ModerationStatus.Published ? "[Sample] Demo profile: no real person" : null,
+                ConsentRecordedAt = status == ModerationStatus.Published ? timeProvider.GetUtcNow() : null,
                 Status = status,
                 IsFeatured = featured
             };

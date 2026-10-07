@@ -1,0 +1,203 @@
+@model PersonInputModel
+@using Khaparwada.Web.Models.Enums
+@using Khaparwada.Web.Services.Common
+@inject IVillageClock Clock
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a profile" : $"Edit “{Model.FullName}”";
+    ViewData["Lead"] = "People";
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var photoField = new ImageFieldViewModel(nameof(Model.Photo), nameof(Model.RemovePhoto),
+        Model.CurrentPhotoUrl is null ? "Choose a photo" : "Choose a new photo", Model.CurrentPhotoUrl,
+        "Optional. A clear photo of the person that they are happy to see online. JPG, PNG or WebP; it is resized automatically, and hidden details such as the GPS location are removed.");
+    string When(DateTimeOffset instant) => Clock.ToVillageTime(instant).ToString("d MMM yyyy, h:mm tt", CultureInfo.InvariantCulture);
+    var decisions = new (ModerationStatus Status, string Hint)[]
+    {
+        (ModerationStatus.Pending, "Not on the website."),
+        (ModerationStatus.UnderReview, "Not on the website. Use it while you confirm the details with the person."),
+        (ModerationStatus.Approved, "Checked and ready, but not on the website yet."),
+        (ModerationStatus.Published, "On the website for everyone."),
+        (ModerationStatus.Rejected, "Not on the website. Write in the note what needs to change.")
+    };
+}
+@section Actions {
+    @if (!Model.IsNew && Model.CurrentStatus == ModerationStatus.Published)
+    {
+        <a class="btn btn-kc-outline" href="/people/@Model.Slug" target="_blank" rel="noopener"><icon name="eye" /> View on website<span class="visually-hidden"> (opens in a new tab)</span></a>
+    }
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+
+    @if (!Model.IsNew)
+    {
+        <p class="kc-review-state">
+            <span>Review:</span>
+            <span class="kc-status @ReviewStates.CssClass(Model.CurrentStatus)">@ReviewStates.Label(Model.CurrentStatus)</span>
+            @if (Model.ReviewedAt is { } reviewedAt)
+            {
+                <span class="kc-review-meta">Last decision by @(Model.ReviewedBy ?? "a former user") on @When(reviewedAt)</span>
+            }
+        </p>
+    }
+
+    @if (!isAdmin)
+    {
+        <div class="kc-admin-alert kc-admin-alert--warning">
+            <icon name="circle-info" />
+            <span>
+                An Admin checks every new profile and every change before it appears on the website.
+                @if (Model.CurrentStatus == ModerationStatus.Published)
+                {
+                    <strong>If you change this profile, it leaves the website until an Admin approves the changes.</strong>
+                }
+            </span>
+        </div>
+        @if (Model.CurrentStatus == ModerationStatus.Rejected && Model.ReviewNote is not null)
+        {
+            <div class="kc-admin-alert kc-admin-alert--error">
+                <icon name="triangle-exclamation" />
+                <span><strong>Sent back:</strong> @Model.ReviewNote</span>
+            </div>
+        }
+    }
+
+    <p class="kc-form-intro">
+        Write only what the person has agreed to share. Never add phone numbers, home addresses, dates of birth or
+        family details. Gujarati text is optional.
+    </p>
+
+    <section class="kc-panel" aria-labelledby="about-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="about-title">About the person</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field kc-field--medium">
+                <label asp-for="CategoryId" class="kc-field-label"></label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">Choose…</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@(category.Name + (category.IsActive ? "" : " (hidden category)"))</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="FullName" for-gu="FullNameGu" />
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    The profile's address on the website: <code class="kc-code">/people/<strong>ramesh-patel</strong></code>.
+                    Filled in from the English name. Changing it later breaks links people have shared.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.FullName)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="Profession" for-gu="ProfessionGu" hint="e.g. “Teacher, Primary School” or “Farmer”." />
+            <bilingual-field for="ShortBio" for-gu="ShortBioGu" rows="4"
+                             hint="A few sentences about their work and life in the village. A blank line starts a new paragraph." />
+            <bilingual-field for="Achievement" for-gu="AchievementGu" rows="3" hint="Optional: an award, a milestone, something they are proud of." />
+            <bilingual-field for="Contribution" for-gu="ContributionGu" rows="3" hint="Optional: what they have done for Khaparwada." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="photo-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="photo-title">Photo</h2>
+            <p class="kc-panel-text">Without a photo, the profile shows the person's initials.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-image-field-wrap">
+                <partial name="_ImageField" model="photoField" />
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="consent-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="consent-title"><icon name="file-signature" /> Consent</h2>
+            <p class="kc-panel-text">
+                A profile is shown only when the person agrees. If they later ask for it to be removed, delete the
+                profile: it leaves the website at once.
+            </p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check kc-field">
+                <input asp-for="HasConsent" class="form-check-input" />
+                <label asp-for="HasConsent" class="form-check-label"></label>
+            </div>
+            <div class="kc-field">
+                <label asp-for="ConsentNote" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="consent-hint">
+                    Needed with the tick. Who agreed, how and when, e.g. “Agreed in person on 5 Oct 2026” or
+                    “Son (Mahesh) agreed by phone”. Only the admin team sees this.
+                </p>
+                <input asp-for="ConsentNote" class="form-control" aria-describedby="consent-hint" autocomplete="off" />
+                <span asp-validation-for="ConsentNote" class="kc-field-error"></span>
+            </div>
+            @if (Model.ConsentRecordedAt is { } recordedAt)
+            {
+                <p class="kc-field-hint mb-0">Consent recorded on @When(recordedAt).</p>
+            }
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch">
+                <input asp-for="IsFeatured" class="form-check-input" role="switch" />
+                <label asp-for="IsFeatured" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    @if (isAdmin)
+    {
+        <section class="kc-panel" aria-labelledby="review-title">
+            <header class="kc-panel-header">
+                <h2 class="kc-panel-title" id="review-title"><icon name="list-check" /> Review</h2>
+                <p class="kc-panel-text">Check the text and the consent first. Approving and showing need the consent box ticked.</p>
+            </header>
+            <div class="kc-panel-body">
+                <fieldset class="kc-field kc-decisions">
+                    <legend class="kc-field-label">@Html.DisplayNameFor(m => m.Status)</legend>
+                    @foreach (var decision in decisions)
+                    {
+                        var id = "status-" + decision.Status.ToString().ToLowerInvariant();
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="@id" name="@Html.NameFor(m => m.Status)"
+                                   value="@decision.Status" checked="@((Model.Status ?? ModerationStatus.Pending) == decision.Status)" />
+                            <label class="form-check-label" for="@id">
+                                <span class="kc-status @ReviewStates.CssClass(decision.Status)">@ReviewStates.Label(decision.Status)</span>
+                                <span class="kc-decision-hint">@decision.Hint</span>
+                            </label>
+                        </div>
+                    }
+                    <span asp-validation-for="Status" class="kc-field-error"></span>
+                </fieldset>
+                <div class="kc-field">
+                    <label asp-for="ReviewNote" class="kc-field-label"></label>
+                    <p class="kc-field-hint" id="review-hint">Needed when you send a profile back: say what has to change.</p>
+                    <textarea asp-for="ReviewNote" class="form-control" rows="3" aria-describedby="review-hint"></textarea>
+                    <span asp-validation-for="ReviewNote" class="kc-field-error"></span>
+                </div>
+            </div>
+        </section>
+    }
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">
+            @(isAdmin ? Model.IsNew ? "Add profile" : "Save profile" : "Save and send for review")
+        </button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,96 @@
+@model PersonListViewModel
+@{
+    var all = L["People"].Value;
+    var title = Model.Category?.Name ?? all;
+    ViewData["Title"] = title;
+    ViewData["Description"] = L["Teachers, doctors, farmers, sports persons and others who serve the village."].Value;
+    // Profiles are of private villagers, who agreed to this website, not to search engines: not indexed.
+    ViewData["NoIndex"] = true;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = L["Teachers, doctors, farmers, sports persons and others who serve the village."],
+        Icon = Model.Category?.Icon ?? "people-group",
+        Breadcrumbs = Model.Category is null
+            ? [new BreadcrumbItem(all)]
+            : [new BreadcrumbItem(all, RouteNames.People), new BreadcrumbItem(Model.Category.Name)]
+    };
+    var count = Model.Pagination.TotalItems;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-people-page">
+    <div class="container">
+        <div class="kc-list-tools">
+            <form class="kc-search" method="get" asp-route="@RouteNames.People" role="search">
+                @if (Model.Category is not null)
+                {
+                    <input type="hidden" name="category" value="@Model.Category.Slug" />
+                }
+                <label class="visually-hidden" for="people-search">@L["Search people"]</label>
+                <input class="form-control" type="search" id="people-search" name="q" value="@Model.Search" maxlength="100"
+                       placeholder="@L["Search by name or work"]" />
+                <button class="btn btn-kc-primary" type="submit" aria-label="@L["Search"]"><icon name="magnifying-glass" /><span>@L["Search"]</span></button>
+            </form>
+        </div>
+
+        <nav class="kc-filter-chips" aria-label="@L["Categories"]">
+            <a class="kc-filter-chip @(Model.Category is null ? "is-active" : null)" aria-current="@(Model.Category is null ? "page" : null)"
+               asp-route="@RouteNames.People" asp-route-q="@Model.Search">@L["All"]</a>
+            @foreach (var category in Model.Categories.Where(c => c.Count > 0))
+            {
+                var current = category.Slug == Model.Category?.Slug;
+                <a class="kc-filter-chip @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+                   asp-route="@RouteNames.People" asp-route-category="@category.Slug" asp-route-q="@Model.Search">
+                    <icon name="@category.Icon" />
+                    @category.Name
+                    <span class="kc-filter-count">@category.Count</span>
+                </a>
+            }
+        </nav>
+
+        <p class="kc-result-summary" role="status">
+            @if (Model.Search is not null)
+            {
+                @L["{0} results for “{1}”", count, Model.Search]
+                <a asp-route="@RouteNames.People" asp-route-category="@Model.Category?.Slug">@L["Clear search"]</a>
+            }
+            else
+            {
+                @(count == 1 ? L["1 profile"] : L["{0} profiles", count])
+            }
+        </p>
+
+        @if (Model.People.Count == 0)
+        {
+            <p class="kc-empty">
+                @if (Model.Search is null && Model.Category is null)
+                {
+                    @L["Profiles will appear here once they are approved."]
+                }
+                else
+                {
+                    @L["Nobody matches. Try another word, or see everyone."]
+                    <a asp-route="@RouteNames.People">@L["Everyone"]</a>
+                }
+            </p>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var person in Model.People)
+                {
+                    <div class="col-sm-6 col-lg-4 col-xl-3">
+                        <partial name="Cards/_PersonCard" model="person" />
+                    </div>
+                }
+            </div>
+            <partial name="_Pagination" model="Model.Pagination" />
+        }
+
+        <p class="kc-people-note">
+            <icon name="circle-info" />
+            @L["Every profile is shown with the consent of the person or their family, and checked by an admin first."]
+        </p>
+    </div>
+</section>

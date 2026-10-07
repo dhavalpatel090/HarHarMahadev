@@ -38,9 +38,9 @@ public static class PublicVisibility
                                 && notice.PublishedAt <= now
                                 && (notice.ExpiresAt == null || notice.ExpiresAt > now));
 
-    /// <summary>Approved and published by an admin, with the person's consent on record.</summary>
+    /// <summary>Published by an admin, with the person's consent on record, in a category that is switched on.</summary>
     public static IQueryable<Person> Visible(this IQueryable<Person> people) =>
-        people.Where(person => person.Status == ModerationStatus.Published && person.HasConsent);
+        people.Where(person => person.Status == ModerationStatus.Published && person.HasConsent && person.Category.IsActive);
 
     public static IQueryable<GalleryAlbum> Visible(this IQueryable<GalleryAlbum> albums) =>
         albums.Where(album => album.IsPublished);

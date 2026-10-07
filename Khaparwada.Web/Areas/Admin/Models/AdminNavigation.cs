@@ -22,7 +22,7 @@ public static class AdminNavigation
             new Item("History timeline", "clock-rotate-left", "Timeline"),
             new Item("Then & now", "arrows-left-right", "ThenNow"),
             new Item("Places", "location-dot", "Places"),
-            new Item("People", "people-group", null, ComingIn: "Phase 6"),
+            new Item("People", "people-group", "People"),
             new Item("Events", "calendar-days", null, ComingIn: "Phase 7"),
             new Item("Gallery", "images", null, ComingIn: "Phase 8"),
             new Item("Notices", "bullhorn", null, ComingIn: "Phase 9"),

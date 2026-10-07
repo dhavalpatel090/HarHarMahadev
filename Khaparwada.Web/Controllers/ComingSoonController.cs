@@ -11,13 +11,6 @@ namespace Khaparwada.Web.Controllers;
 /// </summary>
 public class ComingSoonController : Controller
 {
-    [HttpGet("people", Name = RouteNames.People)]
-    public IActionResult People() =>
-        Placeholder(RouteNames.People, "People", "Teachers, doctors, farmers, sports persons and others who serve the village.", "people-group");
-
-    [HttpGet("people/{slug}", Name = RouteNames.PersonDetails)]
-    public IActionResult PersonDetails(string slug) => People();
-
     [HttpGet("events", Name = RouteNames.Events)]
     public IActionResult Events() =>
         Placeholder(RouteNames.Events, "Events", "Festivals, meetings and village programmes, upcoming and past.", "calendar-days");

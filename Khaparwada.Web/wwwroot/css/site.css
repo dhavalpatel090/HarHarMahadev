@@ -1590,6 +1590,68 @@ a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon)
 .kc-map.kc-map--small { height: 260px; border-radius: var(--kc-radius); box-shadow: none; }
 .kc-place-more { margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--kc-line); }
 
+/* A person's page: the profile card (photo or initials, name, role) and the text. Phones: card on top.
+   From 768px: card on the left, text beside it. */
+.kc-profile {
+    display: grid;
+    gap: 2rem;
+}
+@media (min-width: 768px) {
+    .kc-profile {
+        grid-template-columns: 17rem minmax(0, 1fr);
+        align-items: start;
+        column-gap: 3rem;
+    }
+}
+.kc-profile-card {
+    display: grid;
+    justify-items: center;
+    gap: .35rem;
+    padding: 1.75rem 1.25rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-sm);
+    text-align: center;
+}
+.kc-profile-photo {
+    display: grid;
+    place-items: center;
+    width: 10rem;
+    height: 10rem;
+    margin-bottom: .75rem;
+    overflow: hidden;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--kc-maroon), #B4532A);
+    color: var(--kc-white);
+    font-family: var(--kc-font-heading);
+    font-size: 3rem;
+    font-weight: 700;
+    box-shadow: 0 0 0 4px var(--kc-white), 0 0 0 7px var(--kc-marigold);
+}
+.kc-profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+.kc-profile-name { margin: 0; color: var(--kc-ink); font-family: var(--kc-font-heading); font-size: 1.35rem; font-weight: 700; }
+.kc-profile-role { margin: 0 0 .5rem; color: var(--kc-muted); }
+.kc-profile-card > .kc-chip { text-decoration: none; }
+.kc-profile-body { min-width: 0; }
+.kc-profile-body > section p { font-size: 1.08rem; }
+.kc-profile-block { margin-top: 2.25rem; }
+.kc-profile-block .kc-subheading .icon { color: var(--kc-marigold-600); }
+
+/* "Shown with consent" note under the people list and on each profile. */
+.kc-people-note {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    margin: 2.5rem 0 0;
+    padding: .85rem 1rem;
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-sand);
+    color: var(--kc-muted);
+    font-size: .92rem;
+}
+.kc-people-note .icon { flex-shrink: 0; margin-top: .2em; color: var(--kc-marigold-600); }
+
 /* The /map page: category buttons above a tall map, and the same places as a list below. */
 .kc-map-filters {
     display: flex;

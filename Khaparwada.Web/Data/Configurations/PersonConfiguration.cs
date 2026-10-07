@@ -21,6 +21,8 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
         builder.Property(p => p.Contribution).HasMaxLength(FieldLengths.Intro);
         builder.Property(p => p.ContributionGu).HasMaxLength(FieldLengths.Intro);
         builder.Property(p => p.PhotoPath).HasMaxLength(FieldLengths.FilePath);
+        builder.Property(p => p.ConsentNote).HasMaxLength(FieldLengths.ConsentNote);
+        builder.Property(p => p.ReviewNote).HasMaxLength(FieldLengths.ReviewNote);
 
         builder.HasOne(p => p.Category)
             .WithMany(c => c.People)

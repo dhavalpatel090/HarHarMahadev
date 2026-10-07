@@ -27,6 +27,7 @@ public static class FieldLengths
     public const int HexColor = 7;          // "#RRGGBB"
     public const int ContactMessage = 4000;
     public const int ReviewNote = 1000;
+    public const int ConsentNote = 300;     // how a person's consent was given (admin-only)
 
     /// <summary>Form limit for long text stored as nvarchar(max) (About sections, timeline stories).</summary>
     public const int LongText = 20000;

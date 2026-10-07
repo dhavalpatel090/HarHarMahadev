@@ -17,6 +17,7 @@ using Khaparwada.Web.Services.History;
 using Khaparwada.Web.Services.Home;
 using Khaparwada.Web.Services.Media;
 using Khaparwada.Web.Services.Notices;
+using Khaparwada.Web.Services.People;
 using Khaparwada.Web.Services.Places;
 using Khaparwada.Web.Services.Site;
 using Microsoft.AspNetCore.Identity;
@@ -217,6 +218,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAboutService, AboutService>();
         services.AddScoped<IHistoryService, HistoryService>();
         services.AddScoped<IPlaceService, PlaceService>();
+        services.AddScoped<IPeopleService, PeopleService>();
 
         // Uploads (stateless, so one instance serves every request).
         services.AddSingleton<IUploadStorage, LocalUploadStorage>();
@@ -233,6 +235,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITimelineAdminService, TimelineAdminService>();
         services.AddScoped<IThenNowAdminService, ThenNowAdminService>();
         services.AddScoped<IPlaceAdminService, PlaceAdminService>();
+        services.AddScoped<IPersonAdminService, PersonAdminService>();
 
         return services;
     }

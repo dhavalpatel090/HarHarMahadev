@@ -773,6 +773,13 @@ namespace Khaparwada.Web.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ConsentNote")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTimeOffset?>("ConsentRecordedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Contribution")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -817,6 +824,10 @@ namespace Khaparwada.Web.Migrations
                     b.Property<string>("ProfessionGu")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTimeOffset?>("ReviewedAt")
                         .HasColumnType("datetimeoffset");

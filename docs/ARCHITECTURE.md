@@ -92,6 +92,13 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | `/map` lists the same places under the map | A map that screen-reader users and visitors without JavaScript cannot use |
 | A place's gallery has its own admin page (`/admin/places/{id}/photos`, up to 6 per upload); photo widths and heights are stored | A huge single form; layout jumps while gallery photos load |
 | Coordinates rounded half away from zero (`MidpointRounding.AwayFromZero`) | .NET's default banker's rounding (72.9912345 → 72.991234) disagreeing with SQL Server and with people |
+| A profile is public only when Published **and** consented **and** its category is switched on (`PublicVisibility`); Approved/Published without consent is also refused by the database | One forgotten condition putting a private villager on the website |
+| Consent is a tick **plus** a note of who agreed and how, with the time it was ticked (both admin-only); unticking clears the time | "Did I ever agree?" with no way to answer; a tick nobody can account for |
+| Two-person rule (`PersonAdminService`): only Admins approve, show, hide or send back; an Editor's new profile, or a change to what visitors see or to the consent, goes to "Waiting for review" and leaves the website until an Admin approves it. The role comes from the sign-in, never from the form | Personal details published on one person's word; an Editor posting `Status=Published` |
+| "Sent back" needs a note; approving, showing and sending back record who decided and when | Editors not knowing what to fix; no answer to "who approved this?" |
+| People pages are `noindex` | Consent covers this village website, not a person's name in search engines |
+| Removal request = delete the profile (soft): it leaves the website at once; the profile page links to Contact for "change or removal" | A removal waiting for a review cycle |
+| Detail pages highlight their section in the menu through `SiteNavigation.SectionFor` (`aria-current="true"`; `"page"` only on the section's own page) | Each detail page setting the highlight by hand, and forgetting to |
 | All UI text through `IStringLocalizer` (`@L["…"]`) from Phase 2 | Rewriting every view in Phase 12 |
 | Unicode-wide HTML encoder (`WebEncoderOptions`) | The default encoder sent every Gujarati letter as `&#xAAE;`, making Gujarati pages 2–3× larger |
 | Icon sprite instead of the Font Awesome icon font | ~320 KB of fonts and CSS for 2,600 icons when the site uses ~70 (sprite: ~15 KB compressed) |
@@ -254,7 +261,7 @@ No foreign keys: VillageInfo · SiteSettings · AboutSections · HistoryEntries 
 | Place | Places + map markers | CategoryId, Name⁺, Slug, Summary⁺, Description⁺, Address⁺, Latitude, Longitude, MainImagePath, Phone, Email, Website, Timings⁺, IsFeatured | Published · soft delete |
 | PlaceImage | A place's photos | PlaceId, ImagePath, Width, Height, Caption⁺, SortOrder | via Place |
 | PersonCategory | Teachers, Doctors, … | Name⁺, Slug, IconClass, SortOrder | IsActive |
-| Person | Community profile (no phone / address / birth date by design) | CategoryId, FullName⁺, Slug, Profession⁺, ShortBio⁺, Achievement⁺, Contribution⁺, PhotoPath, HasConsent, IsFeatured, ReviewedBy, ReviewedAt | Status · soft delete |
+| Person | Community profile (no phone / address / birth date by design) | CategoryId, FullName⁺, Slug, Profession⁺, ShortBio⁺, Achievement⁺, Contribution⁺, PhotoPath, HasConsent, ConsentNote + ConsentRecordedAt (admin-only), IsFeatured, ReviewNote (admin-only), ReviewedBy, ReviewedAt | Status · soft delete |
 | Event | Village events | Title⁺, Slug, Summary⁺, Description⁺, StartsAt, EndsAt, IsAllDay, PlaceId, LocationText⁺, ImagePath, IsFeatured | Published · soft delete |
 | GalleryCategory | Old Khaparwada, Navratri, … | Name⁺, Slug, SortOrder | IsActive |
 | GalleryAlbum | A set of photos | CategoryId, EventId, Title⁺, Slug, Description⁺, TakenOn | Published · soft delete |
@@ -330,7 +337,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 3 | Admin foundation: login, roles, dashboard, image upload pipeline, Village Info / Settings / Categories / Useful Links | **Done** |
 | 4 | About + History + Then vs Now (public + admin) | **Done** |
 | 5 | Places + Map | **Done** |
-| 6 | People (approval + consent) | |
+| 6 | People (approval + consent) | **Done** |
 | 7 | Events | |
 | 8 | Gallery (approval, masonry, lightbox) | |
 | 9 | Notices + Contact (inbox) | |
@@ -386,6 +393,13 @@ Each feature phase ships its public pages and its admin screens together, and re
 - **Show a map:** build a `MapViewModel` and render `<partial name="_MapCanvas" model="new MapCanvasViewModel(…)" />`
   (model built in a code block), then load `/js/map.js` in the Scripts section. Category buttons:
   `data-map-for="<map id>"` with `data-map-filter="<category slug>"` buttons (see `Views/Map/Index.cshtml`).
+- **Review a profile:** Admin → People → "Waiting for review" tab (the dashboard links there) → Review → check the
+  text and the consent note → choose a decision → Save. "Sent back" needs a note; the Editor sees it on the form.
+- **Someone asks for their profile to be removed:** Admin → People → delete. It leaves the website at once; the row
+  stays in the database (soft delete) until Phase 11 adds permanent deletion.
+- **Test the Editor rules before Phase 11 (no "add user" screen yet):** copy the admin row in `AspNetUsers` with a new
+  Id, email and SecurityStamp, and add an `AspNetUserRoles` row for the `Editor` role (the Phase 6 test suite does this
+  on its throwaway database). Never do this on the live database.
 - **Test with curl from Git Bash:** `export MSYS_NO_PATHCONV=1` first, and send Gujarati values from UTF-8 files
   (`--data-urlencode "NameGu@name.txt"`). See §11.
 
@@ -418,6 +432,8 @@ Each feature phase ships its public pages and its admin screens together, and re
 | On phones "Get directions" came after the whole description and gallery | Bootstrap columns can only stack in source order | The place page uses CSS grid areas: photo → card → text on phones |
 | About 200 px of empty space under every inner page's header | `.kc-section` padding is meant for stacked Home sections; inner pages added it to the header's own padding | `.kc-page-header + .kc-section` uses a smaller top padding |
 | Test scripts copied with PowerShell lost their Gujarati text | Windows PowerShell 5.1 reads BOM-less UTF-8 files as ANSI (and writes a BOM before `#!`) | Copy or edit such files with `sed`, or pass `-Encoding UTF8` |
+| A place's or a person's page did not highlight "Places" / "People" in the menu | The header compared the menu item's route name with the page's, and detail pages have their own (`place-details`); the coming-soon pages had hidden it by setting the section by hand | `SiteNavigation.SectionFor` maps detail routes to their section; a new detail route gets a line there |
+| `?status=7` would have crashed the admin People list | Enum model binding also accepts numbers, including ones that are not enum values | Check `Enum.IsDefined` on bound enums before using them as keys |
 | An oversized upload shows "connection reset" instead of the 413 page | The server refuses the body as soon as it passes the limit and closes the connection while the browser is still sending | Expected HTTP/1.1 behaviour. The page checks file sizes before sending (`data-max-bytes`), so people never get there |
 
 ## 12. Open items
@@ -432,6 +448,10 @@ Each feature phase ships its public pages and its admin screens together, and re
 - No "bin" screen yet: soft-deleted content is recoverable only in SQL (`IsDeleted = 0`). Planned with the admin
   completion in Phase 11, together with permanently deleting old items and their photo files.
 - Native-speaker review of the Gujarati seed names (categories, tagline).
+- Profiles published before Phase 6 have consent ticked but no consent note; the form asks for one at their next save.
+- Consent is recorded as a note only. If the village prefers signed forms, keep them offline (e.g. at the panchayat
+  office) and say so in the note; uploading scans would put signatures on the server and is deliberately not offered.
+- Editor accounts can only be created in Phase 11 (Users screen); until then every admin account is an Admin.
 - Privacy policy and Terms are drafts (`Views/Home/Privacy.cshtml`, `Terms.cshtml`) with `[bracketed]` decisions
   to make; consider making them admin-editable pages later. Its statement that photo location data is removed
   is now true: verified in Phase 3 (no EXIF, GPS or camera details in any saved file).

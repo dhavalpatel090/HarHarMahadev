@@ -1,0 +1,97 @@
+@model PersonDetailsViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    ViewData["Title"] = Model.FullName;
+    ViewData["Description"] = TextHelpers.Excerpt(Model.ShortBio, 160);
+    ViewData["NoIndex"] = true; // see People/Index: consent covers this website, not search engines
+    var people = L["People"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = Model.FullName,
+        Lead = Model.Profession,
+        Icon = Model.Category.Icon,
+        Breadcrumbs = [new BreadcrumbItem(people, RouteNames.People), new BreadcrumbItem(Model.FullName)]
+    };
+}
+@functions {
+    private static bool IsPlaceholder(string? text) => text?.TrimStart().StartsWith('[') == true;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-person-page">
+    <div class="container">
+        <div class="kc-profile">
+            <aside class="kc-profile-card">
+                <span class="kc-profile-photo" aria-hidden="@(Model.PhotoUrl is null ? "true" : null)">
+                    @if (Model.PhotoUrl is not null)
+                    {
+                        <img src="@Model.PhotoUrl" alt="@Model.FullName" width="240" height="240" />
+                    }
+                    else
+                    {
+                        @Model.Initials
+                    }
+                </span>
+                <p class="kc-profile-name">@Model.FullName</p>
+                <p class="kc-profile-role">@Model.Profession</p>
+                <a class="kc-chip" asp-route="@RouteNames.People" asp-route-category="@Model.Category.Slug">
+                    <icon name="@Model.Category.Icon" /> @Model.Category.Name
+                </a>
+            </aside>
+
+            <div class="kc-profile-body">
+                <section aria-labelledby="bio-title">
+                    <h2 class="kc-subheading" id="bio-title">@L["About"]</h2>
+                    <div class="@(IsPlaceholder(Model.ShortBio) ? "kc-placeholder-text" : null)">
+                        @foreach (var paragraph in TextHelpers.Paragraphs(Model.ShortBio))
+                        {
+                            <p>@paragraph</p>
+                        }
+                    </div>
+                </section>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Achievement))
+                {
+                    <section class="kc-profile-block" aria-labelledby="achievement-title">
+                        <h2 class="kc-subheading" id="achievement-title"><icon name="medal" /> @L["Achievement"]</h2>
+                        <p class="@(IsPlaceholder(Model.Achievement) ? "kc-placeholder-text" : null)">@Model.Achievement</p>
+                    </section>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Contribution))
+                {
+                    <section class="kc-profile-block" aria-labelledby="contribution-title">
+                        <h2 class="kc-subheading" id="contribution-title"><icon name="hand-holding-heart" /> @L["Contribution to the village"]</h2>
+                        <p class="@(IsPlaceholder(Model.Contribution) ? "kc-placeholder-text" : null)">@Model.Contribution</p>
+                    </section>
+                }
+
+                <p class="kc-people-note">
+                    <icon name="circle-info" />
+                    <span>
+                        @L["This profile is shown with the consent of the person or their family."]
+                        <a asp-route="@RouteNames.Contact">@L["Ask for a change or for removal"]</a>
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        @if (Model.MorePeople.Count > 0)
+        {
+            <section class="kc-place-more" aria-labelledby="more-title">
+                <div class="kc-subheading-row">
+                    <h2 class="kc-subheading" id="more-title">@L["More: {0}", Model.Category.Name]</h2>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.People" asp-route-category="@Model.Category.Slug">@L["See all"] <icon name="arrow-right" /></a>
+                </div>
+                <div class="row g-3">
+                    @foreach (var person in Model.MorePeople)
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            <partial name="Cards/_PersonCard" model="person" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</section>

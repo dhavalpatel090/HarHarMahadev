@@ -32,7 +32,14 @@
                 {
                     <li>
                         <icon name="@item.Icon" />
-                        <span class="kc-pending-label">@item.Label</span>
+                        @if (item.Controller is not null)
+                        {
+                            <a class="kc-pending-label" asp-controller="@item.Controller" asp-action="Index" asp-route-status="@item.Status">@item.Label</a>
+                        }
+                        else
+                        {
+                            <span class="kc-pending-label">@item.Label</span>
+                        }
                         @if (item.Controller is null)
                         {
                             <span class="kc-admin-soon">screen in a later phase</span>

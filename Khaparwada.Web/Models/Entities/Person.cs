@@ -28,12 +28,21 @@ public class Person : BaseEntity, ISoftDeletable
 
     /// <summary>The person (or their family) has agreed to this profile being public.</summary>
     public bool HasConsent { get; set; }
+
+    /// <summary>Admin-only: how consent was given, e.g. "Signed form, kept at the panchayat office". Never shown publicly.</summary>
+    public string? ConsentNote { get; set; }
+
+    /// <summary>When consent was recorded, so a later question ("did I agree?") can be answered.</summary>
+    public DateTimeOffset? ConsentRecordedAt { get; set; }
     public bool IsFeatured { get; set; }
 
     public ModerationStatus Status { get; set; } = ModerationStatus.Pending;
     public string? ReviewedByUserId { get; set; }
     public ApplicationUser? ReviewedBy { get; set; }
     public DateTimeOffset? ReviewedAt { get; set; }
+
+    /// <summary>Admin-only: the reviewer's note, e.g. why a profile was sent back. Never shown publicly.</summary>
+    public string? ReviewNote { get; set; }
 
     public bool IsDeleted { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }

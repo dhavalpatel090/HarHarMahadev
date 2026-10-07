@@ -6,6 +6,7 @@ using Khaparwada.Web.Infrastructure.Text;
 using Khaparwada.Web.Models.Enums;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.Services.History;
+using Khaparwada.Web.Services.People;
 using Khaparwada.Web.Services.Places;
 using Khaparwada.Web.Services.Site;
 using Khaparwada.Web.ViewModels.Events;
@@ -221,25 +222,14 @@ public sealed class HomeService(
             .ToListAsync(cancellationToken);
     }
 
-    private Task<List<PersonCardViewModel>> GetFeaturedPeopleAsync(CancellationToken cancellationToken)
-    {
-        var gu = AppLanguage.IsGujarati;
-        return db.People.AsNoTracking()
+    private Task<List<PersonCardViewModel>> GetFeaturedPeopleAsync(CancellationToken cancellationToken) =>
+        db.People.AsNoTracking()
             .Visible()
             .Where(person => person.IsFeatured)
             .OrderBy(person => person.FullName)
             .Take(4)
-            .Select(person => new PersonCardViewModel
-            {
-                Slug = person.Slug,
-                FullName = gu ? person.FullNameGu ?? person.FullName : person.FullName,
-                Profession = gu ? person.ProfessionGu ?? person.Profession : person.Profession,
-                CategoryName = gu ? person.Category.NameGu ?? person.Category.Name : person.Category.Name,
-                CategoryIcon = person.Category.IconClass,
-                PhotoPath = person.PhotoPath
-            })
+            .SelectCards(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
-    }
 
     private async Task<List<MemoryCardViewModel>> GetMemoriesAsync(CancellationToken cancellationToken)
     {

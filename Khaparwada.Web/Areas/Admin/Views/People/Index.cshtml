@@ -1,0 +1,132 @@
+@model PersonAdminListViewModel
+@using Khaparwada.Web.Models.Enums
+@{
+    ViewData["Title"] = "People";
+    ViewData["Lead"] = "Profiles of teachers, doctors, farmers and others. A profile appears on the website only with the person's consent and an Admin's approval.";
+    var tabs = new (PersonListFilter Filter, string Label)[]
+    {
+        (PersonListFilter.All, "All"),
+        (PersonListFilter.Review, "Waiting for review"),
+        (PersonListFilter.Published, "Shown"),
+        (PersonListFilter.Hidden, "Approved, hidden"),
+        (PersonListFilter.Rejected, "Sent back")
+    };
+    string? StatusValue(PersonListFilter filter) => filter == PersonListFilter.All ? null : filter.ToString().ToLowerInvariant();
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/people" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add profile</a>
+}
+
+<nav class="kc-tabs" aria-label="Profiles by review status">
+    @foreach (var tab in tabs)
+    {
+        var current = tab.Filter == Model.Filter;
+        var count = Model.Counts[tab.Filter];
+        <a class="kc-tab @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+           asp-route="admin-people" asp-route-status="@StatusValue(tab.Filter)" asp-route-category="@Model.CategoryId" asp-route-q="@Model.Search">
+            @tab.Label <span class="kc-tab-count @(tab.Filter == PersonListFilter.Review && count > 0 ? "is-hot" : null)">@count</span>
+        </a>
+    }
+</nav>
+
+<form class="kc-admin-filters" method="get" asp-route="admin-people" role="search">
+    @if (Model.Filter != PersonListFilter.All)
+    {
+        <input type="hidden" name="status" value="@StatusValue(Model.Filter)" />
+    }
+    <div>
+        <label class="kc-field-label" for="filter-category">Category</label>
+        <select class="form-select" id="filter-category" name="category">
+            <option value="">All categories</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id" selected="@(category.Id == Model.CategoryId)">@(category.Name + (category.IsActive ? "" : " (hidden)"))</option>
+            }
+        </select>
+    </div>
+    <div class="kc-admin-filters-grow">
+        <label class="kc-field-label" for="filter-q">Name</label>
+        <input class="form-control" type="search" id="filter-q" name="q" value="@Model.Search" maxlength="100" />
+    </div>
+    <button class="btn btn-kc-outline" type="submit"><icon name="magnifying-glass" /> Filter</button>
+</form>
+
+<section class="kc-panel" aria-label="Profiles">
+    @if (Model.Items.Count == 0)
+    {
+        <p class="kc-panel-empty">
+            @(Model.Filter == PersonListFilter.Review && Model.CategoryId is null && Model.Search is null
+                ? "Nothing is waiting for review."
+                : "No profiles found. Change the filter, or add a profile with the button above.")
+        </p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table kc-people-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Person</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Consent</th>
+                        <th scope="col">Review</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="kc-name-cell">
+                                    @if (item.PhotoPath is not null)
+                                    {
+                                        <partial name="_Thumb" model="item.PhotoPath" />
+                                    }
+                                    else
+                                    {
+                                        <span class="kc-thumb kc-thumb--initials" aria-hidden="true">@item.Initials</span>
+                                    }
+                                    <span>
+                                        <strong>@item.FullName</strong>
+                                        <span class="kc-name-gu">
+                                            @item.Profession@(item.IsFeatured ? " · Featured on Home" : null)
+                                        </span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="kc-nowrap">@item.CategoryName</td>
+                            <td>
+                                @if (item.HasConsent)
+                                {
+                                    <span class="kc-status is-on">Given</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status is-off">Not recorded</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsPlaceholder)
+                                {
+                                    <span class="kc-status is-todo">Sample</span>
+                                }
+                                <span class="kc-status @ReviewStates.CssClass(item.Status)">@ReviewStates.Label(item.Status)</span>
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@item.Id">
+                                    <icon name="pen-to-square" /> @(item.Status is ModerationStatus.Pending or ModerationStatus.UnderReview && User.IsInRole(AppRoles.Admin) ? "Review" : "Edit")<span class="visually-hidden"> @item.FullName</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@item.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @item.FullName</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<partial name="_Pagination" model="Model.Pagination" />

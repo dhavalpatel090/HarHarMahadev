@@ -13,8 +13,11 @@ public sealed class DashboardViewModel
 
 public sealed record DashboardStat(string Label, int Value, string Icon, string? Detail = null);
 
-/// <summary>Something waiting for a person to act on. Controller is null until that admin screen exists.</summary>
-public sealed record PendingItem(string Label, int Count, string Icon, string? Controller = null);
+/// <summary>
+/// Something waiting for a person to act on. Controller is null until that admin screen exists; Status is the
+/// list tab it opens (e.g. "review").
+/// </summary>
+public sealed record PendingItem(string Label, int Count, string Icon, string? Controller = null, string? Status = null);
 
 /// <summary>
 /// One step of "finish setting up": replacing a placeholder with real village information. AdminOnly steps
