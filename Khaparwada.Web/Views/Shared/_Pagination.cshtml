@@ -1,0 +1,56 @@
+@model PaginationViewModel
+@* Previous / numbered pages / next. Long lists show the first, last and nearby pages with "…" between. *@
+@if (Model.TotalPages > 1)
+{
+    var pages = new SortedSet<int> { 1, Model.TotalPages, Model.Page - 1, Model.Page, Model.Page + 1 }
+        .Where(page => page >= 1 && page <= Model.TotalPages)
+        .ToList();
+
+    <nav class="kc-pagination" aria-label="@L["Pages"]">
+        <ul>
+            <li>
+                @if (Model.HasPrevious)
+                {
+                    <a class="kc-page-step" asp-route="@Model.RouteName" asp-all-route-data="Model.ValuesFor(Model.Page - 1)" rel="prev" aria-label="@L["Previous page"]">
+                        <icon name="arrow-left" /> <span>@L["Previous"]</span>
+                    </a>
+                }
+                else
+                {
+                    <span class="kc-page-step is-disabled" aria-hidden="true"><icon name="arrow-left" /> <span>@L["Previous"]</span></span>
+                }
+            </li>
+            @for (var i = 0; i < pages.Count; i++)
+            {
+                if (i > 0 && pages[i] - pages[i - 1] > 1)
+                {
+                    <li class="kc-page-gap" aria-hidden="true">…</li>
+                }
+                <li>
+                    @if (pages[i] == Model.Page)
+                    {
+                        <span class="kc-page is-current" aria-current="page"><span class="visually-hidden">@L["Page"] </span>@pages[i]</span>
+                    }
+                    else
+                    {
+                        <a class="kc-page" asp-route="@Model.RouteName" asp-all-route-data="Model.ValuesFor(pages[i])">
+                            <span class="visually-hidden">@L["Page"] </span>@pages[i]
+                        </a>
+                    }
+                </li>
+            }
+            <li>
+                @if (Model.HasNext)
+                {
+                    <a class="kc-page-step" asp-route="@Model.RouteName" asp-all-route-data="Model.ValuesFor(Model.Page + 1)" rel="next" aria-label="@L["Next page"]">
+                        <span>@L["Next"]</span> <icon name="arrow-right" />
+                    </a>
+                }
+                else
+                {
+                    <span class="kc-page-step is-disabled" aria-hidden="true"><span>@L["Next"]</span> <icon name="arrow-right" /></span>
+                }
+            </li>
+        </ul>
+    </nav>
+}

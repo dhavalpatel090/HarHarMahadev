@@ -1,0 +1,174 @@
+@model PlaceInputModel
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using Microsoft.Extensions.Options
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.MapOptions> MapOptions
+@inject IFileVersionProvider FileVersions
+@{
+    ViewData["Title"] = Model.IsNew ? "Add a place" : $"Edit “{Model.Name}”";
+    ViewData["Lead"] = "Places";
+    var map = MapOptions.Value;
+    var invariant = CultureInfo.InvariantCulture;
+    string Asset(string path) => FileVersions.AddFileVersionToPath(PathString.Empty, path);
+    // Start the map on the village centre once it is known; otherwise on Gandevi taluka, where the village is.
+    var startLat = (ViewData["StartLatitude"] as decimal?)?.ToString(invariant) ?? "20.81";
+    var startLng = (ViewData["StartLongitude"] as decimal?)?.ToString(invariant) ?? "72.99";
+    var startZoom = ViewData["StartLatitude"] is decimal ? Math.Min(18, (ViewData["StartZoom"] as int? ?? 15) + 1) : 11;
+    var photoField = new ImageFieldViewModel(nameof(Model.Image), nameof(Model.RemoveImage),
+        Model.CurrentImageUrl is null ? "Choose a main photo" : "Choose a new main photo", Model.CurrentImageUrl);
+}
+@section Actions {
+    @if (!Model.IsNew)
+    {
+        <a class="btn btn-kc-outline" asp-action="Photos" asp-route-id="@Model.Id"><icon name="images" /> Photos (@Model.PhotoCount)</a>
+    }
+}
+
+<form method="post" enctype="multipart/form-data" class="kc-admin-form"
+      asp-action="@(Model.IsNew ? "Create" : "Edit")" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+    <p class="kc-form-intro">Gujarati text is optional. Write only what you know to be true.</p>
+
+    <section class="kc-panel" aria-labelledby="about-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="about-title">About the place</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-field kc-field--medium">
+                <label asp-for="CategoryId" class="kc-field-label"></label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">Choose…</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@(category.Name + (category.IsActive ? "" : " (hidden category)"))</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="Name" for-gu="NameGu" />
+            <div class="kc-field">
+                <label asp-for="Slug" class="kc-field-label"></label>
+                <p class="kc-field-hint" id="slug-hint">
+                    The place's address on the website: <code class="kc-code">/places/<strong>village-lake</strong></code>.
+                    Filled in from the English name. Changing it later breaks links people have shared.
+                </p>
+                <input asp-for="Slug" class="form-control" data-slug-from="@Html.IdFor(m => m.Name)"
+                       aria-describedby="slug-hint" autocomplete="off" spellcheck="false" />
+                <span asp-validation-for="Slug" class="kc-field-error"></span>
+            </div>
+            <bilingual-field for="Summary" for-gu="SummaryGu" rows="3"
+                             hint="One or two sentences, shown on cards, in the map pop-up and in search results." />
+            <bilingual-field for="Description" for-gu="DescriptionGu" rows="8"
+                             hint="Optional: history, importance, what visitors find there. A blank line starts a new paragraph." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="photo-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="photo-title">Main photo</h2>
+            <p class="kc-panel-text">Shown at the top of the place's page, on its card and in the map pop-up. More photos go on the place's Photos page.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="kc-image-field-wrap">
+                <partial name="_ImageField" model="photoField" />
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="where-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="where-title">Where it is</h2>
+            <p class="kc-panel-text">Click the map where the place is, or drag the pin. Without a location the place is not on the map.</p>
+        </header>
+        <div class="kc-panel-body">
+            <bilingual-field for="Address" for-gu="AddressGu" rows="2" />
+            <div class="kc-map kc-map-picker" id="place-map-picker" role="region" aria-label="Map for choosing the place's location"
+                 data-kc-picker
+                 data-lat-input="@Html.IdFor(m => m.Latitude)"
+                 data-lng-input="@Html.IdFor(m => m.Longitude)"
+                 data-tiles="@map.TileUrl"
+                 data-attribution="@map.Attribution"
+                 data-max-zoom="@map.MaxZoom"
+                 data-icons="@Asset(IconTagHelper.SpritePath)"
+                 data-leaflet-css="@Asset("/lib/leaflet/leaflet.css")"
+                 data-leaflet-js="@Asset("/lib/leaflet/leaflet.js")"
+                 data-start-lat="@startLat" data-start-lng="@startLng" data-start-zoom="@startZoom" data-pin-zoom="17">
+                <p class="kc-map-loading">
+                    <icon name="map-location-dot" />
+                    <span class="kc-map-loading-text">Loading map…</span>
+                    <span class="kc-map-error-text">The map could not be loaded. You can still type the latitude and longitude below.</span>
+                </p>
+            </div>
+            <div class="row g-3 mt-1 align-items-end">
+                <div class="col-sm-5">
+                    <label asp-for="Latitude" class="kc-field-label"></label>
+                    <input asp-for="Latitude" class="form-control" inputmode="decimal" autocomplete="off" />
+                    <span asp-validation-for="Latitude" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-5">
+                    <label asp-for="Longitude" class="kc-field-label"></label>
+                    <input asp-for="Longitude" class="form-control" inputmode="decimal" autocomplete="off" />
+                    <span asp-validation-for="Longitude" class="kc-field-error"></span>
+                </div>
+                <div class="col-sm-2">
+                    <button type="button" class="btn btn-sm btn-kc-outline w-100" data-picker-clear="place-map-picker">Remove pin</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="contact-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="contact-title">Contact and timings</h2>
+            <p class="kc-panel-text">All optional. Shown to every visitor.</p>
+        </header>
+        <div class="kc-panel-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label asp-for="Phone" class="kc-field-label"></label>
+                    <input asp-for="Phone" type="tel" class="form-control" autocomplete="off" aria-describedby="phone-hint" />
+                    <span asp-validation-for="Phone" class="kc-field-error"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Email" class="kc-field-label"></label>
+                    <input asp-for="Email" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="Email" class="kc-field-error"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Website" class="kc-field-label"></label>
+                    <input asp-for="Website" type="url" class="form-control" placeholder="https://…" />
+                    <span asp-validation-for="Website" class="kc-field-error"></span>
+                </div>
+            </div>
+            <p class="kc-field-hint" id="phone-hint">
+                Only the place's own public number, such as an office or reception. Never a private person's mobile number.
+            </p>
+            <bilingual-field for="Timings" for-gu="TimingsGu" hint="e.g. “Darshan 6 AM – 12 PM, 4 PM – 9 PM” or “Office: Mon–Sat 10 AM – 5 PM”." />
+        </div>
+    </section>
+
+    <section class="kc-panel" aria-labelledby="show-title">
+        <header class="kc-panel-header">
+            <h2 class="kc-panel-title" id="show-title">Where it appears</h2>
+        </header>
+        <div class="kc-panel-body">
+            <div class="form-check form-switch kc-field">
+                <input asp-for="IsFeatured" class="form-check-input" role="switch" />
+                <label asp-for="IsFeatured" class="form-check-label"></label>
+            </div>
+            <div class="form-check form-switch">
+                <input asp-for="IsPublished" class="form-check-input" role="switch" />
+                <label asp-for="IsPublished" class="form-check-label"></label>
+            </div>
+        </div>
+    </section>
+
+    <div class="kc-form-actions">
+        <button type="submit" class="btn btn-kc-primary">@(Model.IsNew ? "Add place" : "Save place")</button>
+        <a class="btn btn-link" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="/js/map.js" asp-append-version="true" defer></script>
+}

@@ -1,51 +1,16 @@
 @model HomeViewModel
-@using Microsoft.AspNetCore.Mvc.ViewFeatures
-@using Microsoft.Extensions.Options
-@inject IOptions<Khaparwada.Web.Infrastructure.Options.MapOptions> MapOptions
-@inject IFileVersionProvider FileVersions
 @if (Model.Map is { } map)
 {
-    var options = MapOptions.Value;
-    var invariant = CultureInfo.InvariantCulture;
-    // Asset URLs without the "/gu" prefix (see IconTagHelper), versioned so browsers can cache them.
-    string Asset(string path) => FileVersions.AddFileVersionToPath(PathString.Empty, path);
-    var markers = map.Markers.Select(marker => new
-    {
-        marker.Name,
-        marker.Summary,
-        marker.Category,
-        marker.Icon,
-        marker.Color,
-        Lat = marker.Latitude,
-        Lng = marker.Longitude,
-        Url = Url.RouteUrl(RouteNames.PlaceDetails, new { slug = marker.Slug })
-    });
     var heading = new SectionHeadingViewModel(
         L["Find your way"], L["Village map"], "map-title",
         L["Temples, schools, offices and more. Tap a marker to learn about a place."],
         L["Open the full map"], RouteNames.Map);
+    var canvas = new MapCanvasViewModel("home-map", map, L["Interactive map of the village"]);
 
     <section class="kc-section kc-map-section" id="map" aria-labelledby="map-title">
         <div class="container">
             <partial name="_SectionHeading" model="heading" />
-            @* Leaflet (about 40 KB compressed) is fetched only when this map scrolls into view (js/home.js). *@
-            <div class="kc-map" id="home-map" role="region" aria-label="@L["Interactive map of the village"]"
-                 data-kc-map
-                 data-markers="home-map-data"
-                 data-tiles="@options.TileUrl"
-                 data-attribution="@options.Attribution"
-                 data-max-zoom="@options.MaxZoom"
-                 data-lat="@map.CenterLatitude?.ToString(invariant)"
-                 data-lng="@map.CenterLongitude?.ToString(invariant)"
-                 data-zoom="@map.Zoom"
-                 data-icons="@Asset(IconTagHelper.SpritePath)"
-                 data-leaflet-css="@Asset("/lib/leaflet/leaflet.css")"
-                 data-leaflet-js="@Asset("/lib/leaflet/leaflet.js")"
-                 data-details-label="@L["View details"]">
-                <p class="kc-map-loading"><icon name="map-location-dot" /> @L["Loading map…"]</p>
-            </div>
-            @* Data, not code: a JSON block is never executed, so it is compatible with a strict Content-Security-Policy. *@
-            <script type="application/json" id="home-map-data">@Json.Serialize(markers)</script>
+            <partial name="_MapCanvas" model="canvas" />
             <ul class="kc-map-legend">
                 @foreach (var category in Model.PlaceCategories.Where(category => category.PlaceCount > 0))
                 {

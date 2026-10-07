@@ -1,0 +1,103 @@
+@model PlaceAdminListViewModel
+@{
+    ViewData["Title"] = "Places";
+    ViewData["Lead"] = "Temples, schools, offices and other places. Places with a location appear on the village map.";
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/places" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-primary" asp-action="Create"><icon name="plus" /> Add place</a>
+}
+
+<form class="kc-admin-filters" method="get" asp-route="admin-places" role="search">
+    <div>
+        <label class="kc-field-label" for="filter-category">Category</label>
+        <select class="form-select" id="filter-category" name="category">
+            <option value="">All categories</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id" selected="@(category.Id == Model.CategoryId)">@(category.Name + (category.IsActive ? "" : " (hidden)"))</option>
+            }
+        </select>
+    </div>
+    <div class="kc-admin-filters-grow">
+        <label class="kc-field-label" for="filter-q">Name</label>
+        <input class="form-control" type="search" id="filter-q" name="q" value="@Model.Search" maxlength="100" />
+    </div>
+    <button class="btn btn-kc-outline" type="submit"><icon name="magnifying-glass" /> Filter</button>
+</form>
+
+<section class="kc-panel" aria-label="Places">
+    @if (Model.Items.Count == 0)
+    {
+        <p class="kc-panel-empty">No places found. Change the filter, or add a place with the button above.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table kc-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Place</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">On the map</th>
+                        <th scope="col">Photos</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                <div class="kc-name-cell">
+                                    <partial name="_Thumb" model="item.ImagePath" />
+                                    <span>
+                                        <strong>@item.Name</strong>
+                                        @if (item.IsFeatured)
+                                        {
+                                            <span class="kc-name-gu">Featured on Home</span>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(item.NameGu))
+                                        {
+                                            <span class="kc-name-gu" lang="gu">@item.NameGu</span>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="kc-nowrap"><icon name="@item.CategoryIcon" color="@item.CategoryColor" /> @item.CategoryName</td>
+                            <td>@(item.HasLocation ? "Yes" : "No")</td>
+                            <td><a asp-action="Photos" asp-route-id="@item.Id">@item.PhotoCount<span class="visually-hidden"> photos of @item.Name</span></a></td>
+                            <td>
+                                @if (item.IsPlaceholder)
+                                {
+                                    <span class="kc-status is-todo">Sample</span>
+                                }
+                                else if (item.IsPublished)
+                                {
+                                    <span class="kc-status is-on">Shown</span>
+                                }
+                                else
+                                {
+                                    <span class="kc-status">Hidden</span>
+                                }
+                            </td>
+                            <td class="kc-table-actions">
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Edit" asp-route-id="@item.Id">
+                                    <icon name="pen-to-square" /> Edit<span class="visually-hidden"> @item.Name</span>
+                                </a>
+                                <a class="btn btn-sm btn-kc-outline" asp-action="Photos" asp-route-id="@item.Id">
+                                    <icon name="images" /><span class="visually-hidden">Photos of @item.Name</span>
+                                </a>
+                                <a class="btn btn-sm kc-btn-delete" asp-action="Delete" asp-route-id="@item.Id">
+                                    <icon name="trash-can" /><span class="visually-hidden">Delete @item.Name</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+<partial name="_Pagination" model="Model.Pagination" />

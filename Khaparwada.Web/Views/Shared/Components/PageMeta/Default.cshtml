@@ -4,6 +4,10 @@
 {
     <meta name="description" content="@Model.Description" />
 }
+@if (Model.NoIndex)
+{
+    <meta name="robots" content="noindex, follow" />
+}
 <link rel="canonical" href="@Model.CanonicalUrl" />
 <link rel="alternate" hreflang="en-IN" href="@Model.EnglishUrl" />
 <link rel="alternate" hreflang="gu-IN" href="@Model.GujaratiUrl" />

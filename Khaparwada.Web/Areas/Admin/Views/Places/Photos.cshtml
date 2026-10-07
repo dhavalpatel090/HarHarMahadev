@@ -1,0 +1,85 @@
+@model PlacePhotosForm
+@using Microsoft.Extensions.Options
+@using Khaparwada.Web.Services.Admin
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.StorageOptions> StorageOptions
+@{
+    ViewData["Title"] = $"Photos of “{Model.PlaceName}”";
+    ViewData["Lead"] = "Shown as a gallery on the place's page, in the order below.";
+    var storage = StorageOptions.Value;
+    var max = PlaceAdminService.MaxPhotosPerUpload;
+}
+@section Actions {
+    <a class="btn btn-kc-outline" href="/places/@Model.PlaceSlug" target="_blank" rel="noopener"><icon name="eye" /> View page<span class="visually-hidden"> (opens in a new tab)</span></a>
+    <a class="btn btn-kc-outline" asp-action="Edit" asp-route-id="@Model.PlaceId"><icon name="pen-to-square" /> Edit place</a>
+}
+
+<section class="kc-panel kc-admin-form" aria-labelledby="add-title">
+    <header class="kc-panel-header">
+        <h2 class="kc-panel-title" id="add-title">Add photos</h2>
+    </header>
+    <div class="kc-panel-body">
+        <form method="post" enctype="multipart/form-data" asp-action="AddPhotos" asp-route-id="@Model.PlaceId" class="kc-upload-row">
+            <div class="kc-field">
+                <label class="kc-field-label" for="NewPhotos">Choose up to @max photos</label>
+                <p class="kc-field-hint" id="new-photos-hint">
+                    JPG, PNG or WebP, up to @storage.MaxImageMegabytes MB each. They are resized automatically and hidden
+                    details such as the GPS location are removed. Add captions below once they are uploaded.
+                </p>
+                <input class="form-control" type="file" id="NewPhotos" name="NewPhotos" multiple accept="image/jpeg,image/png,image/webp"
+                       aria-describedby="new-photos-hint" data-max-bytes="@(storage.MaxImageMegabytes * 1024L * 1024L)" data-max-files="@max" />
+                <span class="kc-field-error field-validation-valid" data-valmsg-for="NewPhotos" data-valmsg-replace="true"></span>
+            </div>
+            <button type="submit" class="btn btn-kc-primary"><icon name="upload" /> Upload</button>
+        </form>
+    </div>
+</section>
+
+@if (Model.Photos.Count == 0)
+{
+    <section class="kc-panel">
+        <p class="kc-panel-empty">No photos yet. The place's page shows only its main photo.</p>
+    </section>
+}
+else
+{
+    <form method="post" asp-action="Photos" asp-route-id="@Model.PlaceId" class="kc-admin-form">
+        <div asp-validation-summary="ModelOnly" class="kc-admin-alert kc-admin-alert--error" role="alert"></div>
+        <section class="kc-panel" aria-labelledby="list-title">
+            <header class="kc-panel-header">
+                <h2 class="kc-panel-title" id="list-title">@Model.Photos.Count photos</h2>
+                <p class="kc-panel-text">Smaller order numbers come first. Tick “Remove” to delete a photo for good.</p>
+            </header>
+            <ul class="kc-photo-rows">
+                @for (var i = 0; i < Model.Photos.Count; i++)
+                {
+                    <li class="kc-photo-row">
+                        <input type="hidden" asp-for="Photos[i].Id" />
+                        <img src="@MediaUrls.Image(Model.Photos[i].ImagePath, ImageSize.Small)" alt="" loading="lazy" />
+                        <div class="kc-photo-row-fields">
+                            <bilingual-field for="Photos[i].Caption" for-gu="Photos[i].CaptionGu" />
+                            <div class="kc-photo-row-meta">
+                                <div class="kc-field kc-field--tiny">
+                                    <label asp-for="Photos[i].SortOrder" class="kc-field-label"></label>
+                                    <input asp-for="Photos[i].SortOrder" class="form-control" min="0" max="9999" />
+                                    <span asp-validation-for="Photos[i].SortOrder" class="kc-field-error"></span>
+                                </div>
+                                <div class="form-check">
+                                    <input asp-for="Photos[i].Remove" class="form-check-input" />
+                                    <label asp-for="Photos[i].Remove" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+        <div class="kc-form-actions">
+            <button type="submit" class="btn btn-kc-primary">Save photos</button>
+            <a class="btn btn-link" asp-action="Index">Back to places</a>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

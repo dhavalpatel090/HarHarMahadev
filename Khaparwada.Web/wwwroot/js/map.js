@@ -1,7 +1,9 @@
-// Village map on Leaflet, shared by the Home page, (Phase 5) the full map page and the admin location picker.
-// Markers and pop-ups are built with DOM methods and textContent, never innerHTML, so text typed in Admin
-// can never inject HTML or script. Colours are set through element.style, which a strict
-// Content-Security-Policy allows (inline style attributes it would block).
+// Village maps on Leaflet: Home, the /map page, each place's page, and (through loadLeaflet and markerIcon) the
+// admin location picker. Every element with data-kc-map starts by itself: "eager" at once, "lazy" when it
+// scrolls near the screen, so visitors who never reach a map never download Leaflet (about 40 KB compressed).
+// Markers and pop-ups are built with DOM methods and textContent, never innerHTML, so text typed in Admin can
+// never inject HTML or script. Colours are set through element.style, which a strict Content-Security-Policy
+// allows (inline style attributes it would block).
 window.KcMap = (() => {
     'use strict';
 
@@ -61,9 +63,21 @@ window.KcMap = (() => {
         });
     }
 
+    // Name, category, short description, photo and a "View details" link.
     function popup(spriteUrl, marker, detailsLabel) {
         const root = document.createElement('div');
         root.className = 'kc-map-popup';
+
+        if (marker.image) {
+            const image = document.createElement('img');
+            image.className = 'kc-map-popup-image';
+            image.src = marker.image;
+            image.alt = '';
+            image.width = 240;
+            image.height = 135;
+            image.loading = 'lazy';
+            root.append(image);
+        }
 
         const category = document.createElement('span');
         category.className = 'kc-map-popup-category';
@@ -86,6 +100,49 @@ window.KcMap = (() => {
         return root;
     }
 
+    // Category buttons for this map (data-map-for="<map id>"): each shows or hides its category's markers.
+    // The bar stays hidden without JavaScript, where it could not work.
+    function wireFilters(element, map, layers, points) {
+        const buttons = Array.from(document.querySelectorAll(`[data-map-for="${CSS.escape(element.id)}"] [data-map-filter]`));
+        if (buttons.length === 0) {
+            return;
+        }
+
+        const apply = (button) => {
+            const layer = layers[button.dataset.mapFilter];
+            if (!layer) {
+                return;
+            }
+            if (button.getAttribute('aria-pressed') === 'true') {
+                layer.addTo(map);
+            } else {
+                layer.remove();
+            }
+        };
+
+        buttons.forEach((button) => {
+            apply(button);
+            button.addEventListener('click', () => {
+                button.setAttribute('aria-pressed', button.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+                apply(button);
+            });
+        });
+
+        document.querySelectorAll(`[data-map-for="${CSS.escape(element.id)}"] [data-map-filter-all]`).forEach((all) => {
+            all.addEventListener('click', () => {
+                buttons.forEach((button) => {
+                    button.setAttribute('aria-pressed', 'true');
+                    apply(button);
+                });
+                if (points.length > 0) {
+                    map.fitBounds(points, { padding: [48, 48], maxZoom: 17 });
+                }
+            });
+        });
+
+        document.querySelectorAll(`[data-map-for="${CSS.escape(element.id)}"]`).forEach((bar) => { bar.hidden = false; });
+    }
+
     async function show(element) {
         const data = element.dataset;
         const loading = element.querySelector('.kc-map-loading');
@@ -103,23 +160,49 @@ window.KcMap = (() => {
         const map = window.L.map(element, { scrollWheelZoom: false });
         window.L.tileLayer(data.tiles, { maxZoom: Number(data.maxZoom), attribution: data.attribution }).addTo(map);
 
+        // One layer per category, so the map page can show or hide a category in one step.
+        const layers = {};
         const points = markers.map((marker) => {
             const position = [marker.lat, marker.lng];
-            window.L.marker(position, { title: marker.name, icon: markerIcon(data.icons, marker) })
-                .bindPopup(popup(data.icons, marker, data.detailsLabel))
-                .addTo(map);
+            const pinMarker = window.L.marker(position, { title: marker.name, icon: markerIcon(data.icons, marker) });
+            if (data.popups !== 'false') {
+                pinMarker.bindPopup(popup(data.icons, marker, data.detailsLabel));
+            }
+            layers[marker.cat] ??= window.L.layerGroup().addTo(map);
+            layers[marker.cat].addLayer(pinMarker);
             return position;
         });
 
-        if (data.lat && data.lng) {
+        // With one category chosen (/map?category=temples), frame that category's places.
+        const chosen = data.category ? markers.filter((marker) => marker.cat === data.category).map((m) => [m.lat, m.lng]) : [];
+        if (chosen.length > 0) {
+            map.fitBounds(chosen, { padding: [48, 48], maxZoom: 17 });
+        } else if (data.lat && data.lng) {
             map.setView([Number(data.lat), Number(data.lng)], Number(data.zoom) || 15);
         } else if (points.length > 0) {
             map.fitBounds(points, { padding: [48, 48], maxZoom: 17 });
         }
 
+        wireFilters(element, map, layers, points);
         loading?.remove();
         return map;
     }
+
+    function start(element) {
+        if (element.dataset.kcMap === 'eager' || !('IntersectionObserver' in window)) {
+            show(element);
+            return;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            if (entries.some((entry) => entry.isIntersecting)) {
+                observer.disconnect();
+                show(element);
+            }
+        }, { rootMargin: '400px 0px' });
+        observer.observe(element);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('[data-kc-map]').forEach(start));
 
     return { show, loadLeaflet, markerIcon };
 })();

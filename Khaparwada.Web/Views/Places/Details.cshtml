@@ -1,0 +1,191 @@
+@model PlaceDetailsViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@{
+    ViewData["Title"] = Model.Name;
+    ViewData["Description"] = Model.Summary;
+    var places = L["Places"].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = Model.Name,
+        Lead = Model.Summary,
+        Icon = Model.Category.Icon,
+        Breadcrumbs = [new BreadcrumbItem(places, RouteNames.Places), new BreadcrumbItem(Model.Name)]
+    };
+
+    // schema.org data for search engines. Json.Serialize escapes < and >, so text cannot close the script tag.
+    var structuredData = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "Place",
+        ["name"] = Model.Name,
+        ["description"] = Model.Summary,
+        ["address"] = Model.Address,
+        ["telephone"] = Model.Phone
+    };
+    if (Model.HasCoordinates)
+    {
+        structuredData["geo"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "GeoCoordinates",
+            ["latitude"] = Model.Latitude,
+            ["longitude"] = Model.Longitude
+        };
+    }
+    var hasInfo = Model.Address is not null || Model.Timings is not null || Model.Phone is not null
+                  || Model.Email is not null || Model.Website is not null;
+}
+@functions {
+    private static bool IsPlaceholder(string? text) => text?.TrimStart().StartsWith('[') == true;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-place-page">
+    <div class="container">
+        @* Grid areas, so a phone shows the photo, then the details card (directions!), then the text; a desktop
+           shows photo and text on the left with the card beside them. Bootstrap columns could only stack in
+           source order. *@
+        <div class="kc-place-layout @(Model.MainImagePath is not null ? "has-media" : null)">
+            @if (Model.MainImagePath is not null)
+            {
+                <figure class="kc-place-figure">
+                    <img src="@MediaUrls.Image(Model.MainImagePath, ImageSize.Large)" srcset="@MediaUrls.SrcSet(Model.MainImagePath)"
+                         sizes="(min-width: 1400px) 860px, (min-width: 992px) 66vw, 100vw" alt="@Model.Name" fetchpriority="high" />
+                </figure>
+            }
+
+            <div class="kc-place-main">
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div class="kc-place-text @(IsPlaceholder(Model.Description) ? "kc-placeholder-text" : null)">
+                        @foreach (var paragraph in TextHelpers.Paragraphs(Model.Description))
+                        {
+                            <p>@paragraph</p>
+                        }
+                    </div>
+                }
+
+                @if (Model.Photos.Count > 0)
+                {
+                    <section class="kc-place-block" aria-labelledby="photos-title">
+                        <h2 class="kc-subheading" id="photos-title">@L["Photos"]</h2>
+                        <ul class="kc-photo-grid">
+                            @foreach (var photo in Model.Photos)
+                            {
+                                <li>
+                                    <figure>
+                                        <a href="@MediaUrls.Image(photo.ImagePath, ImageSize.Large)">
+                                            <img src="@MediaUrls.Image(photo.ImagePath, ImageSize.Medium)" width="@photo.Width" height="@photo.Height"
+                                                 alt="@(photo.Caption ?? Model.Name)" loading="lazy" decoding="async" />
+                                        </a>
+                                        @if (!string.IsNullOrWhiteSpace(photo.Caption))
+                                        {
+                                            <figcaption>@photo.Caption</figcaption>
+                                        }
+                                    </figure>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+
+                @if (Model.UpcomingEvents.Count > 0)
+                {
+                    <section class="kc-place-block" aria-labelledby="events-title">
+                        <h2 class="kc-subheading" id="events-title">@L["Coming up here"]</h2>
+                        <div class="row g-4">
+                            @foreach (var item in Model.UpcomingEvents)
+                            {
+                                <div class="col-md-6">
+                                    <partial name="Cards/_EventCard" model="item" />
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <aside class="kc-place-aside">
+                <div class="kc-info-card">
+                    <a class="kc-chip" asp-route="@RouteNames.Places" asp-route-category="@Model.Category.Slug">
+                        <icon name="@Model.Category.Icon" color="@Model.Category.Color" /> @Model.Category.Name
+                    </a>
+                    @if (hasInfo)
+                    {
+                        <dl class="kc-info-list">
+                            @if (Model.Address is not null)
+                            {
+                                <div><dt><icon name="location-dot" /> @L["Address"]</dt><dd>@Model.Address</dd></div>
+                            }
+                            @if (Model.Timings is not null)
+                            {
+                                <div><dt><icon name="clock" /> @L["Timings"]</dt><dd>@Model.Timings</dd></div>
+                            }
+                            @if (Model.Phone is not null)
+                            {
+                                <div><dt><icon name="phone" /> @L["Phone"]</dt><dd><a href="@Model.PhoneHref">@Model.Phone</a></dd></div>
+                            }
+                            @if (Model.Email is not null)
+                            {
+                                <div><dt><icon name="envelope" /> @L["Email"]</dt><dd><a href="mailto:@Model.Email">@Model.Email</a></dd></div>
+                            }
+                            @if (Model.Website is not null)
+                            {
+                                <div>
+                                    <dt><icon name="globe" /> @L["Website"]</dt>
+                                    <dd><a href="@Model.Website" target="_blank" rel="noopener noreferrer">@Model.Website<span class="visually-hidden"> @L["(opens in a new tab)"]</span></a></dd>
+                                </div>
+                            }
+                        </dl>
+                    }
+                    @if (Model.HasCoordinates)
+                    {
+                        <div class="kc-info-actions">
+                            <a class="btn btn-kc-primary" href="@Model.DirectionsUrl" target="_blank" rel="noopener noreferrer">
+                                <icon name="route" /> @L["Get directions"]<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                            </a>
+                            <a class="btn btn-kc-outline" href="@Model.OpenStreetMapUrl" target="_blank" rel="noopener noreferrer">
+                                <icon name="map" /> OpenStreetMap<span class="visually-hidden"> @L["(opens in a new tab)"]</span>
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Map is { } map)
+                {
+                    var canvas = new MapCanvasViewModel("place-map", map, L["Map of {0}", Model.Name], CssClass: "kc-map--small", Popups: false);
+                    <div class="kc-place-map">
+                        <partial name="_MapCanvas" model="canvas" />
+                        <a class="kc-link-arrow" asp-route="@RouteNames.Map" asp-route-category="@Model.Category.Slug">@L["See it on the village map"] <icon name="arrow-right" /></a>
+                    </div>
+                }
+            </aside>
+        </div>
+
+        @if (Model.MorePlaces.Count > 0)
+        {
+            <section class="kc-place-more" aria-labelledby="more-title">
+                <div class="kc-subheading-row">
+                    <h2 class="kc-subheading" id="more-title">@L["More: {0}", Model.Category.Name]</h2>
+                    <a class="kc-link-arrow" asp-route="@RouteNames.Places" asp-route-category="@Model.Category.Slug">@L["See all"] <icon name="arrow-right" /></a>
+                </div>
+                <div class="row g-4">
+                    @foreach (var place in Model.MorePlaces)
+                    {
+                        <div class="col-sm-6 col-lg-4">
+                            <partial name="Cards/_PlaceCard" model="place" />
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</section>
+
+<script type="application/ld+json">@Json.Serialize(structuredData)</script>
+
+@section Scripts {
+    @if (Model.Map is not null)
+    {
+        <script src="/js/map.js" asp-append-version="true" defer></script>
+    }
+}

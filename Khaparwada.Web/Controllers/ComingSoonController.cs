@@ -11,17 +11,6 @@ namespace Khaparwada.Web.Controllers;
 /// </summary>
 public class ComingSoonController : Controller
 {
-    [HttpGet("places", Name = RouteNames.Places)]
-    public IActionResult Places() =>
-        Placeholder(RouteNames.Places, "Places", "Temples, schools, offices, water places and other important places.", "location-dot");
-
-    [HttpGet("places/{slug}", Name = RouteNames.PlaceDetails)]
-    public IActionResult PlaceDetails(string slug) => Places();
-
-    [HttpGet("map", Name = RouteNames.Map)]
-    public IActionResult Map() =>
-        Placeholder(RouteNames.Map, "Village map", "Every place on an interactive map.", "map-location-dot");
-
     [HttpGet("people", Name = RouteNames.People)]
     public IActionResult People() =>
         Placeholder(RouteNames.People, "People", "Teachers, doctors, farmers, sports persons and others who serve the village.", "people-group");

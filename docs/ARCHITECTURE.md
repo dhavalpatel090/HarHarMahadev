@@ -84,7 +84,14 @@ Views receive ViewModels only; forms bind to InputModels. Entities never reach a
 | Gujarati pages under `/gu/…`, handled by middleware that moves `/gu` into the PathBase | Google cannot index a cookie-only language. A `{culture}` route parameter was rejected: ASP.NET Core drops it from links to another controller, so links would fall back to English. With PathBase every generated link keeps `/gu` automatically |
 | Language comes from the URL only (no cookie, no browser setting) | One URL showing different languages to different visitors and to search engines |
 | Route names (`RouteNames`) and "coming soon" placeholder pages for later phases | Broken menu links now, and links to change later: a phase moves the route name to its real page |
-| `/places/{slug}` canonical, `/Places/Details/{id}` → 301 (Phase 5) | Split search ranking |
+| `/places/{slug}` canonical; `/Places/Details/{id}` (the original plan's address) and wrong-case slugs → 301 to it | Split search ranking; old shared links breaking |
+| A place is public only when published **and** its category is switched on (`PublicVisibility`) | A place showing a chip and filter link for a category visitors cannot see |
+| Pages may declare `ViewData["CanonicalQuery"]` (e.g. `?category=temples&page=2`) and `ViewData["NoIndex"]` (search results) | Category and page 2 pages pointing their canonical at page 1; search result pages indexed |
+| One map component (`_MapCanvas` + `map.js`): starts by itself, lazy or eager; one layer per category; pop-up with photo | Three slightly different map set-ups on Home, `/map` and each place's page |
+| Place cards, map markers and category counts come from `Services/Places/PlaceQueries.cs` | Home, `/places` and `/map` counting or showing places differently |
+| `/map` lists the same places under the map | A map that screen-reader users and visitors without JavaScript cannot use |
+| A place's gallery has its own admin page (`/admin/places/{id}/photos`, up to 6 per upload); photo widths and heights are stored | A huge single form; layout jumps while gallery photos load |
+| Coordinates rounded half away from zero (`MidpointRounding.AwayFromZero`) | .NET's default banker's rounding (72.9912345 → 72.991234) disagreeing with SQL Server and with people |
 | All UI text through `IStringLocalizer` (`@L["…"]`) from Phase 2 | Rewriting every view in Phase 12 |
 | Unicode-wide HTML encoder (`WebEncoderOptions`) | The default encoder sent every Gujarati letter as `&#xAAE;`, making Gujarati pages 2–3× larger |
 | Icon sprite instead of the Font Awesome icon font | ~320 KB of fonts and CSS for 2,600 icons when the site uses ~70 (sprite: ~15 KB compressed) |
@@ -114,12 +121,13 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
    │  │                                       password), Dashboard, VillageInfo, SiteSettings, Categories, UsefulLinks
    │  ├─ Models\                              InputModels, list/view models, AdminNavigation (the sidebar)
    │  └─ Views\                               _AdminLayout, _AuthLayout, _Sidebar, _StatusMessage + one folder per screen
-   ├─ Controllers\                            Home, About, History, ComingSoon (placeholders), Error
+   ├─ Controllers\                            Home, About, History, Places, Map, ComingSoon (placeholders), Error
    ├─ Data\                                   AppDbContext, Configurations, Interceptors, Seed
    ├─ Migrations\
    ├─ Models\                                 Common, Enums, Entities (20)
    ├─ Services\
    │  ├─ About\, History\                     About page; timeline + then & now (HistoryQueries shared with Home)
+   │  ├─ Places\                              PlaceService (list, details, map page), PlaceQueries (shared with Home)
    │  ├─ Admin\                               Dashboard, Settings, Category, UsefulLink, AboutSection, Timeline, ThenNow
    │  ├─ Common\                              VillageClock, PublicVisibility, OperationResult
    │  ├─ Home\                                HomeService (one query per Home section)
@@ -144,13 +152,14 @@ D:\Dhaval\HarHarMahadev\                      ← git repo root
    ├─ Views\
    │  ├─ Home\                                Index + one partial per section, Privacy, Terms
    │  ├─ About\, History\                     the About page; the timeline + then & now
+   │  ├─ Places\, Map\                        place list and page; the village map page
    │  ├─ Shared\                              _Layout, _Header, _PageHeader, _SectionHeading, _ThenNowFigure, ComingSoon,
    │  │                                       Cards\ (place, event, notice, album, person, memory, category),
    │  │                                       Components\ (PageMeta, AlertBar, SiteFooter)
    │  └─ Error\                               NotFound, Status, Error
    ├─ wwwroot\
    │  ├─ css\site.css, admin.css              the design system; the admin panel's additions
-   │  ├─ js\                                  site.js (all pages), home.js, map.js, admin.js (admin only)
+   │  ├─ js\                                  site.js (all pages), map.js (pages with a map), admin.js (admin only)
    │  ├─ fonts\                               Rasa, Mukta Vaani (+ OFL licences)
    │  ├─ images\                              icons.svg, brand\ (emblem, share image), motifs\toran.svg,
    │  │                                       illustrations\village-dusk.svg
@@ -320,7 +329,7 @@ generic repository libraries, NetTopologySuite, masonry / lightbox plugins, Html
 | 2 | Layout, navbar, footer, Home (design system, language-aware URLs, placeholders for later sections) | **Done** |
 | 3 | Admin foundation: login, roles, dashboard, image upload pipeline, Village Info / Settings / Categories / Useful Links | **Done** |
 | 4 | About + History + Then vs Now (public + admin) | **Done** |
-| 5 | Places + Map | |
+| 5 | Places + Map | **Done** |
 | 6 | People (approval + consent) | |
 | 7 | Events | |
 | 8 | Gallery (approval, masonry, lightbox) | |
@@ -371,6 +380,12 @@ Each feature phase ships its public pages and its admin screens together, and re
   → on `photo.Failed` show `photo.Error`; otherwise `entity.ImagePath = photo.Apply(entity.ImagePath)`, save, then
   `photo.SaveSucceeded()` (or `photo.SaveFailed()` when the save throws). Show it with
   `MediaUrls.Image(path, ImageSize.Medium)` plus `srcset="@MediaUrls.SrcSet(path)"`.
+- **Show a list with pages:** fill a `PaginationViewModel` (page, size, total, route name, the filter values) and
+  `<partial name="_Pagination" model="…" />`; `PaginationViewModel.Clamp` keeps a typed-in page number valid. An admin
+  list needs a named route (`[HttpGet("", Name = "admin-places")]`).
+- **Show a map:** build a `MapViewModel` and render `<partial name="_MapCanvas" model="new MapCanvasViewModel(…)" />`
+  (model built in a code block), then load `/js/map.js` in the Scripts section. Category buttons:
+  `data-map-for="<map id>"` with `data-map-filter="<category slug>"` buttons (see `Views/Map/Index.cshtml`).
 - **Test with curl from Git Bash:** `export MSYS_NO_PATHCONV=1` first, and send Gujarati values from UTF-8 files
   (`--data-urlencode "NameGu@name.txt"`). See §11.
 
@@ -399,6 +414,10 @@ Each feature phase ships its public pages and its admin screens together, and re
 | `<partial model="new X(a ? "b" : "c")" />` broke the build | The `"` of a C# string ends the HTML attribute | Build the model in an `@{ }` block and pass the variable |
 | MVC1006 in a view helper function | A function that renders tag helpers (`<a asp-route>`, `<icon>`) must be async | `async Task Name() { … }` and `await Name();` |
 | A per-form upload limit was ignored | The global antiforgery check (an authorization filter, order 1000) reads the whole form before resource filters run; after that the limit is locked | `UploadLimitAttribute` is an authorization filter with order 900, like ASP.NET Core's `[RequestSizeLimit]` |
+| Coordinates came back one millionth off (72.991234 instead of 72.991235) | `Math.Round` uses banker's rounding (half to even) by default | `MidpointRounding.AwayFromZero` for coordinates |
+| On phones "Get directions" came after the whole description and gallery | Bootstrap columns can only stack in source order | The place page uses CSS grid areas: photo → card → text on phones |
+| About 200 px of empty space under every inner page's header | `.kc-section` padding is meant for stacked Home sections; inner pages added it to the header's own padding | `.kc-page-header + .kc-section` uses a smaller top padding |
+| Test scripts copied with PowerShell lost their Gujarati text | Windows PowerShell 5.1 reads BOM-less UTF-8 files as ANSI (and writes a BOM before `#!`) | Copy or edit such files with `sed`, or pass `-Encoding UTF8` |
 | An oversized upload shows "connection reset" instead of the 413 page | The server refuses the body as soon as it passes the limit and closes the connection while the browser is still sending | Expected HTTP/1.1 behaviour. The page checks file sizes before sending (`data-max-bytes`), so people never get there |
 
 ## 12. Open items
@@ -407,6 +426,9 @@ Each feature phase ships its public pages and its admin screens together, and re
   Gujarati ગણદેવી, નવસારી, ગુજરાત to be confirmed). Still needed from the village: Gujarati spelling of
   "Khaparwada", PIN code, village-centre coordinates, real text and photos. Until then the database holds clearly
   marked `[Add …]` / `[Sample]` placeholders.
+- Place photos open as plain image pages; the Gallery phase (8) adds a lightbox that the place gallery will reuse.
+- The `[Sample]` places sit around a demo point in central Gujarat, not in Gandevi taluka; real places get their
+  real locations from the map picker.
 - No "bin" screen yet: soft-deleted content is recoverable only in SQL (`IsDeleted = 0`). Planned with the admin
   completion in Phase 11, together with permanently deleting old items and their photo files.
 - Native-speaker review of the Gujarati seed names (categories, tagline).

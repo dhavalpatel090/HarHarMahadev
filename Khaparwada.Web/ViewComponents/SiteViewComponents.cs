@@ -43,8 +43,11 @@ public sealed class PageMetaViewComponent(ISiteInfoService siteInfo, IOptions<Si
             ? $"{request.Scheme}://{request.Host}"
             : options.Value.PublicBaseUrl.TrimEnd('/');
 
-        var englishUrl = baseUrl + LanguageUrls.PathFor(request, gujarati: false, includeQuery: false);
-        var gujaratiUrl = baseUrl + LanguageUrls.PathFor(request, gujarati: true, includeQuery: false);
+        // The query string is left out (it can hold tracking or search text), unless the page declares the part
+        // that makes it a page of its own, e.g. "?category=temples&page=2".
+        var canonicalQuery = ViewData["CanonicalQuery"] as string ?? string.Empty;
+        var englishUrl = baseUrl + LanguageUrls.PathFor(request, gujarati: false, includeQuery: false) + canonicalQuery;
+        var gujaratiUrl = baseUrl + LanguageUrls.PathFor(request, gujarati: true, includeQuery: false) + canonicalQuery;
         var gujarati = AppLanguage.IsGujarati;
         var pageTitle = ViewData["Title"] as string;
 
@@ -59,7 +62,8 @@ public sealed class PageMetaViewComponent(ISiteInfoService siteInfo, IOptions<Si
             ImageUrl = baseUrl + (ViewData["ShareImage"] as string ?? DefaultShareImage),
             SiteName = site.SiteName,
             Locale = gujarati ? "gu_IN" : "en_IN",
-            AlternateLocale = gujarati ? "en_IN" : "gu_IN"
+            AlternateLocale = gujarati ? "en_IN" : "gu_IN",
+            NoIndex = ViewData["NoIndex"] is true
         });
     }
 }

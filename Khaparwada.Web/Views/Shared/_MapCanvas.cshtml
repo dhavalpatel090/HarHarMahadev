@@ -1,0 +1,48 @@
+@model MapCanvasViewModel
+@using Khaparwada.Web.Infrastructure.Text
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using Microsoft.Extensions.Options
+@inject IOptions<Khaparwada.Web.Infrastructure.Options.MapOptions> MapOptions
+@inject IFileVersionProvider FileVersions
+@* One Leaflet map (js/map.js). Lazy maps fetch Leaflet (about 40 KB compressed) only when they scroll near the
+   screen; the map page loads it at once. The markers travel as a JSON block: data, never executed, so a strict
+   Content-Security-Policy stays possible. *@
+@{
+    var options = MapOptions.Value;
+    var invariant = CultureInfo.InvariantCulture;
+    var map = Model.Map;
+    var dataId = Model.Id + "-data";
+    // Asset URLs without the "/gu" prefix (see IconTagHelper), versioned so browsers can cache them.
+    string Asset(string path) => FileVersions.AddFileVersionToPath(PathString.Empty, path);
+    var markers = map.Markers.Select(marker => new
+    {
+        marker.Name,
+        Summary = TextHelpers.Excerpt(marker.Summary, 120),
+        marker.Category,
+        Cat = marker.CategorySlug,
+        Icon = IconNames.ToSymbol(marker.Icon),
+        marker.Color,
+        Image = MediaUrls.Image(marker.ImagePath, ImageSize.Small),
+        Lat = marker.Latitude,
+        Lng = marker.Longitude,
+        Url = Url.RouteUrl(RouteNames.PlaceDetails, new { slug = marker.Slug })
+    });
+}
+<div class="kc-map @Model.CssClass" id="@Model.Id" role="region" aria-label="@Model.AriaLabel"
+     data-kc-map="@(Model.Lazy ? "lazy" : "eager")"
+     data-markers="@dataId"
+     data-popups="@(Model.Popups ? "true" : "false")"
+     data-category="@Model.Category"
+     data-tiles="@options.TileUrl"
+     data-attribution="@options.Attribution"
+     data-max-zoom="@options.MaxZoom"
+     data-lat="@map.CenterLatitude?.ToString(invariant)"
+     data-lng="@map.CenterLongitude?.ToString(invariant)"
+     data-zoom="@map.Zoom"
+     data-icons="@Asset(IconTagHelper.SpritePath)"
+     data-leaflet-css="@Asset("/lib/leaflet/leaflet.css")"
+     data-leaflet-js="@Asset("/lib/leaflet/leaflet.js")"
+     data-details-label="@L["View details"]">
+    <p class="kc-map-loading"><icon name="map-location-dot" /> @L["Loading map…"]</p>
+</div>
+<script type="application/json" id="@dataId">@Json.Serialize(markers)</script>

@@ -13,6 +13,9 @@ public sealed class PageMetaViewModel
     public required string SiteName { get; init; }
     public required string Locale { get; init; }
     public required string AlternateLocale { get; init; }
+
+    /// <summary>For pages search engines should not list, such as search results (ViewData["NoIndex"] = true).</summary>
+    public bool NoIndex { get; init; }
 }
 
 /// <summary>The banner at the top of inner pages: breadcrumb, title and a short introduction.</summary>

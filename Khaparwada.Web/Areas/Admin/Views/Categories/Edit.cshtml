@@ -74,8 +74,11 @@
             </div>
 
             <div class="form-check form-switch">
-                <input asp-for="IsActive" class="form-check-input" role="switch" />
+                <input asp-for="IsActive" class="form-check-input" role="switch" aria-describedby="active-hint" />
                 <label asp-for="IsActive" class="form-check-label"></label>
+                <p class="kc-field-hint mb-0" id="active-hint">
+                    When off, visitors see neither the category nor anything in it. Nothing is deleted: switch it on again to bring it all back.
+                </p>
             </div>
         </div>
     </section>

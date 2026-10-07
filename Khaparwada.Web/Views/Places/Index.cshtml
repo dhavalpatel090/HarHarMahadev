@@ -1,0 +1,97 @@
+@model PlaceListViewModel
+@{
+    var all = L["Places"].Value;
+    var title = Model.Category?.Name ?? all;
+    ViewData["Title"] = title;
+    ViewData["Description"] = Model.Category is null
+        ? L["Temples, schools, offices, water places and the other places that make the village home."].Value
+        : L["{0} in the village: addresses, timings, photos and the map.", Model.Category.Name].Value;
+
+    // The category and page make a page of its own for search engines; a search does not (see PageMeta).
+    var canonical = new List<string>();
+    if (Model.Category is not null) { canonical.Add("category=" + Uri.EscapeDataString(Model.Category.Slug)); }
+    if (Model.Pagination.Page > 1) { canonical.Add("page=" + Model.Pagination.Page); }
+    ViewData["CanonicalQuery"] = canonical.Count == 0 ? null : "?" + string.Join("&", canonical);
+    ViewData["NoIndex"] = Model.Search is not null;
+
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = Model.Category is null
+            ? L["Temples, schools, offices, water places and the other places that make the village home."]
+            : L["Every place in “{0}”, with addresses, timings and the map.", Model.Category.Name],
+        Icon = Model.Category?.Icon ?? "location-dot",
+        Breadcrumbs = Model.Category is null
+            ? [new BreadcrumbItem(all)]
+            : [new BreadcrumbItem(all, RouteNames.Places), new BreadcrumbItem(Model.Category.Name)]
+    };
+    var count = Model.Pagination.TotalItems;
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-places-page">
+    <div class="container">
+        <div class="kc-list-tools">
+            <form class="kc-search" method="get" asp-route="@RouteNames.Places" role="search">
+                @if (Model.Category is not null)
+                {
+                    <input type="hidden" name="category" value="@Model.Category.Slug" />
+                }
+                <label class="visually-hidden" for="place-search">@L["Search places"]</label>
+                <input class="form-control" type="search" id="place-search" name="q" value="@Model.Search" maxlength="100"
+                       placeholder="@L["Search by name or address"]" />
+                <button class="btn btn-kc-primary" type="submit" aria-label="@L["Search"]"><icon name="magnifying-glass" /><span>@L["Search"]</span></button>
+            </form>
+            <a class="btn btn-kc-outline" asp-route="@RouteNames.Map" asp-route-category="@Model.Category?.Slug">
+                <icon name="map-location-dot" /> @L["View on the map"]
+            </a>
+        </div>
+
+        <nav class="kc-filter-chips" aria-label="@L["Categories"]">
+            <a class="kc-filter-chip @(Model.Category is null ? "is-active" : null)" aria-current="@(Model.Category is null ? "page" : null)"
+               asp-route="@RouteNames.Places" asp-route-q="@Model.Search">@L["All"]</a>
+            @foreach (var category in Model.Categories.Where(c => c.PlaceCount > 0))
+            {
+                var current = category.Slug == Model.Category?.Slug;
+                <a class="kc-filter-chip @(current ? "is-active" : null)" aria-current="@(current ? "page" : null)"
+                   asp-route="@RouteNames.Places" asp-route-category="@category.Slug" asp-route-q="@Model.Search">
+                    <icon name="@category.Icon" color="@(current ? null : category.Color)" />
+                    @category.Name
+                    <span class="kc-filter-count">@category.PlaceCount</span>
+                </a>
+            }
+        </nav>
+
+        <p class="kc-result-summary" role="status">
+            @if (Model.Search is not null)
+            {
+                @L["{0} results for “{1}”", count, Model.Search]
+                <a asp-route="@RouteNames.Places" asp-route-category="@Model.Category?.Slug">@L["Clear search"]</a>
+            }
+            else
+            {
+                @(count == 1 ? L["1 place"] : L["{0} places", count])
+            }
+        </p>
+
+        @if (Model.Places.Count == 0)
+        {
+            <p class="kc-empty">
+                @L["No places match. Try another word, or look at all places."]
+                <a asp-route="@RouteNames.Places">@L["All places"]</a>
+            </p>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var place in Model.Places)
+                {
+                    <div class="col-sm-6 col-lg-4 col-xl-3">
+                        <partial name="Cards/_PlaceCard" model="place" />
+                    </div>
+                }
+            </div>
+            <partial name="_Pagination" model="Model.Pagination" />
+        }
+    </div>
+</section>

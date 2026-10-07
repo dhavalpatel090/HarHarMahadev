@@ -73,8 +73,8 @@ public sealed class SettingsAdminService(
         village.State = AdminText.Optional(input.State);
         village.StateGu = AdminText.Optional(input.StateGu);
         village.PinCode = AdminText.Optional(input.PinCode);
-        village.Latitude = input.Latitude is { } latitude ? Math.Round(latitude, 6) : null;
-        village.Longitude = input.Longitude is { } longitude ? Math.Round(longitude, 6) : null;
+        village.Latitude = input.Latitude is { } latitude ? Math.Round(latitude, 6, MidpointRounding.AwayFromZero) : null;
+        village.Longitude = input.Longitude is { } longitude ? Math.Round(longitude, 6, MidpointRounding.AwayFromZero) : null;
         village.MapZoom = input.MapZoom;
 
         await db.SaveChangesAsync(cancellationToken);

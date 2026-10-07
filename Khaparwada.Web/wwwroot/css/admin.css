@@ -911,6 +911,61 @@ legend.kc-field-label { /* Bootstrap floats legends and makes them large */
 }
 .kc-media-empty .icon { width: 2rem; height: 2rem; opacity: .6; }
 .kc-image-field-wrap { max-width: 36rem; }
+
+/* List filters (Places): category, name, Filter button on one line from 768px. */
+.kc-admin-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .75rem 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+}
+.kc-admin-filters > div { flex: 0 1 16rem; }
+.kc-admin-filters > .kc-admin-filters-grow { flex: 1 1 14rem; }
+.kc-admin-filters .kc-field-label { font-size: .85rem; }
+.kc-field--medium { max-width: 24rem; }
+.kc-field--tiny { max-width: 7rem; margin-bottom: 0; }
+
+/* A place's Photos page. */
+.kc-upload-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+}
+.kc-upload-row .kc-field { flex: 1 1 22rem; margin-bottom: 0; }
+.kc-photo-rows { margin: 0; padding: 0; list-style: none; }
+.kc-photo-row {
+    display: grid;
+    grid-template-columns: 8rem minmax(0, 1fr);
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-top: 1px solid var(--kc-line);
+}
+.kc-photo-row:first-child { border-top: 0; }
+.kc-photo-row img {
+    width: 8rem;
+    height: 6rem;
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-sand);
+    object-fit: cover;
+}
+.kc-photo-row-fields .kc-bilingual { margin-bottom: .75rem; }
+.kc-photo-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1.5rem;
+}
+.kc-photo-row-meta .form-check { margin-bottom: .5rem; }
+@media (max-width: 575.98px) {
+    .kc-photo-row { grid-template-columns: minmax(0, 1fr); }
+    .kc-photo-row img { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+}
 .kc-media-preview img[hidden] { display: none; }
 .kc-media-preview figcaption {
     margin-top: .4rem;

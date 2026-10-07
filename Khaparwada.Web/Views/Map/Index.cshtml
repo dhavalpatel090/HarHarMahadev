@@ -1,0 +1,70 @@
+@model MapPageViewModel
+@{
+    var title = L["Village map"].Value;
+    ViewData["Title"] = title;
+    ViewData["Description"] = L["Every place in the village on one map: temples, schools, offices, water places and more."].Value;
+    var header = new PageHeaderViewModel
+    {
+        Title = title,
+        Lead = L["Tap a marker to see what is there. Use the buttons to show or hide a kind of place."],
+        Icon = "map-location-dot",
+        Breadcrumbs = [new BreadcrumbItem(title)]
+    };
+    var hasMap = Model.Map.Markers.Count > 0 || Model.Map.CenterLatitude is not null;
+    var canvas = new MapCanvasViewModel("village-map", Model.Map, L["Interactive map of the village"],
+        Lazy: false, CssClass: "kc-map--page", Category: Model.SelectedCategory);
+}
+<partial name="_PageHeader" model="header" />
+
+<section class="kc-section kc-map-page">
+    <div class="container">
+        @if (!hasMap)
+        {
+            <p class="kc-empty">@L["No places are on the map yet. Please visit again soon."]</p>
+        }
+        else
+        {
+            @if (Model.Categories.Count > 1)
+            {
+                @* Hidden until map.js has the map ready: without JavaScript these buttons could do nothing. *@
+                <div class="kc-map-filters" data-map-for="village-map" role="group" aria-label="@L["Show on the map"]" hidden>
+                    <button type="button" class="kc-filter-chip" data-map-filter-all>@L["Show all"]</button>
+                    @foreach (var category in Model.Categories)
+                    {
+                        var shown = Model.SelectedCategory is null || Model.SelectedCategory == category.Slug;
+                        <button type="button" class="kc-filter-chip kc-map-filter" data-map-filter="@category.Slug" aria-pressed="@(shown ? "true" : "false")">
+                            <icon name="@category.Icon" color="@category.Color" />
+                            @category.Name
+                            <span class="kc-filter-count">@category.Places.Count</span>
+                        </button>
+                    }
+                </div>
+            }
+
+            <partial name="_MapCanvas" model="canvas" />
+
+            @* The same places as a list: for screen-reader users, and for anyone without JavaScript or a good connection. *@
+            <section class="kc-map-list" aria-labelledby="map-list-title">
+                <h2 class="kc-subheading" id="map-list-title">@L["Places on the map"]</h2>
+                <div class="kc-map-list-grid">
+                    @foreach (var category in Model.Categories)
+                    {
+                        <div class="kc-map-list-group">
+                            <h3 class="kc-map-list-heading"><icon name="@category.Icon" color="@category.Color" /> @category.Name</h3>
+                            <ul>
+                                @foreach (var place in category.Places)
+                                {
+                                    <li><a asp-route="@RouteNames.PlaceDetails" asp-route-slug="@place.Slug">@place.Name</a></li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="/js/map.js" asp-append-version="true" defer></script>
+}

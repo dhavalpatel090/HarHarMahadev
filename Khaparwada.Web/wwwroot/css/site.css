@@ -497,6 +497,9 @@ main:focus { outline: none; }
 }
 
 .kc-section { padding-block: var(--kc-section-space); }
+/* Inner pages start right after the page header, which has its own padding: the full section space on top
+   of it left a gap of about 200 px before the content. */
+.kc-page-header + .kc-section { padding-top: clamp(2rem, 1.4rem + 2vw, 3.25rem); }
 .kc-section--sand { background: var(--kc-sand); }
 .kc-section--indigo {
     position: relative;
@@ -1275,6 +1278,17 @@ html[lang="gu"] .kc-hero-title { max-width: 18ch; }
 .kc-map-popup-title { margin: .2rem 0 .3rem; font-family: var(--kc-font-heading); font-size: 1.15rem; font-weight: 700; }
 .kc-map-popup-text { margin: 0 0 .6rem; color: var(--kc-muted); }
 .kc-map-popup-link { font-weight: 600; }
+.kc-map-popup-image {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    margin-bottom: .6rem;
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-sand);
+    object-fit: cover;
+}
 
 .kc-contact-strip {
     position: relative;
@@ -1390,6 +1404,217 @@ html[lang="gu"] .kc-hero-title { max-width: 18ch; }
     .kc-event-date { width: 72px; }
     .kc-notice-arrow { display: none; }
 }
+
+/* Lists: search, category chips, result count and pages (Places; later Events, Notices, Gallery). */
+.kc-list-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem 1rem;
+    margin-bottom: 1.25rem;
+}
+.kc-search {
+    display: flex;
+    flex: 1 1 22rem;
+    gap: .5rem;
+    max-width: 34rem;
+}
+.kc-search .form-control {
+    padding: .6rem 1rem;
+    border-color: var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    background-color: var(--kc-white);
+}
+.kc-search .form-control:focus { border-color: var(--kc-marigold); box-shadow: 0 0 0 .2rem rgb(232 163 61 / .28); }
+@media (max-width: 575.98px) {
+    .kc-search .btn span { display: none; } /* the magnifying glass is enough; aria-label keeps the button named */
+}
+
+.kc-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+.kc-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .45rem .9rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-white);
+    color: var(--kc-text);
+    font: inherit;
+    font-size: .95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.kc-filter-chip:hover { border-color: var(--kc-marigold); color: var(--kc-maroon); }
+.kc-filter-chip.is-active,
+.kc-filter-chip[aria-pressed="true"] { border-color: var(--kc-maroon); background: var(--kc-maroon); color: var(--kc-white); }
+.kc-filter-chip[aria-pressed="true"] .icon { color: var(--kc-white); }
+.kc-filter-chip[aria-pressed="false"] { opacity: .75; }
+.kc-filter-count {
+    padding: 0 .45rem;
+    border-radius: var(--kc-radius-pill);
+    background: rgb(0 0 0 / .07);
+    font-size: .8rem;
+}
+.kc-filter-chip.is-active .kc-filter-count,
+.kc-filter-chip[aria-pressed="true"] .kc-filter-count { background: rgb(255 255 255 / .2); }
+
+.kc-result-summary {
+    margin: 0 0 1.25rem;
+    color: var(--kc-muted);
+    font-weight: 600;
+}
+.kc-result-summary a { margin-left: .5rem; }
+
+.kc-pagination { margin-top: 2.5rem; }
+.kc-pagination ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.kc-page,
+.kc-page-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    min-width: 2.6rem;
+    height: 2.6rem;
+    padding: 0 .9rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius-pill);
+    background: var(--kc-white);
+    color: var(--kc-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+a.kc-page:hover,
+a.kc-page-step:hover { border-color: var(--kc-marigold); color: var(--kc-maroon); }
+.kc-page.is-current { border-color: var(--kc-maroon); background: var(--kc-maroon); color: var(--kc-white); }
+.kc-page-step.is-disabled { opacity: .45; }
+.kc-page-gap { padding: 0 .25rem; color: var(--kc-muted); }
+@media (max-width: 575.98px) {
+    .kc-page-step span { display: none; }
+}
+
+/* A place's page: photo, text, photos, events; on the side, the details card and a small map.
+   Phones: photo → card → text. From 992px: photo and text on the left, the card beside both. */
+.kc-place-layout {
+    display: grid;
+    grid-template-areas: "aside" "main";
+    gap: 1.75rem;
+}
+.kc-place-layout.has-media { grid-template-areas: "media" "aside" "main"; }
+.kc-place-figure { grid-area: media; }
+.kc-place-aside { grid-area: aside; }
+.kc-place-main { grid-area: main; min-width: 0; }
+@media (min-width: 992px) {
+    .kc-place-layout {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        grid-template-areas: "main aside";
+        align-items: start;
+        column-gap: 3rem;
+    }
+    .kc-place-layout.has-media { grid-template-areas: "media aside" "main aside"; }
+}
+.kc-place-figure { margin: 0; }
+.kc-place-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--kc-radius-lg);
+    background: var(--kc-sand);
+    object-fit: cover;
+}
+.kc-place-text p { color: var(--kc-text); font-size: 1.08rem; }
+.kc-place-block { margin-top: 2.5rem; }
+.kc-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.kc-photo-grid figure { margin: 0; }
+.kc-photo-grid img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--kc-radius-sm);
+    background: var(--kc-sand);
+    object-fit: cover;
+    transition: transform .25s var(--kc-ease);
+}
+.kc-photo-grid a { display: block; overflow: hidden; border-radius: var(--kc-radius-sm); }
+.kc-photo-grid a:hover img { transform: scale(1.04); }
+.kc-photo-grid figcaption { margin-top: .4rem; color: var(--kc-muted); font-size: .9rem; }
+
+.kc-info-card {
+    display: grid;
+    gap: 1.1rem;
+    padding: 1.4rem;
+    border: 1px solid var(--kc-line);
+    border-radius: var(--kc-radius);
+    background: var(--kc-white);
+    box-shadow: var(--kc-shadow-sm);
+}
+.kc-info-card > .kc-chip { justify-self: start; text-decoration: none; } /* grid items stretch otherwise */
+.kc-info-list { display: grid; gap: .9rem; margin: 0; }
+.kc-info-list dt {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--kc-muted);
+    font-size: .85rem;
+    font-weight: 600;
+}
+.kc-info-list dt .icon { color: var(--kc-marigold-600); }
+.kc-info-list dd { margin: .15rem 0 0; overflow-wrap: anywhere; }
+.kc-info-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.kc-place-map { display: grid; gap: .75rem; margin-top: 1.25rem; }
+.kc-map.kc-map--small { height: 260px; border-radius: var(--kc-radius); box-shadow: none; }
+.kc-place-more { margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--kc-line); }
+
+/* The /map page: category buttons above a tall map, and the same places as a list below. */
+.kc-map-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+.kc-map.kc-map--page { height: clamp(380px, 70vh, 720px); }
+.kc-map-list { margin-top: 2.5rem; }
+.kc-map-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: 1.5rem 2rem;
+}
+.kc-map-list-heading {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 .5rem;
+    font-family: var(--kc-font-body);
+    font-size: 1.02rem;
+    font-weight: 600;
+}
+.kc-map-list-group ul { margin: 0; padding-left: 1.6rem; }
+.kc-map-list-group li { margin-bottom: .25rem; }
 
 /* Text still holding a "[Add …]" placeholder reads as "to be written", not as content. */
 .kc-placeholder-text,

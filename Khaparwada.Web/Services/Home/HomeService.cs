@@ -6,6 +6,7 @@ using Khaparwada.Web.Infrastructure.Text;
 using Khaparwada.Web.Models.Enums;
 using Khaparwada.Web.Services.Common;
 using Khaparwada.Web.Services.History;
+using Khaparwada.Web.Services.Places;
 using Khaparwada.Web.Services.Site;
 using Khaparwada.Web.ViewModels.Events;
 using Khaparwada.Web.ViewModels.Gallery;
@@ -41,7 +42,8 @@ public sealed class HomeService(
     public async Task<HomeViewModel> GetAsync(CancellationToken cancellationToken = default)
     {
         var site = await siteInfo.GetAsync(cancellationToken);
-        var (categories, totalPlaces) = await GetCategoriesAsync(cancellationToken);
+        var categories = await db.LoadCategoriesAsync(AppLanguage.IsGujarati, cancellationToken);
+        var totalPlaces = categories.Sum(category => category.Tile.PlaceCount);
 
         return new HomeViewModel
         {
@@ -76,7 +78,7 @@ public sealed class HomeService(
     /// Typed-in figures (population, families, area) appear only once the admin has entered them; the
     /// counts of schools, temples and places are always computed from the Places table.
     /// </summary>
-    private List<StatViewModel> BuildStats(SiteInfo site, IReadOnlyList<CategoryInfo> categories, int totalPlaces)
+    private List<StatViewModel> BuildStats(SiteInfo site, IReadOnlyList<PlaceCategoryCount> categories, int totalPlaces)
     {
         var stats = new List<StatViewModel>();
         if (site.Population is { } population)
@@ -102,67 +104,14 @@ public sealed class HomeService(
         return stats;
     }
 
-    private async Task<(IReadOnlyList<CategoryInfo> Categories, int TotalPlaces)> GetCategoriesAsync(CancellationToken cancellationToken)
-    {
-        var gu = AppLanguage.IsGujarati;
-
-        var placeCounts = await db.Places.AsNoTracking()
-            .Visible()
-            .GroupBy(place => place.CategoryId)
-            .Select(group => new { CategoryId = group.Key, Count = group.Count() })
-            .ToDictionaryAsync(group => group.CategoryId, group => group.Count, cancellationToken);
-
-        var rows = await db.PlaceCategories.AsNoTracking()
-            .Where(category => category.IsActive)
-            .OrderBy(category => category.SortOrder)
-            .Select(category => new
-            {
-                category.Id,
-                category.Slug,
-                Name = gu ? category.NameGu ?? category.Name : category.Name,
-                category.IconClass,
-                category.MarkerColor,
-                category.ShowInStats
-            })
-            .ToListAsync(cancellationToken);
-
-        var categories = rows
-            .Select(row => new CategoryInfo(
-                new CategoryTileViewModel
-                {
-                    Slug = row.Slug,
-                    Name = row.Name,
-                    Icon = row.IconClass,
-                    Color = row.MarkerColor,
-                    PlaceCount = placeCounts.GetValueOrDefault(row.Id)
-                },
-                row.ShowInStats))
-            .ToList();
-
-        return (categories, placeCounts.Values.Sum());
-    }
-
-    private Task<List<PlaceCardViewModel>> GetFeaturedPlacesAsync(CancellationToken cancellationToken)
-    {
-        var gu = AppLanguage.IsGujarati;
-        return db.Places.AsNoTracking()
+    private Task<List<PlaceCardViewModel>> GetFeaturedPlacesAsync(CancellationToken cancellationToken) =>
+        db.Places.AsNoTracking()
             .Visible()
             .Where(place => place.IsFeatured)
-            .OrderBy(place => place.Category.SortOrder)
-            .ThenBy(place => place.Name)
+            .InListOrder()
             .Take(4)
-            .Select(place => new PlaceCardViewModel
-            {
-                Slug = place.Slug,
-                Name = gu ? place.NameGu ?? place.Name : place.Name,
-                Summary = gu ? place.SummaryGu ?? place.Summary : place.Summary,
-                CategoryName = gu ? place.Category.NameGu ?? place.Category.Name : place.Category.Name,
-                CategoryIcon = place.Category.IconClass,
-                CategoryColor = place.Category.MarkerColor,
-                ImagePath = place.MainImagePath
-            })
+            .SelectCards(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
-    }
 
     private async Task<List<TimelineItemViewModel>> GetHistoryHighlightsAsync(CancellationToken cancellationToken)
     {
@@ -314,25 +263,13 @@ public sealed class HomeService(
 
     private async Task<MapViewModel?> GetMapAsync(SiteInfo site, CancellationToken cancellationToken)
     {
-        var gu = AppLanguage.IsGujarati;
-        var rows = await db.Places.AsNoTracking()
+        var markers = await db.Places.AsNoTracking()
             .Visible()
-            .Where(place => place.Latitude != null && place.Longitude != null)
-            .OrderBy(place => place.Name)
-            .Select(place => new
-            {
-                place.Slug,
-                Name = gu ? place.NameGu ?? place.Name : place.Name,
-                Summary = gu ? place.SummaryGu ?? place.Summary : place.Summary,
-                Category = gu ? place.Category.NameGu ?? place.Category.Name : place.Category.Name,
-                place.Category.IconClass,
-                place.Category.MarkerColor,
-                Latitude = place.Latitude!.Value,
-                Longitude = place.Longitude!.Value
-            })
+            .InListOrder()
+            .SelectMarkers(AppLanguage.IsGujarati)
             .ToListAsync(cancellationToken);
 
-        if (rows.Count == 0 && !site.HasCoordinates)
+        if (markers.Count == 0 && !site.HasCoordinates)
         {
             return null;
         }
@@ -342,19 +279,7 @@ public sealed class HomeService(
             CenterLatitude = site.Latitude,
             CenterLongitude = site.Longitude,
             Zoom = site.MapZoom,
-            Markers = rows.Select(row => new MapMarkerViewModel
-            {
-                Slug = row.Slug,
-                Name = row.Name,
-                Summary = TextHelpers.Excerpt(row.Summary, 120),
-                Category = row.Category,
-                Icon = IconNames.ToSymbol(row.IconClass),
-                Color = row.MarkerColor,
-                Latitude = row.Latitude,
-                Longitude = row.Longitude
-            }).ToList()
+            Markers = markers
         };
     }
-
-    private sealed record CategoryInfo(CategoryTileViewModel Tile, bool ShowInStats);
 }

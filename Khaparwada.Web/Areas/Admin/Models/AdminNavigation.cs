@@ -21,7 +21,7 @@ public static class AdminNavigation
             new Item("About page", "book-open", "AboutSections"),
             new Item("History timeline", "clock-rotate-left", "Timeline"),
             new Item("Then & now", "arrows-left-right", "ThenNow"),
-            new Item("Places", "location-dot", null, ComingIn: "Phase 5"),
+            new Item("Places", "location-dot", "Places"),
             new Item("People", "people-group", null, ComingIn: "Phase 6"),
             new Item("Events", "calendar-days", null, ComingIn: "Phase 7"),
             new Item("Gallery", "images", null, ComingIn: "Phase 8"),

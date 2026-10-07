@@ -15,8 +15,12 @@ public static class PublicVisibility
     public static readonly Expression<Func<GalleryImage, bool>> GalleryImageIsVisible =
         image => image.Status == ModerationStatus.Published && image.Album.IsPublished;
 
+    /// <summary>
+    /// Published, in a category that is switched on. Switching a category off hides its places too; otherwise a
+    /// place would show a category chip and filter link for a category visitors cannot see.
+    /// </summary>
     public static IQueryable<Place> Visible(this IQueryable<Place> places) =>
-        places.Where(place => place.IsPublished);
+        places.Where(place => place.IsPublished && place.Category.IsActive);
 
     public static IQueryable<Event> Visible(this IQueryable<Event> events) =>
         events.Where(item => item.IsPublished);

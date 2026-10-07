@@ -1,7 +1,7 @@
 // Admin panel helpers. Each one is switched on by a data- attribute in the page, and every form also works
 // without JavaScript: the server checks everything again.
 //   data-slug-from="Name"           fill the web address from the English name (new items only)
-//   data-max-bytes / data-preview-target   check a file's size before uploading, and preview a photo
+//   data-max-bytes / data-max-files / data-preview-target   check file sizes and count before uploading; preview a photo
 //   data-icon-filter="grid-id"      search box for the icon picker
 //   data-kc-picker                  map for choosing the village centre (needs map.js)
 (() => {
@@ -67,12 +67,18 @@
         };
 
         input.addEventListener('change', () => {
-            const file = input.files && input.files[0];
+            const files = Array.from(input.files || []);
             const maxBytes = Number(input.dataset.maxBytes || 0);
+            const maxFiles = Number(input.dataset.maxFiles || 0);
+            const tooBig = maxBytes ? files.find((file) => file.size > maxBytes) : null;
 
-            if (file && maxBytes && file.size > maxBytes) {
+            if (maxFiles && files.length > maxFiles) {
                 input.value = '';
-                setFieldError(input, `This file is ${megabytes(file.size)} MB. The limit is ${megabytes(maxBytes)} MB.`);
+                setFieldError(input, `You chose ${files.length} files. Choose at most ${maxFiles} at a time.`);
+            } else if (tooBig) {
+                input.value = '';
+                const name = files.length > 1 ? `“${tooBig.name}” is` : 'This file is';
+                setFieldError(input, `${name} ${megabytes(tooBig.size)} MB. The limit is ${megabytes(maxBytes)} MB.`);
             } else {
                 setFieldError(input, null);
             }
@@ -135,7 +141,7 @@
         const data = element.dataset;
         const latInput = document.getElementById(data.latInput);
         const lngInput = document.getElementById(data.lngInput);
-        const zoomInput = document.getElementById(data.zoomInput);
+        const zoomInput = data.zoomInput ? document.getElementById(data.zoomInput) : null; // optional (places have none)
         const loading = element.querySelector('.kc-map-loading');
         const clearButton = document.querySelector(`[data-picker-clear="${element.id}"]`);
         let removePin = () => {};
@@ -185,8 +191,10 @@
             const writeInputs = (latlng) => {
                 latInput.value = latlng.lat.toFixed(6);
                 lngInput.value = latlng.lng.toFixed(6);
-                zoomInput.value = zoomForSite();
-                [latInput, lngInput, zoomInput].forEach(revalidate);
+                if (zoomInput) {
+                    zoomInput.value = zoomForSite();
+                }
+                [latInput, lngInput, zoomInput].filter(Boolean).forEach(revalidate);
             };
 
             const placePin = (latlng) => {
@@ -200,7 +208,7 @@
 
             const saved = readInputs();
             if (saved) {
-                map.setView(saved, Number(zoomInput.value) || 15);
+                map.setView(saved, Number(zoomInput?.value || data.pinZoom) || 15);
                 placePin(saved);
             } else {
                 map.setView([Number(data.startLat), Number(data.startLng)], Number(data.startZoom));
@@ -214,7 +222,7 @@
 
             // The website's map opens at the zoom the admin leaves this map on.
             map.on('zoomend', () => {
-                if (pin) {
+                if (pin && zoomInput) {
                     zoomInput.value = zoomForSite();
                 }
             });
@@ -229,7 +237,7 @@
             };
             latInput.addEventListener('change', onTyped);
             lngInput.addEventListener('change', onTyped);
-            zoomInput.addEventListener('change', () => {
+            zoomInput?.addEventListener('change', () => {
                 const zoom = Number(zoomInput.value);
                 if (zoom >= 5 && zoom <= 19) {
                     map.setZoom(zoom);
